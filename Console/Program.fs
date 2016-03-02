@@ -34,6 +34,18 @@ type RssReaderConsole () =
     |> List.sortBy (fun item -> item.Date)
     |> List.rev
 
+  member this.PrintItem(item, ?header) =
+    let header =
+      match header with
+      | Some h -> h + " "
+      | None -> ""
+
+    printfn "%s%s" header (item.Title)
+    printfn "* Date: %s" (item.Date.ToString("G"))
+    printfn "* Link: %s" (item.Link |> Option.getOr "(no link)")
+    printfn "* From: %s" (item.Uri  |> string)
+    item.Desc |> Option.iter (printfn "* Desc:\r\n%s")
+
   member this.PrintTimeLine() =
     let items = this.Timeline
     let len = items |> List.length
@@ -44,13 +56,10 @@ type RssReaderConsole () =
           Console.ReadKey() |> ignore
 
         printfn "----------------"
-        printfn "[%3d/%3d] %s"
-          i len
-          (item.Title)
-        printfn "* Date: %s" (item.Date.ToString("G"))
-        printfn "* Link: %s" (item.Link |> Option.getOr "(no link)")
-        printfn "* From: %s" (item.Uri  |> string)
-        item.Desc |> Option.iter (printfn "* Desc:\r\n%s")
+        this.PrintItem
+          ( item
+          , (sprintf "[%3d/%3d]" i len)
+          )
         )
 
   member this.Passive() =
