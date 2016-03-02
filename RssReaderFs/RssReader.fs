@@ -1,8 +1,7 @@
 ﻿namespace RssReaderFs
 
 module RssReader =
-  type RssReader (initialFeeds: RssFeed []) =
-    let mutable feeds = initialFeeds
+  type RssReader (feeds: RssFeed []) =
 
     new () =
       RssReader()
@@ -25,7 +24,7 @@ module RssReader =
           feeds
           |> Seq.map (Rss.updateFeedAsync)
           |> Async.Parallel
-        feeds <- newFeeds
+        return RssReader(newFeeds)
       }
       
     // 全アイテムの時系列順

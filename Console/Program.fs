@@ -16,24 +16,25 @@ type Config (path) =
     File.WriteAllText(path, json)
 
 type RssReaderConsole (cfg: Config) =
-  let reader =
+  let mutable reader =
     cfg.LoadReader()
-
-  let mutable items = []
 
   member this.Save() =
     cfg.SaveReader(reader)
 
-  member this.Update() =
+  member this.CheckUpdate() =
     async {
-      do! reader.Update()
-      items <- reader.Timeline
+      let! newReader = reader.Update()
+      let items = newReader.Timeline
 
       let len = items |> List.length
       if len > 0 then
         do!
           Console.Out.WriteLineAsync(sprintf "New %d feeds!" len)
           |> Async.AwaitTaskVoid
+        return newReader |> Some
+      else
+        return None
     }
 
   member this.PrintItem(item, ?header) =
@@ -48,7 +49,9 @@ type RssReaderConsole (cfg: Config) =
     printfn "* From: %s" (item.Uri  |> string)
     item.Desc |> Option.iter (printfn "* Desc:\r\n%s")
 
-  member this.PrintTimeLine() =
+  member this.PrintTimeLine(newReader) =
+    reader <- newReader
+    let items = reader.Timeline
     let len = items |> List.length
     items
     |> List.iteri (fun i item ->
@@ -69,7 +72,7 @@ type RssReaderConsole (cfg: Config) =
 
     let rec loop () =
       async {
-        do! this.Update()
+        let! _ = this.CheckUpdate()
         do! Async.Sleep(timeout)
         return! loop ()
       }
@@ -90,7 +93,8 @@ type RssReaderConsole (cfg: Config) =
             |> Array.toList
           match command with
           | "up" :: _ | "update" :: _ ->
-              do! this.Update()
+              let! _ = this.CheckUpdate()
+              ()
           | _ -> ()
           return! loop ()
       }
