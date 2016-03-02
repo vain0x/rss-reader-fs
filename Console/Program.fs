@@ -116,6 +116,14 @@ type RssReaderConsole (cfg: Config) =
               | Some newReader ->
                   this.PrintTimeLine(newReader)
 
+          | "src" :: _ ->
+              reader.Feeds
+              |> Array.map (fun feed -> feed.Source)
+              |> Array.iteri (fun i src ->
+                  printfn "#%d: %s <%s>"
+                    i (src.Name) (src.Uri |> string)
+                )
+
           | "add" :: name :: url :: _ ->
               let source = { Name = name; Uri = Uri(url) }
               let r = RssReader(DateTime.MinValue, [source])
