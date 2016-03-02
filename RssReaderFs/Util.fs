@@ -68,3 +68,24 @@ module Net =
       xmlDoc.Load(xmlReader)
       return xmlDoc
     }
+    
+module Serialize =
+  open System.Text
+  open System.Runtime.Serialization
+  open System.Runtime.Serialization.Json
+
+  let private toString = Encoding.UTF8.GetString
+  let private toBytes (x : string) = Encoding.UTF8.GetBytes x
+
+  let serializeJson<'a> (x : 'a) = 
+      let jsonSerializer = new DataContractJsonSerializer(typedefof<'a>)
+
+      use stream = new IO.MemoryStream()
+      jsonSerializer.WriteObject(stream, x)
+      toString <| stream.ToArray()
+
+  let deserializeJson<'a> (json : string) =
+      let jsonSerializer = new DataContractJsonSerializer(typedefof<'a>)
+
+      use stream = new IO.MemoryStream(toBytes json)
+      jsonSerializer.ReadObject(stream) :?> 'a
