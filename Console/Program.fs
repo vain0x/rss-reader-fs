@@ -12,27 +12,8 @@ type RssReaderConsole () =
         { Name = name; Uri = Uri(url) }
         )
 
-  let mutable feeds =
-    sources
-    |> List.map (Rss.downloadFeedAsync)
-    |> Async.Parallel
-    |> Async.RunSynchronously
-
-  member this.Update() =
-    let newFeeds =
-      feeds
-      |> Seq.map (Rss.updateFeedAsync)
-      |> Async.Parallel
-      |> Async.RunSynchronously
-    feeds <- newFeeds
-
-  // 全アイテムの時系列順
-  member this.Timeline =
-    feeds
-    |> Seq.collect (fun feed -> feed.Items)
-    |> Seq.toList
-    |> List.sortBy (fun item -> item.Date)
-    |> List.rev
+  let reader =
+    RssReader.RssReader(sources)
 
   member this.PrintItem(item, ?header) =
     let header =
@@ -47,7 +28,7 @@ type RssReaderConsole () =
     item.Desc |> Option.iter (printfn "* Desc:\r\n%s")
 
   member this.PrintTimeLine() =
-    let items = this.Timeline
+    let items = reader.Timeline
     let len = items |> List.length
     items
     |> List.iteri (fun i item ->
@@ -67,7 +48,7 @@ type RssReaderConsole () =
       while true do
         this.PrintTimeLine()
         do! Async.Sleep(1000)
-        this.Update()
+        reader.Update()
     }
     |> Async.RunSynchronously
 

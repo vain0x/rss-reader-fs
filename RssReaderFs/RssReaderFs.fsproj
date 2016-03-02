@@ -54,6 +54,7 @@
     <Compile Include="Util.fs" />
     <Compile Include="Domain.fs" />
     <Compile Include="Rss.fs" />
+    <Compile Include="RssReader.fs" />
     <None Include="App.config" />
   </ItemGroup>
   <PropertyGroup>
