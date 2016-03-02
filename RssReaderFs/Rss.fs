@@ -17,6 +17,7 @@ let parseRss uri (xml: XmlDocument) =
         Date  =
           at "pubDate"
           |> Option.bind (DateTime.tryParse)
+          |> Option.map (fun time -> time.ToLocalTime())
         Uri = uri
       }
   in
@@ -36,7 +37,7 @@ let downloadFeedAsync (source: RssSource) =
     let! items = source |> downloadRssAsync
     return
       {
-        LastUpdate  = DateTime.UtcNow
+        LastUpdate  = DateTime.Now
         Items       = items
         OldItems    = []
         Source      = source
@@ -59,7 +60,7 @@ let updateFeedAsync (feed: RssFeed) =
     return
       { feed
         with
-          LastUpdate  = DateTime.UtcNow
+          LastUpdate  = DateTime.Now
           OldItems    = feed.Items :: feed.OldItems
           Items       = newItems
       }
