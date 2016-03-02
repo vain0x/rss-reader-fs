@@ -1,5 +1,7 @@
 ﻿namespace RssReaderFs
 
+open System
+
 module RssReader =
   type RssReader (feeds: RssFeed []) =
 
@@ -21,6 +23,12 @@ module RssReader =
     member this.Add(rhs: RssReader) =
       RssReader(Array.append feeds (rhs.Feeds))
 
+    member this.SourceFilter(pred) =
+      let (feeds, removed) =
+        feeds
+        |> Array.partition pred
+      (RssReader(feeds), removed)
+      
     member this.Update() =
       async {
         let! newFeeds =
