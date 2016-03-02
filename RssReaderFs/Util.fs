@@ -1,5 +1,4 @@
-﻿[<AutoOpen>]
-module Util
+﻿namespace RssReaderFs
 
 open System
 

@@ -1,4 +1,6 @@
-﻿open System
+﻿
+open System
+open RssReaderFs
 
 type RssReaderConsole () =
   let sources =

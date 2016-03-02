@@ -1,29 +1,30 @@
-﻿[<AutoOpen>]
-module Domain
+﻿namespace RssReaderFs
 
 open System
 
-type RssSource =
-  {
-    Name: string
-    Uri: Uri
+[<AutoOpen>]
+module Domain =
+  type RssSource =
+    {
+      Name: string
+      Uri: Uri
 
-    // Category, UpdateSpan, etc.
-  }
+      // Category, UpdateSpan, etc.
+    }
 
-type RssItem =
-  {
-    Title: string
-    Desc: string option
-    Link: string option
-    Date: DateTime
-    Uri: Uri
-  }
+  type RssItem =
+    {
+      Title: string
+      Desc: string option
+      Link: string option
+      Date: DateTime
+      Uri: Uri
+    }
 
-type RssFeed =
-  {
-    Source      : RssSource
-    LastUpdate  : DateTime
-    Items       : seq<RssItem>
-    OldItems    : seq<RssItem> list
-  }
+  type RssFeed =
+    {
+      Source      : RssSource
+      LastUpdate  : DateTime
+      Items       : seq<RssItem>
+      OldItems    : seq<RssItem> list
+    }
