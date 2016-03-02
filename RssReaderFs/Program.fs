@@ -10,26 +10,22 @@ type RssConsolePrinter () =
         { Name = name; Uri = Uri(url) }
         )
 
-  let mutable items =
-    []
-
-  member this.Update() =
+  let mutable feeds =
     sources
-    |> List.map (Rss.downloadRssAsync)
+    |> List.map (Rss.downloadFeedAsync)
     |> Async.Parallel
     |> Async.RunSynchronously
-    |> tap (fun feeds ->
-        // 時系列順
-        items <-
-          feeds
-          |> Seq.collect id
-          |> Seq.toList
-          |> List.sortBy (fun item -> item.Date)
-          |> List.rev
-        )
-    |> ignore
+    
+  // 全アイテムの時系列順
+  member this.Timeline =
+    feeds
+    |> Seq.collect (fun feed -> feed.Items)
+    |> Seq.toList
+    |> List.sortBy (fun item -> item.Date)
+    |> List.rev
 
   member this.Print() =
+    let items = this.Timeline
     let len = items |> List.length
     items
     |> List.iteri (fun i item ->
@@ -47,7 +43,6 @@ type RssConsolePrinter () =
 [<EntryPoint>]
 let main argv =
   let rcp = RssConsolePrinter()
-  rcp.Update()
   rcp.Print()
 
   // exit code
