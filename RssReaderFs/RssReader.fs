@@ -10,9 +10,8 @@ module RssReader =
     new (lastUpdate, sources: seq<RssSource>) =
       let feeds =
         sources
-        |> Seq.map (Rss.downloadFeedAsync lastUpdate)
-        |> Async.Parallel
-        |> Async.RunSynchronously
+        |> Seq.map (Rss.emptyFeed lastUpdate)
+        |> Seq.toArray
       RssReader(feeds)
 
     member this.Update() =

@@ -13,7 +13,7 @@ type RssReaderConsole () =
         )
 
   let reader =
-    RssReader.RssReader(sources)
+    RssReader.RssReader(DateTime.MinValue, sources)
 
   member this.PrintItem(item, ?header) =
     let header =
@@ -46,9 +46,9 @@ type RssReaderConsole () =
   member this.Passive() =
     async {
       while true do
+        reader.Update()
         this.PrintTimeLine()
         do! Async.Sleep(1000)
-        reader.Update()
     }
     |> Async.RunSynchronously
 
