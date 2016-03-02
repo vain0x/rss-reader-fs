@@ -39,12 +39,12 @@ module Rss =
       return (xml |> parseRss uri)
     }
 
-  let downloadFeedAsync (source: RssSource) =
+  let downloadFeedAsync lastUpdate (source: RssSource) =
     async {
       let! items = source |> downloadRssAsync
       return
         {
-          LastUpdate  = DateTime.Now
+          LastUpdate  = lastUpdate
           Items       = items
           OldItems    = []
           Source      = source
