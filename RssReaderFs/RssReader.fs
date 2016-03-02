@@ -20,12 +20,13 @@ module RssReader =
       RssReader(feeds)
 
     member this.Update() =
-      let newFeeds =
-        feeds
-        |> Seq.map (Rss.updateFeedAsync)
-        |> Async.Parallel
-        |> Async.RunSynchronously
-      feeds <- newFeeds
+      async {
+        let! newFeeds =
+          feeds
+          |> Seq.map (Rss.updateFeedAsync)
+          |> Async.Parallel
+        feeds <- newFeeds
+      }
       
     // 全アイテムの時系列順
     member this.Timeline =

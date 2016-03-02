@@ -19,8 +19,22 @@ type RssReaderConsole (cfg: Config) =
   let reader =
     cfg.LoadReader()
 
+  let mutable items = []
+
   member this.Save() =
     cfg.SaveReader(reader)
+
+  member this.Update() =
+    async {
+      do! reader.Update()
+      items <- reader.Timeline
+
+      let len = items |> List.length
+      if len > 0 then
+        do!
+          Console.Out.WriteLineAsync(sprintf "New %d feeds!" len)
+          |> Async.AwaitTaskVoid
+    }
 
   member this.PrintItem(item, ?header) =
     let header =
@@ -50,13 +64,18 @@ type RssReaderConsole (cfg: Config) =
           )
         )
 
-  member this.Passive() =
-    async {
-      while true do
-        reader.Update()
-        this.PrintTimeLine()
-        do! Async.Sleep(1000)
-    }
+  member this.CheckNewFeedsAsync(?timeout, ?thresh) =
+    let timeout = defaultArg timeout  (5 * 60 * 1000)  // 5 min
+    let thresh  = defaultArg thresh   1
+
+    let rec loop () =
+      async {
+        do! this.Update()
+        do! Async.Sleep(timeout)
+        return! loop ()
+      }
+    in
+      loop ()
 
   member this.Interactive() =
     let rec loop () = async {
@@ -78,6 +97,9 @@ let main argv =
   let rrc = RssReaderConsole(cfg)
 
   try
+    rrc.CheckNewFeedsAsync()
+    |> Async.Start
+
     rrc.Interactive()
     |> Async.RunSynchronously
   finally

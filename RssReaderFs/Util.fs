@@ -69,6 +69,12 @@ module Net =
       return xmlDoc
     }
 
+module Async =
+  open System.Threading.Tasks
+
+  let AwaitTaskVoid : (Task -> Async<unit>) =
+    Async.AwaitIAsyncResult >> Async.Ignore
+
 module Serialize =
   open System.Text
   open System.Runtime.Serialization
