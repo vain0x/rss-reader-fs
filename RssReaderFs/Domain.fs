@@ -1,12 +1,16 @@
 ﻿namespace RssReaderFs
 
 open System
+open System.Runtime.Serialization
 
 [<AutoOpen>]
 module Domain =
   type RssSource =
     {
+      [<field: DataMember(Name = "name")>]
       Name: string
+
+      [<field: DataMember(Name = "uri")>]
       Uri: Uri
 
       // Category, UpdateSpan, etc.
