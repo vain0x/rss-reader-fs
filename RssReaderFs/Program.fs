@@ -37,16 +37,18 @@ type RssReaderConsole () =
     let len = items |> List.length
     items
     |> List.iteri (fun i item ->
+        if i > 0 then
+          printfn "..."
+          Console.ReadKey() |> ignore
+
         printfn "----------------"
-        printfn "[%2d/%2d] %s\r\nDate: %s\r\nUri: %s\r\n%s\r\n\r\n%s"
+        printfn "[%3d/%3d] %s"
           i len
           (item.Title)
-          (item.Date |> string)
-          (item.Uri  |> string)
-          (item.Desc |> Option.getOr "(no description)")
-          (item.Link |> Option.getOr "(no link)")
-
-        Console.ReadKey() |> ignore
+        printfn "* Date: %s" (item.Date.ToString("G"))
+        printfn "* Link: %s" (item.Link |> Option.getOr "(no link)")
+        printfn "* From: %s" (item.Uri  |> string)
+        item.Desc |> Option.iter (printfn "* Desc:\r\n%s")
         )
 
 [<EntryPoint>]
