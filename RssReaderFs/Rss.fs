@@ -31,6 +31,18 @@ let downloadRssAsync (source: RssSource) =
     return (xml |> parseRss uri)
   }
 
+let downloadFeedAsync (source: RssSource) =
+  async {
+    let! items = source |> downloadRssAsync
+    return
+      {
+        LastUpdate  = DateTime.UtcNow
+        Items       = items
+        OldItems    = []
+        Source      = source
+      }
+  }
+
 let updateFeedAsync (feed: RssFeed) =
   async {
     let! newItems = feed.Source |> downloadRssAsync
