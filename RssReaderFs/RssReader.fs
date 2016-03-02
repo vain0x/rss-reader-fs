@@ -18,6 +18,9 @@ module RssReader =
         Serialize.deserializeJson<RssFeed []>(json)
       RssReader(feeds)
 
+    member this.Add(rhs: RssReader) =
+      RssReader(Array.append feeds (rhs.Feeds))
+
     member this.Update() =
       async {
         let! newFeeds =
