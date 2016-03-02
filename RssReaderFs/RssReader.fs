@@ -14,6 +14,11 @@ module RssReader =
         |> Seq.toArray
       RssReader(feeds)
 
+    new (json: string) =
+      let feeds =
+        Serialize.deserializeJson<RssFeed []>(json)
+      RssReader(feeds)
+
     member this.Update() =
       let newFeeds =
         feeds
