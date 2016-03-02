@@ -49,7 +49,6 @@ type RssReaderConsole (cfg: Config) =
     item.Desc |> Option.iter (printfn "* Desc:\r\n%s")
 
   member this.PrintTimeLine() =
-    let items = reader.Timeline
     let len = items |> List.length
     items
     |> List.iteri (fun i item ->
