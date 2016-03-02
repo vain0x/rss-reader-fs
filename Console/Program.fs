@@ -85,6 +85,13 @@ type RssReaderConsole (cfg: Config) =
       | "quit" | "halt" | "exit" ->
           ()
       | line ->
+          let command =
+            line.Split([|' '|], StringSplitOptions.RemoveEmptyEntries)
+            |> Array.toList
+          match command with
+          | "up" :: _ | "update" :: _ ->
+              do! this.Update()
+          | _ -> ()
           return! loop ()
       }
     in
