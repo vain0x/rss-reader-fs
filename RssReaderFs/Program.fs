@@ -41,8 +41,8 @@ type RssReaderConsole () =
         printfn "[%2d/%2d] %s\r\nDate: %s\r\nUri: %s\r\n%s\r\n\r\n%s"
           i len
           (item.Title)
-          (item.Uri |> string)
           (item.Date |> string)
+          (item.Uri  |> string)
           (item.Desc |> Option.getOr "(no description)")
           (item.Link |> Option.getOr "(no link)")
 
