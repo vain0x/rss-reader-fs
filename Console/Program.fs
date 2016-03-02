@@ -1,19 +1,26 @@
 ﻿
 open System
+open System.IO
 open RssReaderFs
 
-type RssReaderConsole () =
-  let sources =
-    [
-      ("Yahoo!ニュース", @"http://dailynews.yahoo.co.jp/fc/rss.xml")
-      ("NHKニュース", @"http://www3.nhk.or.jp/rss/news/cat0.xml")
-    ]
-    |> List.map (fun (name, url) ->
-        { Name = name; Uri = Uri(url) }
-        )
+type RssReader = RssReader.RssReader
 
+type Config (path) =
+  member this.LoadReader() =
+    let json =
+      File.ReadAllText(path)
+    RssReader.RssReader(json)
+
+  member this.SaveReader(r: RssReader) =
+    let json = r.SerializedFeeds
+    File.WriteAllText(path, json)
+
+type RssReaderConsole (cfg: Config) =
   let reader =
-    RssReader.RssReader(DateTime.MinValue, sources)
+    cfg.LoadReader()
+
+  member this.Save() =
+    cfg.SaveReader(reader)
 
   member this.PrintItem(item, ?header) =
     let header =
@@ -54,9 +61,13 @@ type RssReaderConsole () =
 
 [<EntryPoint>]
 let main argv =
-  let rrc = RssReaderConsole()
+  let cfg = Config(@"feeds.json")
+  let rrc = RssReaderConsole(cfg)
 
-  rrc.Passive()
+  try
+    rrc.Passive()
+  finally
+    rrc.Save()
 
   // exit code
   0
