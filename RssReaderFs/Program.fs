@@ -32,7 +32,7 @@ type RssConsolePrinter () =
     |> List.sortBy (fun item -> item.Date)
     |> List.rev
 
-  member this.Print() =
+  member this.PrintTimeLine() =
     let items = this.Timeline
     let len = items |> List.length
     items
@@ -51,7 +51,7 @@ type RssConsolePrinter () =
 [<EntryPoint>]
 let main argv =
   let rcp = RssConsolePrinter()
-  rcp.Print()
+  rcp.PrintTimeLine()
 
   // exit code
   0
