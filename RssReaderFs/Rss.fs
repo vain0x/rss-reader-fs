@@ -3,7 +3,7 @@
 open System
 open System.Xml
 
-let parseRss source (xml: XmlDocument) =
+let parseRss uri (xml: XmlDocument) =
   let getTextElem xpath =
       Xml.selectSingleNode xpath
       >> Option.map (Xml.innerText)
@@ -11,13 +11,13 @@ let parseRss source (xml: XmlDocument) =
   let buildItem (xnode: XmlNode) =
       let at = flip getTextElem xnode
       {
-        Source = source
         Title = at "title" |> Option.getOr "(untitled)"
         Desc  = at "description"
         Link  = at "link"
         Date  =
           at "pubDate"
           |> Option.bind (DateTime.tryParse)
+        Uri = uri
       }
   in
     xml
@@ -26,10 +26,11 @@ let parseRss source (xml: XmlDocument) =
 
 let downloadRssAsync (source: RssSource) =
   async {
-    let! xml = Net.downloadXmlAsync(source.Uri)
+    let uri = source.Uri
+    let! xml = Net.downloadXmlAsync(uri)
     return
       {
-        Source = source
-        Items = (xml |> parseRss source)
+        Items = (xml |> parseRss uri)
+        Uri = uri
       }
   }

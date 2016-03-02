@@ -13,15 +13,15 @@ type RssSource =
 
 type RssItem =
   {
-    Source: RssSource
     Title: string
     Desc: string option
     Link: string option
     Date: DateTime option
+    Uri: Uri
   }
 
 type RssFeed =
   {
-    Source: RssSource
     Items: seq<RssItem>
+    Uri: Uri
   }

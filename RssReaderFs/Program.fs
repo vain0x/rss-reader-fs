@@ -34,11 +34,10 @@ type RssConsolePrinter () =
     items
     |> List.iteri (fun i item ->
         printfn "----------------"
-        printfn "[%2d/%2d] %s\r\nSource: %s <%s>\r\n%s\r\n\r\n%s"
+        printfn "[%2d/%2d] %s\r\nUri: %s\r\n%s\r\n\r\n%s"
           i len
           (item.Title)
-          (item.Source.Name)
-          (item.Source.Uri |> string)
+          (item.Uri |> string)
           (item.Desc |> Option.getOr "(no description)")
           (item.Link |> Option.getOr "(no link)")
 
