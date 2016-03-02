@@ -8,22 +8,28 @@ let parseRss uri (xml: XmlDocument) =
       Xml.selectSingleNode xpath
       >> Option.map (Xml.innerText)
 
-  let buildItem (xnode: XmlNode) =
+  let tryBuildItem (xnode: XmlNode) =
       let at = flip getTextElem xnode
-      {
-        Title = at "title" |> Option.getOr "(untitled)"
-        Desc  = at "description"
-        Link  = at "link"
-        Date  =
+      let title = at "title"
+      let date  =
           at "pubDate"
           |> Option.bind (DateTime.tryParse)
           |> Option.map (fun time -> time.ToLocalTime())
-        Uri = uri
-      }
+      in
+        match (title, date) with
+        | (Some title, Some date) ->
+            {
+              Title = title
+              Desc  = at "description"
+              Link  = at "link"
+              Date  = date
+              Uri   = uri
+            } |> Some
+        | _ -> None
   in
     xml
     |> Xml.selectNodes "rss/channel/item"
-    |> Seq.map buildItem
+    |> Seq.choose tryBuildItem
 
 let downloadRssAsync (source: RssSource) =
   async {
@@ -52,9 +58,7 @@ let updateFeedAsync (feed: RssFeed) =
     let newItems =
       newItems
       |> Seq.filter (fun item ->
-          match item.Date with
-          | None -> false  // TODO: 時刻未定義な項目はこの仕組みでは扱えない
-          | Some date -> date >= feed.LastUpdate
+          item.Date >= feed.LastUpdate
           )
 
     return

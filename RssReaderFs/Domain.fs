@@ -16,7 +16,7 @@ type RssItem =
     Title: string
     Desc: string option
     Link: string option
-    Date: DateTime option
+    Date: DateTime
     Uri: Uri
   }
 
