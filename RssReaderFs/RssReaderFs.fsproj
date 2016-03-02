@@ -44,9 +44,16 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Net" />
     <Reference Include="System.Numerics" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Util.fs" />
+    <Compile Include="Domain.fs" />
+    <Compile Include="Rss.fs" />
     <Compile Include="Program.fs" />
     <None Include="App.config" />
   </ItemGroup>
