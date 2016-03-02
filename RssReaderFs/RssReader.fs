@@ -41,3 +41,6 @@ module RssReader =
               Items = []
               OldItems = []
           })
+          
+    member this.SerializedFeeds =
+      Serialize.serializeJson(this.EmptyFeeds)
