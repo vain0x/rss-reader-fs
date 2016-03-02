@@ -22,9 +22,14 @@ type RssReaderConsole (cfg: Config) =
   member this.Save() =
     cfg.SaveReader(reader)
 
+  member this.UpdateAsync() =
+   async {
+      return! reader.Update()
+   }
+
   member this.CheckUpdate() =
     async {
-      let! newReader = reader.Update()
+      let! newReader = this.UpdateAsync()
       let items = newReader.Timeline
 
       let len = items |> List.length
@@ -50,21 +55,24 @@ type RssReaderConsole (cfg: Config) =
     item.Desc |> Option.iter (printfn "* Desc:\r\n%s")
 
   member this.PrintTimeLine(newReader) =
-    reader <- newReader
-    let items = reader.Timeline
-    let len = items |> List.length
-    items
-    |> List.iteri (fun i item ->
-        if i > 0 then
-          printfn "..."
-          Console.ReadKey() |> ignore
+    let body () =
+      reader <- newReader
+      let items = reader.Timeline
+      let len = items |> List.length
+      items
+      |> List.iteri (fun i item ->
+          if i > 0 then
+            printfn "..."
+            Console.ReadKey() |> ignore
 
-        printfn "----------------"
-        this.PrintItem
-          ( item
-          , (sprintf "[%3d/%3d]" i len)
+          printfn "----------------"
+          this.PrintItem
+            ( item
+            , (sprintf "[%3d/%3d]" i len)
+            )
           )
-        )
+    in
+      lock reader body
 
   member this.CheckNewFeedsAsync(?timeout, ?thresh) =
     let timeout = defaultArg timeout  (5 * 60 * 1000)  // 5 min
@@ -93,8 +101,21 @@ type RssReaderConsole (cfg: Config) =
             |> Array.toList
           match command with
           | "up" :: _ | "update" :: _ ->
-              let! _ = this.CheckUpdate()
-              ()
+              let! newReaderOpt = this.CheckUpdate()
+              match newReaderOpt with
+              | None ->
+                  printfn "No new feeds available."
+              | Some _ ->
+                  ()
+
+          | "show" :: _ ->
+              let! newReaderOpt = this.CheckUpdate()
+              match newReaderOpt with
+              | None ->
+                  printfn "No new feeds available."
+              | Some newReader ->
+                  this.PrintTimeLine(newReader)
+
           | _ -> ()
           return! loop ()
       }
