@@ -132,6 +132,25 @@ type RssReaderConsole (cfg: Config) =
                   reader <- reader.Add(r)
                   )
 
+          | "remove" :: name :: _ ->
+              let pred (feed: RssFeed) =
+                let source = feed.Source
+                source.Name <> name
+              in
+                lock reader (fun () ->
+                    let (r, removed) = reader.SourceFilter(pred)
+                    let count = removed |> Array.length
+                    if count > 0 then
+                      reader <- r
+                      printfn "%d sources have been removed:"
+                        count
+                      removed
+                      |> Array.iter (fun feed ->
+                          let src = feed.Source
+                          printfn "%s <%s>" (src.Name) (src.Uri |> string)
+                          )
+                    )
+
           | _ -> ()
           return! loop ()
       }
