@@ -15,7 +15,15 @@ type RssConsolePrinter () =
     |> List.map (Rss.downloadFeedAsync)
     |> Async.Parallel
     |> Async.RunSynchronously
-    
+
+  member this.Update() =
+    let newFeeds =
+      feeds
+      |> Seq.map (Rss.updateFeedAsync)
+      |> Async.Parallel
+      |> Async.RunSynchronously
+    feeds <- newFeeds
+
   // 全アイテムの時系列順
   member this.Timeline =
     feeds
