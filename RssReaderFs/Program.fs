@@ -1,6 +1,6 @@
 ﻿open System
 
-type RssConsolePrinter () =
+type RssReaderConsole () =
   let sources =
     [
       ("Yahoo!ニュース", @"http://dailynews.yahoo.co.jp/fc/rss.xml")
@@ -51,13 +51,13 @@ type RssConsolePrinter () =
 
 [<EntryPoint>]
 let main argv =
-  let rcp = RssConsolePrinter()
+  let rrc = RssReaderConsole()
 
   async {
     while true do
-      rcp.PrintTimeLine()
+      rrc.PrintTimeLine()
       do! Async.Sleep(1000)
-      rcp.Update()
+      rrc.Update()
   }
   |> Async.RunSynchronously
 
