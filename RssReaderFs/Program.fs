@@ -22,7 +22,7 @@ type RssConsolePrinter () =
         // 時系列順
         items <-
           feeds
-          |> Seq.collect (fun feed -> feed.Items)
+          |> Seq.collect id
           |> Seq.toList
           |> List.sortBy (fun item -> item.Date)
           |> List.rev

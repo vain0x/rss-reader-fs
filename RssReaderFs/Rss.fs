@@ -28,10 +28,27 @@ let downloadRssAsync (source: RssSource) =
   async {
     let uri = source.Uri
     let! xml = Net.downloadXmlAsync(uri)
+    return (xml |> parseRss uri)
+  }
+
+let updateFeedAsync (feed: RssFeed) =
+  async {
+    let! newItems = feed.Source |> downloadRssAsync
+
+    // 前回の取得時刻より新しいアイテムのみ
+    let newItems =
+      newItems
+      |> Seq.filter (fun item ->
+          match item.Date with
+          | None -> false  // TODO: 時刻未定義な項目はこの仕組みでは扱えない
+          | Some date -> date >= feed.LastUpdate
+          )
+
     return
-      {
-        LastUpdated = DateTime.UtcNow
-        Items = (xml |> parseRss uri)
-        Source = source
+      { feed
+        with
+          LastUpdate  = DateTime.UtcNow
+          OldItems    = feed.Items :: feed.OldItems
+          Items       = newItems
       }
   }

@@ -22,7 +22,8 @@ type RssItem =
 
 type RssFeed =
   {
-    Source: RssSource
-    LastUpdated: DateTime
-    Items: seq<RssItem>
+    Source      : RssSource
+    LastUpdate  : DateTime
+    Items       : seq<RssItem>
+    OldItems    : seq<RssItem> list
   }
