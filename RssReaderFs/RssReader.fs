@@ -32,3 +32,12 @@ module RssReader =
 
     member this.Feeds =
       feeds
+
+    member this.EmptyFeeds =
+      feeds
+      |> Array.map (fun feed -> 
+          { feed
+            with
+              Items = []
+              OldItems = []
+          })
