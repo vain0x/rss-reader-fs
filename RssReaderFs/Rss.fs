@@ -30,6 +30,7 @@ let downloadRssAsync (source: RssSource) =
     let! xml = Net.downloadXmlAsync(uri)
     return
       {
+        LastUpdated = DateTime.UtcNow
         Items = (xml |> parseRss uri)
         Uri = uri
       }

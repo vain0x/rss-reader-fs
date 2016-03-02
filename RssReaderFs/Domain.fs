@@ -22,6 +22,7 @@ type RssItem =
 
 type RssFeed =
   {
+    LastUpdated: DateTime
     Items: seq<RssItem>
     Uri: Uri
   }
