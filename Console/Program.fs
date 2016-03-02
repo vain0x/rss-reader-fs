@@ -53,17 +53,20 @@ type RssReaderConsole () =
         item.Desc |> Option.iter (printfn "* Desc:\r\n%s")
         )
 
+  member this.Passive() =
+    async {
+      while true do
+        this.PrintTimeLine()
+        do! Async.Sleep(1000)
+        this.Update()
+    }
+    |> Async.RunSynchronously
+
 [<EntryPoint>]
 let main argv =
   let rrc = RssReaderConsole()
 
-  async {
-    while true do
-      rrc.PrintTimeLine()
-      do! Async.Sleep(1000)
-      rrc.Update()
-  }
-  |> Async.RunSynchronously
+  rrc.Passive()
 
   // exit code
   0
