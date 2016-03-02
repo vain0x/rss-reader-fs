@@ -57,7 +57,20 @@ type RssReaderConsole (cfg: Config) =
         this.PrintTimeLine()
         do! Async.Sleep(1000)
     }
-    |> Async.RunSynchronously
+
+  member this.Interactive() =
+    let rec loop () = async {
+      let! line = Console.In.ReadLineAsync() |> Async.AwaitTask
+      match line with
+      | null | "" ->
+          return! loop ()
+      | "quit" | "halt" | "exit" ->
+          ()
+      | line ->
+          return! loop ()
+      }
+    in
+      loop ()
 
 [<EntryPoint>]
 let main argv =
@@ -65,7 +78,8 @@ let main argv =
   let rrc = RssReaderConsole(cfg)
 
   try
-    rrc.Passive()
+    rrc.Interactive()
+    |> Async.RunSynchronously
   finally
     rrc.Save()
 

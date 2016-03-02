@@ -68,7 +68,7 @@ module Net =
       xmlDoc.Load(xmlReader)
       return xmlDoc
     }
-    
+
 module Serialize =
   open System.Text
   open System.Runtime.Serialization
