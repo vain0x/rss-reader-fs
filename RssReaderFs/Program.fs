@@ -51,7 +51,14 @@ type RssConsolePrinter () =
 [<EntryPoint>]
 let main argv =
   let rcp = RssConsolePrinter()
-  rcp.PrintTimeLine()
+
+  async {
+    while true do
+      rcp.PrintTimeLine()
+      do! Async.Sleep(1000)
+      rcp.Update()
+  }
+  |> Async.RunSynchronously
 
   // exit code
   0
