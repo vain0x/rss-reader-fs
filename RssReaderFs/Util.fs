@@ -35,6 +35,16 @@ module Seq =
         (^T: (member Item: int -> _) (self, i))
       }
 
+module Dictionary =
+  open System.Collections.Generic
+
+  let ofSeq kvs =
+    Dictionary()
+    |> tap (fun dict ->
+        kvs
+        |> Seq.iter (fun (k, v) -> dict.Add(k, v) |> ignore)
+        )
+
 module DateTime =
   let tryParse s =
     DateTime.TryParse(s)

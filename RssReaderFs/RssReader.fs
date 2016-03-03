@@ -1,12 +1,27 @@
 ﻿namespace RssReaderFs
 
 open System
+open System.Collections.Generic
 
 module RssReader =
-  type RssReader (feeds: RssFeed []) =
+  type RssReader
+    ( feeds: RssFeed []
+    , sourceMap: Dictionary<Uri, RssSource>
+    ) =
 
     new () =
       RssReader()
+
+    new (feeds: RssFeed []) =
+      let dict =
+        feeds
+        |> Seq.map (fun feed ->
+            let src = feed.Source
+            in (src.Uri, src)
+            )
+        |> Dictionary.ofSeq
+      in
+        RssReader(feeds, dict)
 
     new (lastUpdate, sources: seq<RssSource>) =
       let feeds =
@@ -18,6 +33,7 @@ module RssReader =
     new (json: string) =
       let feeds =
         Serialize.deserializeJson<RssFeed []>(json)
+
       RssReader(feeds)
 
     member this.Add(rhs: RssReader) =
