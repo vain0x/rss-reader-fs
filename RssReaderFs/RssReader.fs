@@ -28,13 +28,14 @@ module RssReader =
         sources
         |> Seq.map (Rss.emptyFeed lastUpdate)
         |> Seq.toArray
-      RssReader(feeds)
+      in
+        RssReader(feeds)
 
     new (json: string) =
       let feeds =
         Serialize.deserializeJson<RssFeed []>(json)
-
-      RssReader(feeds)
+      in
+        RssReader(feeds)
 
     member this.Add(rhs: RssReader) =
       RssReader(Array.append feeds (rhs.Feeds))

@@ -9,11 +9,13 @@ type Config (path) =
   member this.LoadReader() =
     let json =
       File.ReadAllText(path)
-    RssReader.RssReader(json)
+    in
+      RssReader.RssReader(json)
 
   member this.SaveReader(r: RssReader) =
     let json = r.SerializedFeeds
-    File.WriteAllText(path, json)
+    in
+      File.WriteAllText(path, json)
 
 type RssReaderConsole (cfg: Config) =
   let mutable reader =
@@ -31,7 +33,6 @@ type RssReaderConsole (cfg: Config) =
     async {
       let! newReader = this.UpdateAsync()
       let items = newReader.Timeline
-
       let len = items |> List.length
       if len > 0 then
         do!
@@ -47,12 +48,12 @@ type RssReaderConsole (cfg: Config) =
       match header with
       | Some h -> h + " "
       | None -> ""
-
-    printfn "%s%s" header (item.Title)
-    printfn "* Date: %s" (item.Date.ToString("G"))
-    printfn "* Link: %s" (item.Link |> Option.getOr "(no link)")
-    printfn "* From: %s" (item.Uri  |> string)
-    item.Desc |> Option.iter (printfn "* Desc:\r\n%s")
+    do
+      printfn "%s%s" header (item.Title)
+      printfn "* Date: %s" (item.Date.ToString("G"))
+      printfn "* Link: %s" (item.Link |> Option.getOr "(no link)")
+      printfn "* From: %s" (item.Uri  |> string)
+      item.Desc |> Option.iter (printfn "* Desc:\r\n%s")
 
   member this.PrintTimeLine(newReader) =
     let body () =
