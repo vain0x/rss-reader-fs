@@ -10,15 +10,18 @@ type Config (path) =
     try
       let json =
         File.ReadAllText(path)
+      let sources =
+        Serialize.deserializeJson<RssSource []>(json)
       in
-        RssReader(json)
+        RssReader(sources)
     with
     | _ ->
         eprintfn "Can't open file '%s'." path
         RssReader()
 
   member this.SaveReader(r: RssReader) =
-    let json = r.SerializedFeeds
+    let json =
+      Serialize.serializeJson(r.Sources)
     in
       File.WriteAllText(path, json)
 

@@ -31,12 +31,6 @@ module RssReader =
       in
         RssReader(feeds)
 
-    new (json: string) =
-      let feeds =
-        Serialize.deserializeJson<RssFeed []>(json)
-      in
-        RssReader(feeds)
-
     member this.Add(rhs: RssReader) =
       RssReader(Array.append feeds (rhs.Feeds))
 
@@ -69,15 +63,3 @@ module RssReader =
 
     member this.Feeds =
       feeds
-
-    member this.EmptyFeeds =
-      feeds
-      |> Array.map (fun feed -> 
-          { feed
-            with
-              Items = []
-              OldItems = []
-          })
-          
-    member this.SerializedFeeds =
-      Serialize.serializeJson(this.EmptyFeeds)
