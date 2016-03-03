@@ -68,3 +68,22 @@ module RssReader =
     member this.Feeds =
       feeds
 
+  module Serialize =
+    open System.IO
+
+    let load path =
+      try
+        let json =
+          File.ReadAllText(path)
+        let sources =
+          Serialize.deserializeJson<RssSource []>(json)
+        in
+          RssReader(sources) |> Some
+      with
+      | _ -> None
+
+    let save path (r: RssReader) =
+      let json =
+        Serialize.serializeJson(r.Sources)
+      in
+        File.WriteAllText(path, json)

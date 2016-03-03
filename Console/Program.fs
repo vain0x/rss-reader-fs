@@ -7,23 +7,14 @@ type RssReader = RssReader.RssReader
 
 type Config (path) =
   member this.LoadReader() =
-    try
-      let json =
-        File.ReadAllText(path)
-      let sources =
-        Serialize.deserializeJson<RssSource []>(json)
-      in
-        RssReader(sources)
-    with
-    | _ ->
+    match RssReader.Serialize.load path with
+    | Some r -> r
+    | None ->
         eprintfn "Can't open file '%s'." path
         RssReader()
 
-  member this.SaveReader(r: RssReader) =
-    let json =
-      Serialize.serializeJson(r.Sources)
-    in
-      File.WriteAllText(path, json)
+  member this.SaveReader(r) =
+    RssReader.Serialize.save path r
 
 type RssReaderConsole (cfg: Config) =
   let mutable reader =
