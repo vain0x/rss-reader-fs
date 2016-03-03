@@ -12,6 +12,9 @@ module Domain =
 
       [<field: DataMember(Name = "uri")>]
       Uri: Uri
+      
+      [<field: DataMember(Name = "lastUpdate")>]
+      LastUpdate: DateTime
 
       // Category, UpdateSpan, etc.
     }
@@ -28,7 +31,6 @@ module Domain =
   type RssFeed =
     {
       Source      : RssSource
-      LastUpdate  : DateTime
       Items       : seq<RssItem>
       OldItems    : seq<RssItem> list
     }

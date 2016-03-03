@@ -10,7 +10,7 @@ module RssReader =
     ) =
 
     new () =
-      RssReader([||])
+      RssReader([])
 
     new (feeds: RssFeed []) =
       let dict =
@@ -23,10 +23,10 @@ module RssReader =
       in
         RssReader(feeds, dict)
 
-    new (lastUpdate, sources: seq<RssSource>) =
+    new (sources: seq<RssSource>) =
       let feeds =
         sources
-        |> Seq.map (Rss.emptyFeed lastUpdate)
+        |> Seq.map (Rss.emptyFeed)
         |> Seq.toArray
       in
         RssReader(feeds)

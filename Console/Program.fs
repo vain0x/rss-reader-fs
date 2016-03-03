@@ -131,8 +131,13 @@ type RssReaderConsole (cfg: Config) =
                 )
 
           | "add" :: name :: url :: _ ->
-              let source = { Name = name; Uri = Uri(url) }
-              let r = RssReader(DateTime.MinValue, [source])
+              let source =
+                {
+                  Name        = name
+                  Uri         = Uri(url)
+                  LastUpdate  = DateTime.MinValue
+                }
+              let r = RssReader([source])
               in
                 lock reader (fun () ->
                   reader <- reader.Add(r)

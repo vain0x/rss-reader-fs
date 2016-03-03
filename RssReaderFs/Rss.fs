@@ -39,29 +39,29 @@ module Rss =
       return (xml |> parseRss uri)
     }
 
-  let emptyFeed lastUpdate (source: RssSource) =
+  let emptyFeed (source: RssSource) =
     {
       Source      = source
-      LastUpdate  = lastUpdate
       Items       = []
       OldItems    = []
     }
 
   let updateFeedAsync (feed: RssFeed) =
     async {
-      let! newItems = feed.Source |> downloadRssAsync
+      let src = feed.Source
+      let! newItems = src |> downloadRssAsync
 
       // 前回の取得時刻より新しいアイテムのみ
       let newItems =
         newItems
         |> Seq.filter (fun item ->
-            item.Date >= feed.LastUpdate
+            item.Date >= src.LastUpdate
             )
 
       return
         { feed
           with
-            LastUpdate  = DateTime.Now
+            Source      = { src with LastUpdate = DateTime.Now }
             OldItems    = feed.Items :: feed.OldItems
             Items       = newItems
         }
