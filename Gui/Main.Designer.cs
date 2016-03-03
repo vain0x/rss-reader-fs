@@ -27,7 +27,14 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
+            this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
             this.SuspendLayout();
+            // 
+            // notifyIcon
+            // 
+            this.notifyIcon.Text = "RssReaderFs";
+            this.notifyIcon.Visible = true;
             // 
             // Main
             // 
@@ -41,6 +48,8 @@
         }
 
         #endregion
+
+        private System.Windows.Forms.NotifyIcon notifyIcon;
     }
 }
 
