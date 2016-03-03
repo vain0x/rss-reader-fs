@@ -39,6 +39,13 @@ module Rss =
       return (xml |> parseRss uri)
     }
 
+  let sourceFromUrl name (url: string) =
+    {
+      Name        = name
+      Uri         = Uri(url)
+      LastUpdate  = DateTime.MinValue
+    }
+
   let emptyFeed (source: RssSource) =
     {
       Source      = source
