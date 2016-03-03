@@ -63,6 +63,10 @@ module RssReader =
       |> List.sortBy (fun item -> item.Date)
       |> List.rev
 
+    member this.Sources =
+      feeds
+      |> Array.map (fun feed -> feed.Source)
+
     member this.Feeds =
       feeds
 
