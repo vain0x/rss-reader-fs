@@ -10,7 +10,7 @@ module RssReader =
     ) =
 
     new () =
-      RssReader()
+      RssReader([||])
 
     new (feeds: RssFeed []) =
       let dict =
