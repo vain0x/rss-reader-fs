@@ -7,10 +7,15 @@ type RssReader = RssReader.RssReader
 
 type Config (path) =
   member this.LoadReader() =
-    let json =
-      File.ReadAllText(path)
-    in
-      RssReader.RssReader(json)
+    try
+      let json =
+        File.ReadAllText(path)
+      in
+        RssReader(json)
+    with
+    | _ ->
+        eprintfn "Can't open file '%s'." path
+        RssReader()
 
   member this.SaveReader(r: RssReader) =
     let json = r.SerializedFeeds
