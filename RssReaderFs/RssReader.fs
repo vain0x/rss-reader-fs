@@ -57,9 +57,14 @@ module RssReader =
       |> List.sortBy (fun item -> item.Date)
       |> List.rev
 
+    member this.TryFindSource(uri) =
+      sourceMap.TryGetValue(uri)
+      |> Option.ofTrial
+
     member this.Sources =
       feeds
       |> Array.map (fun feed -> feed.Source)
 
     member this.Feeds =
       feeds
+
