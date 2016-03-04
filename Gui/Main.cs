@@ -17,6 +17,7 @@ namespace Gui
 {
     public partial class Main : Form
     {
+        string path_;
         Domain.RssReader reader_;
         Domain.RssItem curItem_;
 
@@ -26,10 +27,10 @@ namespace Gui
         {
             InitializeComponent();
 
-            var path = @"feeds.json";
+            path_ = @"feeds.json";
 
             // Load
-            var sourcesOpt = Rss.Serialize.load(path);
+            var sourcesOpt = Rss.Serialize.load(path_);
             var sources    = (Domain.RssSource[])null;
             if ( sourcesOpt == null ) {
                 this.ShowWarning("feed ファイルが読み込まれませんでした。");
@@ -107,6 +108,13 @@ namespace Gui
             if ( curItem_ != null && curItem_.Link != null ) {
                 Process.Start(curItem_.Link.Value);
             }
+        }
+
+        private void Main_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            // Save sources
+            var sources = RssReader.Sources(this.reader_);
+            Rss.Serialize.save<Domain.RssSource[]>(path_, sources);
         }
     }
 }
