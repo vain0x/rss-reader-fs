@@ -3,93 +3,112 @@
 open System
 open System.Collections.Generic
 
-[<AutoOpen>]
-module RssReaderExtension =
+module RssReader =
   let mutable observerId = 0
 
-  let newObserverId () =
+  let private newObserverId () =
     observerId
     |> tap (fun obsId ->
         observerId <- observerId + 1
         )
+        
+  [<CompiledName("Create")>]
+  let create(sources: RssSource []) =
+    {
+      SourceMap =
+        sources
+        |> Array.map (fun src -> (src.Uri, src))
+        |> Dictionary.ofSeq
+      Subscriptions =
+        Map.empty
+    }
 
-  type RssReader with
-    static member Create(sources: RssSource []) =
-      {
+  let internal sourceMap (rr: RssReader) =
+    rr.SourceMap
+
+  let internal subscriptions (rr: RssReader) =
+    rr.Subscriptions
+    
+  [<CompiledName("Sources")>]
+  let sources rr =
+    rr.SourceMap
+    |> Dictionary.toArray
+    |> Array.map snd
+
+  [<CompiledName("Subscribe")>]
+  let subscribe obs rr =
+    let obsId = newObserverId () |> ObserverId
+    in
+      { rr with
+          Subscriptions = rr |> subscriptions |> Map.add obsId obs
+      }
+
+  [<CompiledName("Unsubscribe")>]
+  let unsubscribe obsId rr =
+    { rr with
+        Subscriptions = rr |> subscriptions |> Map.remove obsId
+        }
+
+  [<CompiledName("Add")>]
+  let add (source: RssSource) rr =
+    { rr with
         SourceMap =
-          sources
-          |> Array.map (fun src -> (src.Uri, src))
-          |> Dictionary.ofSeq
-        Subscriptions =
-          Map.empty
+          rr
+          |> sourceMap
+          |> tap (fun m -> m.Add(source.Uri, source))
+    }
+
+  [<CompiledName("Remove")>]
+  let remove uri rr =
+    { rr with
+        SourceMap =
+          rr
+          |> sourceMap
+          |> tap (fun s -> s.Remove(uri) |> ignore)
+    }
+
+  [<CompiledName("NewItems")>]
+  let private newItems items rr =
+    for KeyValue (_, obs) in rr |> subscriptions do
+      obs.OnNewItems(items)
+    rr
+
+  [<CompiledName("ReadItem")>]
+  let readItem item now rr =
+    let sourceMap' =
+      match (rr |> sourceMap).TryGetValue(item.Uri) |> Option.ofTrial with
+      | None -> rr |> sourceMap
+      | Some src ->
+        let src =
+          { src with LastUpdate = max (src.LastUpdate) now }
+        in
+          rr
+          |> sourceMap
+          |> tap (fun m -> m.[item.Uri] <- src)
+    in
+      { rr with
+          SourceMap = sourceMap'
       }
 
-    member this.Sources =
-      this.SourceMap
-      |> Dictionary.toArray
-      |> Array.map snd
+  let updateAllAsync rr =
+    async {
+      let! itemsList =
+        rr
+        |> sources
+        |> Array.map (Rss.updateRssAsync)
+        |> Async.Parallel
+      return
+        itemsList
+        |> Seq.collect id
+        |> Seq.toArray
+        |> flip newItems rr
+    }
 
-    member this.Subscribe(obs) =
-      let obsId = newObserverId () |> ObserverId
-      in
-        { this with
-            Subscriptions = this.Subscriptions |> Map.add obsId obs
-        }
+  [<CompiledName("UpdateAll")>]
+  let updateAll rr =
+    rr |> updateAllAsync |> Async.StartAsTask
 
-    member this.Unsubscribe(obsId) =
-      { this with
-          Subscriptions = this.Subscriptions |> Map.remove obsId
-          }
-
-    member this.Add(source: RssSource) =
-      { this with
-          SourceMap =
-            this.SourceMap
-            |> tap (fun m -> m.Add(source.Uri, source))
-      }
-
-    member this.Remove(uri) =
-      { this with
-          SourceMap =
-            this.SourceMap
-            |> tap (fun s -> s.Remove(uri) |> ignore)
-      }
-
-    member this.NewItems (items: RssItem []) =
-      for KeyValue (_, obs) in this.Subscriptions do
-        obs.OnNewItems(items)
-      this
-
-    member this.ReadItem(item, ?now) =
-      let now =
-        defaultArg now (DateTime.Now)
-      let sourceMap' =
-        match this.SourceMap.TryGetValue(item.Uri) |> Option.ofTrial with
-        | None -> this.SourceMap
-        | Some src ->
-          let src =
-            { src with LastUpdate = max (src.LastUpdate) now }
-          in
-            this.SourceMap
-            |> tap (fun m -> m.[item.Uri] <- src)
-      in
-        { this with
-            SourceMap = sourceMap'
-        }
-
-    member this.UpdateAllAsync() =
-      async {
-        let! itemsList =
-          this.Sources
-          |> Array.map (Rss.updateRssAsync)
-          |> Async.Parallel
-        return
-          itemsList
-          |> Seq.collect id
-          |> Seq.toArray
-          |> this.NewItems
-      }
-
-    member this.TryFindSource(uri: Uri) =
-      this.SourceMap.TryGetValue(uri)
-      |> Option.ofTrial
+  [<CompiledName("TryFindSource")>]
+  let tryFindSource uri rr =
+    (rr |> sourceMap).TryGetValue(uri)
+    |> Option.ofTrial
