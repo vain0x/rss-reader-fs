@@ -98,6 +98,8 @@ namespace Gui
                 (item.Desc == null)
                 ? "(no description)"
                 : item.Desc.Value;
+
+            this.reader_ = RssReader.ReadItem(item, System.DateTime.Now, this.reader_);
         }
 
         private void linkFeedLink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
