@@ -16,7 +16,7 @@ type Config (path) =
       RssReader.create(sources)
 
   member this.SaveReader(r) =
-    Rss.Serialize.save path r
+    Rss.Serialize.save path (r |> RssReader.sources)
 
 type RssReaderConsole (cfg: Config) =
   let (* mutable *) unreadItems =
