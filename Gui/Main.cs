@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Diagnostics;
 
 using Microsoft.FSharp.Core;
 using Microsoft.FSharp.Collections;
@@ -17,6 +18,7 @@ namespace Gui
     public partial class Main : Form
     {
         Domain.RssReader reader_;
+        Domain.RssItem curItem_;
 
         delegate void ShowItemDelegate(Domain.RssItem item);
 
@@ -83,6 +85,8 @@ namespace Gui
 
         private void ShowItem(Domain.RssItem item)
         {
+            this.curItem_ = item;
+
             var srcOpt = RssReader.TryFindSource(item.Uri, this.reader_);
             if ( srcOpt == null ) {
                 labelFeedSource.Text = "(unknown source)";
@@ -95,6 +99,13 @@ namespace Gui
                 (item.Desc == null)
                 ? "(no description)"
                 : item.Desc.Value;
+        }
+
+        private void linkFeedLink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            if ( curItem_ != null && curItem_.Link != null ) {
+                Process.Start(curItem_.Link.Value);
+            }
         }
     }
 }

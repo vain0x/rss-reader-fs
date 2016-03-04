@@ -51,6 +51,7 @@
             this.linkFeedLink.TabIndex = 1;
             this.linkFeedLink.TabStop = true;
             this.linkFeedLink.Text = "Open...";
+            this.linkFeedLink.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkFeedLink_LinkClicked);
             // 
             // labelFeedSource
             // 
