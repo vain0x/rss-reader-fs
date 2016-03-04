@@ -1,6 +1,7 @@
 ﻿namespace RssReaderFs
 
 open System
+open System.Collections.Generic
 open System.Runtime.Serialization
 
 [<AutoOpen>]
@@ -28,7 +29,14 @@ module Domain =
       Uri: Uri
     }
 
-  type RssFeed (source: RssSource) =
-    inherit Observable.ObservableSource<RssItem>()
+  type ObserverId =
+    | ObserverId of int
 
-    member this.Source = source
+  type RssSubscriber =
+    abstract member OnNewItems: RssItem [] -> unit
+
+  type RssReader =
+    {
+      SourceMap     : Dictionary<Uri, RssSource>
+      Subscriptions : Map<ObserverId, RssSubscriber>
+    }

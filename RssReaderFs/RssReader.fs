@@ -4,75 +4,111 @@ open System
 open System.Collections.Generic
 
 module RssReader =
-  type RssReader
-    ( feeds: RssFeed []
-    , sourceMap: Dictionary<Uri, RssSource>
-    ) =
+  let mutable observerId = 0
 
-    new () =
-      RssReader([])
-
-    new (feeds: RssFeed []) =
-      let dict =
-        feeds
-        |> Seq.map (fun feed ->
-            let src = feed.Source
-            in (src.Uri, src)
-            )
-        |> Dictionary.ofSeq
-      in
-        RssReader(feeds, dict)
-
-    new (sources: seq<RssSource>) =
-      let feeds =
+  let private newObserverId () =
+    observerId
+    |> tap (fun obsId ->
+        observerId <- observerId + 1
+        )
+        
+  [<CompiledName("Create")>]
+  let create(sources: RssSource []) =
+    {
+      SourceMap =
         sources
-        |> Seq.map (fun src -> RssFeed(src))
-        |> Seq.toArray
-      in
-        RssReader(feeds)
+        |> Array.map (fun src -> (src.Uri, src))
+        |> Dictionary.ofSeq
+      Subscriptions =
+        Map.empty
+    }
 
-    member this.Add(rhs: RssReader) =
-      RssReader(Array.append feeds (rhs.Feeds))
+  let internal sourceMap (rr: RssReader) =
+    rr.SourceMap
 
-    member this.SourceFilter(pred) =
-      let (feeds, removed) =
-        feeds
-        |> Array.partition pred
-      (RssReader(feeds), removed)
-      
-    member this.Update() =
-      async {
-        // TODO: 実装
-        do! Async.Sleep(1000)
+  let internal subscriptions (rr: RssReader) =
+    rr.Subscriptions
+    
+  [<CompiledName("Sources")>]
+  let sources rr =
+    rr.SourceMap
+    |> Dictionary.toArray
+    |> Array.map snd
+
+  [<CompiledName("Subscribe")>]
+  let subscribe obs rr =
+    let obsId = newObserverId () |> ObserverId
+    in
+      { rr with
+          Subscriptions = rr |> subscriptions |> Map.add obsId obs
       }
-      
-    member this.TryFindSource(uri) =
-      sourceMap.TryGetValue(uri)
-      |> Option.ofTrial
 
-    member this.Sources =
-      feeds
-      |> Array.map (fun feed -> feed.Source)
+  [<CompiledName("Unsubscribe")>]
+  let unsubscribe obsId rr =
+    { rr with
+        Subscriptions = rr |> subscriptions |> Map.remove obsId
+        }
 
-    member this.Feeds =
-      feeds
+  [<CompiledName("Add")>]
+  let add (source: RssSource) rr =
+    { rr with
+        SourceMap =
+          rr
+          |> sourceMap
+          |> tap (fun m -> m.Add(source.Uri, source))
+    }
 
-  module Serialize =
-    open System.IO
+  [<CompiledName("Remove")>]
+  let remove uri rr =
+    { rr with
+        SourceMap =
+          rr
+          |> sourceMap
+          |> tap (fun s -> s.Remove(uri) |> ignore)
+    }
 
-    let load path =
-      try
-        let json =
-          File.ReadAllText(path)
-        let sources =
-          Serialize.deserializeJson<RssSource []>(json)
+  [<CompiledName("NewItems")>]
+  let private newItems items rr =
+    for KeyValue (_, obs) in rr |> subscriptions do
+      obs.OnNewItems(items)
+    rr
+
+  [<CompiledName("ReadItem")>]
+  let readItem item now rr =
+    let sourceMap' =
+      match (rr |> sourceMap).TryGetValue(item.Uri) |> Option.ofTrial with
+      | None -> rr |> sourceMap
+      | Some src ->
+        let src =
+          { src with LastUpdate = max (src.LastUpdate) now }
         in
-          RssReader(sources) |> Some
-      with
-      | _ -> None
+          rr
+          |> sourceMap
+          |> tap (fun m -> m.[item.Uri] <- src)
+    in
+      { rr with
+          SourceMap = sourceMap'
+      }
 
-    let save path (r: RssReader) =
-      let json =
-        Serialize.serializeJson(r.Sources)
-      in
-        File.WriteAllText(path, json)
+  let updateAllAsync rr =
+    async {
+      let! itemsList =
+        rr
+        |> sources
+        |> Array.map (Rss.updateRssAsync)
+        |> Async.Parallel
+      return
+        itemsList
+        |> Seq.collect id
+        |> Seq.toArray
+        |> flip newItems rr
+    }
+
+  [<CompiledName("UpdateAll")>]
+  let updateAll rr =
+    rr |> updateAllAsync |> Async.StartAsTask
+
+  [<CompiledName("TryFindSource")>]
+  let tryFindSource uri rr =
+    (rr |> sourceMap).TryGetValue(uri)
+    |> Option.ofTrial
