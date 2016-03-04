@@ -100,7 +100,7 @@ namespace Gui
                 ? "(no description)"
                 : item.Desc.Value;
 
-            this.reader_ = RssReader.ReadItem(item, System.DateTime.Now, this.reader_);
+            this.reader_ = RssReader.ReadItem(item, item.Date, this.reader_);
         }
 
         private void linkFeedLink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
