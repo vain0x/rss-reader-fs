@@ -13,7 +13,7 @@ type Config (path) =
           eprintfn "Can't open file '%s'." path
           [||]
     in
-      RssReader.Create(sources)
+      RssReader.create(sources)
 
   member this.SaveReader(r) =
     Rss.Serialize.save path r
@@ -30,16 +30,15 @@ type RssReaderConsole (cfg: Config) =
           }
 
   let mutable reader =
-    cfg
-      .LoadReader()
-      .Subscribe(observer)
+    cfg.LoadReader()
+    |> RssReader.subscribe(observer)
 
   member this.Save() =
     cfg.SaveReader(reader)
 
   member this.CheckUpdate() =
     async {
-      let! newReader = reader.UpdateAllAsync()
+      let! newReader = reader |> RssReader.updateAllAsync
       let len = unreadItems.Count
       if len > 0 then
         do!
@@ -56,7 +55,7 @@ type RssReaderConsole (cfg: Config) =
       | Some h -> h + " "
       | None -> ""
     let src =
-      reader.TryFindSource(item.Uri)
+      reader |> RssReader.tryFindSource(item.Uri)
     do
       printfn "%s%s" header (item.Title)
       printfn "* Date: %s" (item.Date.ToString("G"))
@@ -66,7 +65,7 @@ type RssReaderConsole (cfg: Config) =
           )
       item.Desc |> Option.iter (printfn "* Desc:\r\n%s")
 
-      reader <- reader.ReadItem(item)
+      reader <- reader |> RssReader.readItem item (DateTime.Now)
       unreadItems.Remove(item) |> ignore
 
   member this.PrintTimeLine(newReader) =
@@ -133,7 +132,8 @@ type RssReaderConsole (cfg: Config) =
                   ()
 
           | "src" :: _ ->
-              reader.Sources
+              reader
+              |> RssReader.sources
               |> Array.iteri (fun i src ->
                   printfn "#%d: %s <%s>"
                     i (src.Name) (src.Uri |> string)
@@ -143,15 +143,16 @@ type RssReaderConsole (cfg: Config) =
               let source = Rss.sourceFromUrl name url
               in
                 lock reader (fun () ->
-                  reader <- reader.Add(source)
+                  reader <- reader |> RssReader.add(source)
                   )
 
           | "remove" :: url :: _ ->
               let uri = Uri(url)
               let body () =
-                reader.TryFindSource(uri)
+                reader
+                |> RssReader.tryFindSource(uri)
                 |> Option.iter (fun src ->
-                    reader <- reader.Remove(uri)
+                    reader <- reader |> RssReader.remove(uri)
                     printfn "'%s <%s>' has been removed."
                       (src.Name)
                       (src.Uri |> string)
