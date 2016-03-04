@@ -1,38 +1,46 @@
 ﻿
 open System
 open System.IO
+open System.Collections.Generic
 open RssReaderFs
-
-type RssReader = RssReader.RssReader
 
 type Config (path) =
   member this.LoadReader() =
-    match RssReader.Serialize.load path with
-    | Some r -> r
-    | None ->
-        eprintfn "Can't open file '%s'." path
-        RssReader()
+    let sources =
+      match Rss.Serialize.load path with
+      | Some r -> r
+      | None ->
+          eprintfn "Can't open file '%s'." path
+          [||]
+    in
+      RssReader.Create(sources)
 
   member this.SaveReader(r) =
-    RssReader.Serialize.save path r
+    Rss.Serialize.save path r
 
 type RssReaderConsole (cfg: Config) =
+  let (* mutable *) unreadItems =
+    new HashSet<RssItem>()
+
+  let observer =
+    { new RssSubscriber with
+        member this.OnNewItems(items: RssItem []) =
+          for item in items do
+            unreadItems.Add(item) |> ignore
+          }
+
   let mutable reader =
-    cfg.LoadReader()
+    cfg
+      .LoadReader()
+      .Subscribe(observer)
 
   member this.Save() =
     cfg.SaveReader(reader)
 
-  member this.UpdateAsync() =
-   async {
-      return! reader.Update()
-   }
-
   member this.CheckUpdate() =
     async {
-      let! newReader = this.UpdateAsync()
-      let items = []//newReader.Timeline
-      let len = items |> List.length
+      let! newReader = reader.UpdateAllAsync()
+      let len = unreadItems.Count
       if len > 0 then
         do!
           Console.Out.WriteLineAsync(sprintf "New %d feeds!" len)
@@ -58,12 +66,15 @@ type RssReaderConsole (cfg: Config) =
           )
       item.Desc |> Option.iter (printfn "* Desc:\r\n%s")
 
+      reader <- reader.ReadItem(item)
+      unreadItems.Remove(item) |> ignore
+
   member this.PrintTimeLine(newReader) =
     let body () =
       reader <- newReader
-      let items = []//reader.Timeline
-      let len = items |> List.length
-      items
+      let len = unreadItems.Count
+      unreadItems
+      |> Seq.toList  // unreadItems は可変なので Seq.iter だとダメ
       |> List.iteri (fun i item ->
           if i > 0 then
             printfn "..."
@@ -118,17 +129,17 @@ type RssReaderConsole (cfg: Config) =
               | None ->
                   printfn "No new feeds available."
               | Some newReader ->
-                  // TODO:
+                  this.PrintTimeLine(newReader)
                   ()
 
           | "src" :: _ ->
-              reader.Feeds
-              |> Array.map (fun feed -> feed.Source)
+              reader.Sources
               |> Array.iteri (fun i src ->
                   printfn "#%d: %s <%s>"
                     i (src.Name) (src.Uri |> string)
                 )
 
+                (*
           | "add" :: name :: url :: _ ->
               let source = Rss.sourceFromUrl name url
               let r = RssReader([source])
@@ -153,6 +164,7 @@ type RssReaderConsole (cfg: Config) =
                     printfn "%s <%s>" (src.Name) (src.Uri |> string)
               in
                 lock reader body
+                //*)
 
           | _ -> ()
           return! loop ()
