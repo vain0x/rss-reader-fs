@@ -26,7 +26,7 @@ module RssReader =
     new (sources: seq<RssSource>) =
       let feeds =
         sources
-        |> Seq.map (Rss.emptyFeed)
+        |> Seq.map (fun src -> RssFeed(src))
         |> Seq.toArray
       in
         RssReader(feeds)
@@ -42,21 +42,10 @@ module RssReader =
       
     member this.Update() =
       async {
-        let! newFeeds =
-          feeds
-          |> Seq.map (Rss.updateFeedAsync)
-          |> Async.Parallel
-        return RssReader(newFeeds, sourceMap)
+        // TODO: 実装
+        do! Async.Sleep(1000)
       }
       
-    // 全アイテムの時系列順
-    member this.Timeline =
-      feeds
-      |> Seq.collect (fun feed -> feed.Items)
-      |> Seq.toList
-      |> List.sortBy (fun item -> item.Date)
-      |> List.rev
-
     member this.TryFindSource(uri) =
       sourceMap.TryGetValue(uri)
       |> Option.ofTrial

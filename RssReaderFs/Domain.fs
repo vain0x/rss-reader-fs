@@ -28,9 +28,7 @@ module Domain =
       Uri: Uri
     }
 
-  type RssFeed =
-    {
-      Source      : RssSource
-      Items       : seq<RssItem>
-      OldItems    : seq<RssItem> list
-    }
+  type RssFeed (source: RssSource) =
+    inherit Observable.ObservableSource<RssItem>()
+
+    member this.Source = source

@@ -31,7 +31,7 @@ type RssReaderConsole (cfg: Config) =
   member this.CheckUpdate() =
     async {
       let! newReader = this.UpdateAsync()
-      let items = newReader.Timeline
+      let items = []//newReader.Timeline
       let len = items |> List.length
       if len > 0 then
         do!
@@ -61,7 +61,7 @@ type RssReaderConsole (cfg: Config) =
   member this.PrintTimeLine(newReader) =
     let body () =
       reader <- newReader
-      let items = reader.Timeline
+      let items = []//reader.Timeline
       let len = items |> List.length
       items
       |> List.iteri (fun i item ->
@@ -118,7 +118,8 @@ type RssReaderConsole (cfg: Config) =
               | None ->
                   printfn "No new feeds available."
               | Some newReader ->
-                  this.PrintTimeLine(newReader)
+                  // TODO:
+                  ()
 
           | "src" :: _ ->
               reader.Feeds
