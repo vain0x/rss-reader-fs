@@ -63,8 +63,7 @@ namespace Gui
         private async Task UpdateRssAsync()
         {
             while ( true ) {
-                var newReader = await RssReader.UpdateAll(this.reader_);
-                this.reader_ = newReader;
+                await RssReader.UpdateAll(this.reader_);
                 await Task.Delay(5 * 60 * 1000);
             }
         }

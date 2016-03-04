@@ -38,13 +38,13 @@ type RssReaderConsole (cfg: Config) =
 
   member this.CheckUpdate() =
     async {
-      let! newReader = reader |> RssReader.updateAllAsync
+      do! reader |> RssReader.updateAllAsync
       let len = unreadItems.Count
       if len > 0 then
         do!
           Console.Out.WriteLineAsync(sprintf "New %d feeds!" len)
           |> Async.AwaitTaskVoid
-        return newReader |> Some
+        return reader |> Some
       else
         return None
     }

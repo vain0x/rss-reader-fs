@@ -71,7 +71,6 @@ module RssReader =
   let private newItems items rr =
     for KeyValue (_, obs) in rr |> subscriptions do
       obs.OnNewItems(items)
-    rr
 
   [<CompiledName("ReadItem")>]
   let readItem item now rr =
