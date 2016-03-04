@@ -1,52 +1,50 @@
 ﻿
 open System
 open System.IO
+open System.Collections.Generic
 open RssReaderFs
-
-type RssReader = RssReader.RssReader
 
 type Config (path) =
   member this.LoadReader() =
-    try
-      let json =
-        File.ReadAllText(path)
-      let sources =
-        Serialize.deserializeJson<RssSource []>(json)
-      in
-        RssReader(sources)
-    with
-    | _ ->
-        eprintfn "Can't open file '%s'." path
-        RssReader()
-
-  member this.SaveReader(r: RssReader) =
-    let json =
-      Serialize.serializeJson(r.Sources)
+    let sources =
+      match Rss.Serialize.load path with
+      | Some r -> r
+      | None ->
+          eprintfn "Can't open file '%s'." path
+          [||]
     in
-      File.WriteAllText(path, json)
+      RssReader.create(sources)
+
+  member this.SaveReader(r) =
+    Rss.Serialize.save path (r |> RssReader.sources)
 
 type RssReaderConsole (cfg: Config) =
+  let (* mutable *) unreadItems =
+    new HashSet<RssItem>()
+
+  let observer =
+    { new RssSubscriber with
+        member this.OnNewItems(items: RssItem []) =
+          for item in items do
+            unreadItems.Add(item) |> ignore
+          }
+
   let mutable reader =
     cfg.LoadReader()
+    |> RssReader.subscribe(observer)
 
   member this.Save() =
     cfg.SaveReader(reader)
 
-  member this.UpdateAsync() =
-   async {
-      return! reader.Update()
-   }
-
   member this.CheckUpdate() =
     async {
-      let! newReader = this.UpdateAsync()
-      let items = newReader.Timeline
-      let len = items |> List.length
+      do! reader |> RssReader.updateAllAsync
+      let len = unreadItems.Count
       if len > 0 then
         do!
           Console.Out.WriteLineAsync(sprintf "New %d feeds!" len)
           |> Async.AwaitTaskVoid
-        return newReader |> Some
+        return reader |> Some
       else
         return None
     }
@@ -57,7 +55,7 @@ type RssReaderConsole (cfg: Config) =
       | Some h -> h + " "
       | None -> ""
     let src =
-      reader.TryFindSource(item.Uri)
+      reader |> RssReader.tryFindSource(item.Uri)
     do
       printfn "%s%s" header (item.Title)
       printfn "* Date: %s" (item.Date.ToString("G"))
@@ -67,12 +65,15 @@ type RssReaderConsole (cfg: Config) =
           )
       item.Desc |> Option.iter (printfn "* Desc:\r\n%s")
 
+      reader <- reader |> RssReader.readItem item (item.Date)
+      unreadItems.Remove(item) |> ignore
+
   member this.PrintTimeLine(newReader) =
     let body () =
       reader <- newReader
-      let items = reader.Timeline
-      let len = items |> List.length
-      items
+      let len = unreadItems.Count
+      unreadItems
+      |> Seq.toList  // unreadItems は可変なので Seq.iter だとダメ
       |> List.iteri (fun i item ->
           if i > 0 then
             printfn "..."
@@ -128,10 +129,11 @@ type RssReaderConsole (cfg: Config) =
                   printfn "No new feeds available."
               | Some newReader ->
                   this.PrintTimeLine(newReader)
+                  ()
 
           | "src" :: _ ->
-              reader.Feeds
-              |> Array.map (fun feed -> feed.Source)
+              reader
+              |> RssReader.sources
               |> Array.iteri (fun i src ->
                   printfn "#%d: %s <%s>"
                     i (src.Name) (src.Uri |> string)
@@ -139,26 +141,22 @@ type RssReaderConsole (cfg: Config) =
 
           | "add" :: name :: url :: _ ->
               let source = Rss.sourceFromUrl name url
-              let r = RssReader([source])
               in
                 lock reader (fun () ->
-                  reader <- reader.Add(r)
+                  reader <- reader |> RssReader.add(source)
                   )
 
-          | "remove" :: name :: _ ->
-              let pred (feed: RssFeed) =
-                let source = feed.Source
-                source.Name <> name
+          | "remove" :: url :: _ ->
+              let uri = Uri(url)
               let body () =
-                let (r, removed) = reader.SourceFilter(pred)
-                let count = removed |> Array.length
-                if count > 0 then
-                  reader <- r
-                  printfn "%d sources have been removed:"
-                    count
-                  for feed in removed do
-                    let src = feed.Source
-                    printfn "%s <%s>" (src.Name) (src.Uri |> string)
+                reader
+                |> RssReader.tryFindSource(uri)
+                |> Option.iter (fun src ->
+                    reader <- reader |> RssReader.remove(uri)
+                    printfn "'%s <%s>' has been removed."
+                      (src.Name)
+                      (src.Uri |> string)
+                    )
               in
                 lock reader body
 

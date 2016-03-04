@@ -1,6 +1,7 @@
 ﻿namespace RssReaderFs
 
 open System
+open System.Collections.Generic
 
 [<AutoOpen>]
 module Misc =
@@ -44,6 +45,12 @@ module Dictionary =
         kvs
         |> Seq.iter (fun (k, v) -> dict.Add(k, v) |> ignore)
         )
+
+  let toArray (dict: Dictionary<_, _>) =
+    [|
+      for KeyValue (k, v) in dict do
+        yield (k, v)
+      |]
 
 module DateTime =
   let tryParse s =
