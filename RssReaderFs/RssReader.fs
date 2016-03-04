@@ -3,76 +3,79 @@
 open System
 open System.Collections.Generic
 
-module RssReader =
-  type RssReader
-    ( feeds: RssFeed []
-    , sourceMap: Dictionary<Uri, RssSource>
-    ) =
+[<AutoOpen>]
+module RssReaderExtension =
+  let mutable observerId = 0
 
-    new () =
-      RssReader([])
+  let newObserverId () =
+    observerId
+    |> tap (fun obsId ->
+        observerId <- observerId + 1
+        )
 
-    new (feeds: RssFeed []) =
-      let dict =
-        feeds
-        |> Seq.map (fun feed ->
-            let src = feed.Source
-            in (src.Uri, src)
-            )
-        |> Dictionary.ofSeq
-      in
-        RssReader(feeds, dict)
-
-    new (sources: seq<RssSource>) =
-      let feeds =
-        sources
-        |> Seq.map (fun src -> RssFeed(src))
-        |> Seq.toArray
-      in
-        RssReader(feeds)
-
-    member this.Add(rhs: RssReader) =
-      RssReader(Array.append feeds (rhs.Feeds))
-
-    member this.SourceFilter(pred) =
-      let (feeds, removed) =
-        feeds
-        |> Array.partition pred
-      (RssReader(feeds), removed)
-      
-    member this.Update() =
-      async {
-        // TODO: 実装
-        do! Async.Sleep(1000)
+  type RssReader with
+    static member Create(sources: RssSource []) =
+      {
+        SourceMap =
+          sources
+          |> Array.map (fun src -> (src.Uri, src))
+          |> Dictionary.ofSeq
+        Subscriptions =
+          Map.empty
       }
-      
-    member this.TryFindSource(uri) =
-      sourceMap.TryGetValue(uri)
-      |> Option.ofTrial
 
     member this.Sources =
-      feeds
-      |> Array.map (fun feed -> feed.Source)
+      this.SourceMap
+      |> Dictionary.toArray
+      |> Array.map snd
 
-    member this.Feeds =
-      feeds
-
-  module Serialize =
-    open System.IO
-
-    let load path =
-      try
-        let json =
-          File.ReadAllText(path)
-        let sources =
-          Serialize.deserializeJson<RssSource []>(json)
-        in
-          RssReader(sources) |> Some
-      with
-      | _ -> None
-
-    let save path (r: RssReader) =
-      let json =
-        Serialize.serializeJson(r.Sources)
+    member this.Subscribe(obs) =
+      let obsId = newObserverId () |> ObserverId
       in
-        File.WriteAllText(path, json)
+        { this with
+            Subscriptions = this.Subscriptions |> Map.add obsId obs
+        }
+
+    member this.Unsubscribe(obsId) =
+      { this with
+          Subscriptions = this.Subscriptions |> Map.remove obsId
+          }
+
+    member this.NewItems (items: RssItem []) =
+      for KeyValue (_, obs) in this.Subscriptions do
+        obs.OnNewItems(items)
+      this
+
+    member this.ReadItem(item, ?now) =
+      let now =
+        defaultArg now (DateTime.Now)
+      let sourceMap' =
+        match this.SourceMap.TryGetValue(item.Uri) |> Option.ofTrial with
+        | None -> this.SourceMap
+        | Some src ->
+          let src =
+            { src with LastUpdate = max (src.LastUpdate) now }
+          in
+            this.SourceMap
+            |> tap (fun m -> m.[item.Uri] <- src)
+      in
+        { this with
+            SourceMap = sourceMap'
+        }
+
+    member this.UpdateAllAsync() =
+      async {
+        let! itemsList =
+          this.Sources
+          |> Array.map (Rss.updateRssAsync)
+          |> Async.Parallel
+        return
+          itemsList
+          |> Seq.collect id
+          |> Seq.toArray
+          |> this.NewItems
+      }
+
+    member this.TryFindSource(uri: Uri) =
+      this.SourceMap.TryGetValue(uri)
+      |> Option.ofTrial
