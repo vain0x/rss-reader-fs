@@ -100,6 +100,7 @@ module RssReader =
         itemsList
         |> Seq.collect id
         |> Seq.toArray
+        |> Array.sortBy (fun item -> item.Date)
         |> flip newItems rr
     }
 
