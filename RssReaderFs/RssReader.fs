@@ -48,6 +48,13 @@ module RssReaderExtension =
             |> tap (fun m -> m.Add(source.Uri, source))
       }
 
+    member this.Remove(uri) =
+      { this with
+          SourceMap =
+            this.SourceMap
+            |> tap (fun s -> s.Remove(uri) |> ignore)
+      }
+
     member this.NewItems (items: RssItem []) =
       for KeyValue (_, obs) in this.Subscriptions do
         obs.OnNewItems(items)
