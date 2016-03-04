@@ -46,7 +46,7 @@ module RssReader =
           feeds
           |> Seq.map (Rss.updateFeedAsync)
           |> Async.Parallel
-        return RssReader(newFeeds)
+        return RssReader(newFeeds, sourceMap)
       }
       
     // 全アイテムの時系列順
