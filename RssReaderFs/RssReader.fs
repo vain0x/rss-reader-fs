@@ -41,6 +41,13 @@ module RssReaderExtension =
           Subscriptions = this.Subscriptions |> Map.remove obsId
           }
 
+    member this.Add(source: RssSource) =
+      { this with
+          SourceMap =
+            this.SourceMap
+            |> tap (fun m -> m.Add(source.Uri, source))
+      }
+
     member this.NewItems (items: RssItem []) =
       for KeyValue (_, obs) in this.Subscriptions do
         obs.OnNewItems(items)
