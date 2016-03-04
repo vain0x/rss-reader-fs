@@ -73,13 +73,13 @@ module RssReader =
       obs.OnNewItems(items)
 
   [<CompiledName("ReadItem")>]
-  let readItem item now rr =
+  let readItem item rr =
     let sourceMap' =
       match (rr |> sourceMap).TryGetValue(item.Uri) |> Option.ofTrial with
       | None -> rr |> sourceMap
       | Some src ->
         let src =
-          { src with LastUpdate = max (src.LastUpdate) now }
+          { src with LastUpdate = max (src.LastUpdate) (item.Date) }
         in
           rr
           |> sourceMap

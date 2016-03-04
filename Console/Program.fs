@@ -65,7 +65,7 @@ type RssReaderConsole (cfg: Config) =
           )
       item.Desc |> Option.iter (printfn "* Desc:\r\n%s")
 
-      reader <- reader |> RssReader.readItem item (item.Date)
+      reader <- reader |> RssReader.readItem item
       unreadItems.Remove(item) |> ignore
 
   member this.PrintTimeLine(newReader) =
