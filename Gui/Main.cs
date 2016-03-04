@@ -54,10 +54,12 @@ namespace Gui
                         Invoke(new ShowItemDelegate(this.ShowItem), item);
                         await Task.Delay(3000);
                     }
+                    ShowReceiving();
                 }));
             this.reader_ = RssReader.Subscribe(subscriber, this.reader_);
 
             // Start updating
+            ShowReceiving();
             this.UpdateRssAsync();
         }
 
@@ -81,6 +83,14 @@ namespace Gui
         private void ShowWarning(string text)
         {
             this.ShowBalloonTip(text, ToolTipIcon.Warning);
+        }
+
+        private void ShowReceiving()
+        {
+            this.curItem_ = null;
+            textBoxFeedTitle.Text = "";
+            labelFeedSource.Text = "";
+            textBoxFeedDesc.Text = "(now_loading...)";
         }
 
         private void ShowItem(Domain.RssItem item)
