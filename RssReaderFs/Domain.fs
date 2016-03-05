@@ -30,6 +30,7 @@ module Domain =
     }
 
   type ObserverId =
+    internal
     | ObserverId of int
 
   type RssSubscriber =

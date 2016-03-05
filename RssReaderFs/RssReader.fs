@@ -11,7 +11,8 @@ module RssReader =
     |> tap (fun obsId ->
         observerId <- observerId + 1
         )
-        
+    |> ObserverId
+
   [<CompiledName("Create")>]
   let create(sources: RssSource []) =
     {
@@ -37,7 +38,7 @@ module RssReader =
 
   [<CompiledName("Subscribe")>]
   let subscribe obs rr =
-    let obsId = newObserverId () |> ObserverId
+    let obsId = newObserverId ()
     in
       { rr with
           Subscriptions = rr |> subscriptions |> Map.add obsId obs
