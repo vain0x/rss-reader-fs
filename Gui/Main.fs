@@ -9,6 +9,7 @@ type Main () as this =
   inherit Form
     ( Text        = "RssReaderFs.Gui"
     , Size        = Size(640, 480)
+    , MinimumSize = Size(320, 240)
     )
 
   let path = @"feeds.json"
@@ -18,74 +19,47 @@ type Main () as this =
   let reader () = rc.Reader
   let feeds  () = rc.Feeds
 
-  let listViewHeight  = 150
-  let textBoxHeight   = this.ClientSize.Height - 70 - listViewHeight
-
   let listView =
     new ListView
       ( Location    = Point(5, 5)
-      , Size        = Size(this.ClientSize.Width - 10, listViewHeight)
       , View        = View.Details
       , Font        = yuGothic10
       )
     // Add columns
     |> tap (fun listView ->
-        let totalWidth =
-          (listView.ClientSize.Width - (* スクロールバー分 *) 20) |> float
         let columns =
           [|
-            ("Title"  , 0.50)
-            ("✓"     , 0.05)
-            ("Date"   , 0.17)
-            ("Source" , 0.28)
+            "Title"
+            "✓"
+            "Date"
+            "Source"
           |]
-          |> Array.map (fun (text, ratio) ->
-              new ColumnHeader
-                ( Text    = text
-                , Width   = (totalWidth * ratio |> int)
-                )
+          |> Array.map (fun text ->
+              new ColumnHeader(Text = text)
               )
         do listView.Columns.AddRange(columns)
         )
 
   let titleLabel =
     new Label
-      ( Location    = Point(5, listViewHeight + 5)
-      , Size        = Size(this.ClientSize.Width - 10, 25)
-      , Font        = new Font("Yu Gothic", float32 14)
+      ( Font        = new Font("Yu Gothic", float32 14)
       )
 
   let linkLabel =
     new LinkLabel
-      ( Location    =
-          Point
-            ( 5
-            , 5 + listViewHeight + 5 + titleLabel.Size.Height + 5
-            )
-      , Size        = Size(250, 20)
+      ( Size        = Size(300, 20)
       , Font        = yuGothic10
       )
 
   let sourceLabel =
     new Label
-      ( Location =
-          Point
-            ( 5 + linkLabel.Size.Width + 5
-            , linkLabel.Location.Y
-            )
-      , Size =
-          Size
-            ( this.ClientSize.Width - linkLabel.Size.Width - 10
-            , linkLabel.Size.Height
-            )
+      ( Size = Size(200, 20)
       , Font = yuGothic10
       )
 
   let textBox =
     new TextBox
-      ( Location    = Point(5, this.ClientSize.Height - textBoxHeight - 5)
-      , Size        = Size(this.ClientSize.Width - 10, textBoxHeight)
-      , Multiline   = true
+      ( Multiline   = true
       , Font        = yuGothic10
       )
 
@@ -97,6 +71,32 @@ type Main () as this =
       sourceLabel   :> Control
       textBox       :> Control
     |]
+
+  let resize () =
+    let textBoxHeight   = 100
+    let listViewHeight  = this.ClientSize.Height - textBoxHeight - 70
+    do
+      listView.Size <-
+        Size(this.ClientSize.Width - 10, listViewHeight)
+
+      textBox.Location <-
+        Point(5, this.ClientSize.Height - textBoxHeight - 5)
+      textBox.Size <-
+        Size(this.ClientSize.Width - 10, textBoxHeight)
+      
+      titleLabel.Location <-
+        Point(5, listViewHeight + 5)
+      titleLabel.Size <-
+        Size(this.ClientSize.Width - 10, 25)
+
+      linkLabel.Location <-
+          Point(5, 5 + listViewHeight + 5 + titleLabel.Size.Height + 5)
+      
+      sourceLabel.Location <-
+        Point
+          ( 5 + linkLabel.Size.Width + 5
+          , linkLabel.Location.Y
+          )
 
   let listViewItemsFromNewFeeds (items: RssItem []) =
     [|
@@ -150,6 +150,8 @@ type Main () as this =
       do e.Item.SubItems.Item(1).Text <- "✓"
       )
 
+    this.SizeChanged.Add (fun e -> resize ())
+
     this.FormClosed.Add (fun e ->
       rc.Save()
       )
@@ -157,6 +159,7 @@ type Main () as this =
   // Init controls
   do
     unshow ()
+    resize ()
     base.Controls.AddRange(controls)
 
   // Init reader
