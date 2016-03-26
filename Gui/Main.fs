@@ -140,6 +140,17 @@ type Main () as this =
           addNewFeeds items
           }
 
+  let checkUpdate () =
+    reader ()
+    |> RssReader.updateAllAsync
+    |> Async.RunSynchronously
+
+  let updateTimer =
+    new Timer(Interval = 3 * 60 * 1000)
+    |> tap (fun timer ->
+        timer.Tick.Add (fun e -> checkUpdate ())
+        )
+
   // Add handlers
   do
     listView.ItemSelectionChanged.Add (fun e ->
@@ -163,4 +174,5 @@ type Main () as this =
   // Init reader
   do
     rc.Subscribe(observer)
-    reader () |> RssReader.updateAllAsync |> Async.RunSynchronously
+    checkUpdate ()
+    updateTimer.Start()
