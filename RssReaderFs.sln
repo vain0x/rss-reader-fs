@@ -10,7 +10,7 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Console", "Console\Console.
 		{A7C8142E-4C32-4DC6-8787-AA9E293A3A7A} = {A7C8142E-4C32-4DC6-8787-AA9E293A3A7A}
 	EndProjectSection
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Gui", "Gui\Gui.fsproj", "{0D4BEE1C-FF5A-4E53-886A-DF9FB9FC8FA5}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "RssReaderFs.Gui", "Gui\RssReaderFs.Gui.fsproj", "{0D4BEE1C-FF5A-4E53-886A-DF9FB9FC8FA5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
