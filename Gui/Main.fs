@@ -118,7 +118,11 @@ type Main () as this =
 
   let addNewFeeds items =
     let lvItems = listViewItemsFromNewFeeds items
-    do listView.Items.AddRange(lvItems)
+    let body () = listView.Items.AddRange(lvItems)
+    do
+      if listView.InvokeRequired
+      then listView.BeginInvoke(UnitDelegate(body)) |> ignore
+      else body ()
 
   let unshow () =
     titleLabel.Text     <- "(now loading...)"
