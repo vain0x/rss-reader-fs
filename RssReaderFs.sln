@@ -10,6 +10,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Console", "Console\Console.
 		{A7C8142E-4C32-4DC6-8787-AA9E293A3A7A} = {A7C8142E-4C32-4DC6-8787-AA9E293A3A7A}
 	EndProjectSection
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Gui", "Gui\Gui.fsproj", "{0D4BEE1C-FF5A-4E53-886A-DF9FB9FC8FA5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,6 +26,10 @@ Global
 		{E37A1131-B10D-4DFD-B7DD-FF52A2397F52}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E37A1131-B10D-4DFD-B7DD-FF52A2397F52}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E37A1131-B10D-4DFD-B7DD-FF52A2397F52}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0D4BEE1C-FF5A-4E53-886A-DF9FB9FC8FA5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D4BEE1C-FF5A-4E53-886A-DF9FB9FC8FA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D4BEE1C-FF5A-4E53-886A-DF9FB9FC8FA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D4BEE1C-FF5A-4E53-886A-DF9FB9FC8FA5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
