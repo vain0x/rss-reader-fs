@@ -2,6 +2,7 @@
 
 open System
 open System.Drawing
+open System.IO
 open System.Windows.Forms
 open RssReaderFs
 
@@ -12,6 +13,7 @@ type Main () as this =
     , MinimumSize = Size(320, 240)
     )
 
+  let pathState = @"RssReaderFsGuiMainFormState.json"
   let path = @"feeds.json"
 
   let rc = RssClient.Create(path)
@@ -151,6 +153,40 @@ type Main () as this =
         timer.Tick.Add (fun e -> checkUpdate ())
         )
 
+  let loadState () =
+    try
+      let json =
+        File.ReadAllText(pathState)
+      let state =
+        Serialize.deserializeJson<MainFormState> (json)
+      do
+        this.Location <- state.Location
+        this.Size     <- state.Size
+        
+        state.ListViewColumnWidths
+        |> Array.iteri (fun i w ->
+            listView.Columns.Item(i).Width <- w
+            )
+    with
+    | e -> ()
+
+  let saveState () =
+    let state =
+      {
+        Location    = this.Location
+        Size        = this.Size
+        ListViewColumnWidths =
+          [|
+            for i in 0..(listView.Columns.Count - 1) do
+              let col = listView.Columns.Item(i)
+              yield col.Width
+          |]
+      }
+    let json =
+      Serialize.serializeJson<MainFormState> (state)
+    do
+      File.WriteAllText(pathState, json)
+
   // Add handlers
   do
     listView.ItemSelectionChanged.Add (fun e ->
@@ -163,12 +199,14 @@ type Main () as this =
 
     this.FormClosed.Add (fun e ->
       rc.Save()
+      saveState()
       )
 
   // Init controls
   do
     unshow ()
     resize ()
+    loadState ()
     base.Controls.AddRange(controls)
 
   // Init reader
