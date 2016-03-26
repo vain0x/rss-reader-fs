@@ -116,9 +116,7 @@ type Main () as this =
 
   let addNewFeeds items =
     let lvItems = listViewItemsFromNewFeeds items
-    do
-      for lvItem in lvItems |> Array.rev do
-        listView.Items.Insert(0, lvItem) |> ignore
+    do listView.Items.AddRange(lvItems)
 
   let unshow () =
     titleLabel.Text     <- "(now loading...)"
