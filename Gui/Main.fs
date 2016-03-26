@@ -9,7 +9,6 @@ open RssReaderFs
 type Main () as this =
   inherit Form
     ( Text        = "RssReaderFs.Gui"
-    , Size        = Size(640, 480)
     , MinimumSize = Size(320, 240)
     )
 
