@@ -113,3 +113,12 @@ module RssReader =
   let tryFindSource uri rr =
     (rr |> sourceMap).TryGetValue(uri)
     |> Option.ofTrial
+
+  [<CompiledName("SourceName")>]
+  let sourceName uri rr =
+    let name =
+      match rr |> tryFindSource uri with
+      | Some { Name = name } -> name + " "
+      | None -> ""
+    in
+      sprintf "%s<%s>" name (uri |> string)
