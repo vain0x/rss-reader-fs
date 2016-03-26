@@ -64,6 +64,13 @@ type Main () as this =
       , Font        = yuGothic10
       )
 
+  let sourceListButton =
+    new Button
+      ( Size        = Size(80, 25)
+      , Font        = yuGothic10
+      , Text        = "Sources"
+      )
+
   let controls =
     [|
       listView      :> Control
@@ -71,17 +78,18 @@ type Main () as this =
       linkLabel     :> Control
       sourceLabel   :> Control
       textBox       :> Control
+      sourceListButton      :> Control
     |]
 
   let resize () =
     let textBoxHeight   = 100
-    let listViewHeight  = this.ClientSize.Height - textBoxHeight - 70
+    let listViewHeight  = this.ClientSize.Height - textBoxHeight - 95
     do
       listView.Size <-
         Size(this.ClientSize.Width - 10, listViewHeight)
 
       textBox.Location <-
-        Point(5, this.ClientSize.Height - textBoxHeight - 5)
+        Point(5, this.ClientSize.Height - textBoxHeight - 35)
       textBox.Size <-
         Size(this.ClientSize.Width - 10, textBoxHeight)
       
@@ -98,6 +106,11 @@ type Main () as this =
           ( 5 + linkLabel.Size.Width + 5
           , linkLabel.Location.Y
           )
+
+      sourceListButton.Location <-  
+        Point(5, this.ClientSize.Height - 30)
+
+  let sourceListForm = new SourceListForm(rc)
 
   let listViewItemsFromNewFeeds (items: RssItem []) =
     [|
@@ -196,6 +209,10 @@ type Main () as this =
       let title = e.Item.SubItems.Item(0).Text
       do feeds () |> Map.tryFind title |> Option.iter (readFeed)
       do e.Item.SubItems.Item(1).Text <- "✓"
+      )
+
+    sourceListButton.Click.Add (fun e ->
+      sourceListForm.Show()
       )
 
     this.SizeChanged.Add (fun e -> resize ())
