@@ -97,9 +97,6 @@ module RssReader =
         |> flip newItems rr
     }
 
-  let updateAll rr =
-    rr |> updateAllAsync |> Async.StartAsTask
-
   let tryFindSource uri rr =
     (rr |> sourceMap).TryGetValue(uri)
     |> Option.ofTrial
