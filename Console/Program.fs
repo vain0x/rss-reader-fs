@@ -126,7 +126,7 @@ type RssReaderConsole (rc: RssClient) =
                 reader ()
                 |> RssReader.tryFindSource(uri)
                 |> Option.iter (fun src ->
-                    rc.Remove(uri)
+                    rc.RemoveSource(uri)
                     printfn "'%s <%s>' has been removed."
                       (src.Name)
                       (src.Uri |> string)

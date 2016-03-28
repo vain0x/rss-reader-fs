@@ -177,7 +177,7 @@ type SourceListForm (rc: RssClient) as this =
         let lvItem = selectedItems.Item(i)
         let columns = lvItem |> subitems
         let uri = Uri(columns.Uri.Text)
-        do rc.Remove(uri)
+        do rc.RemoveSource(uri)
       )
 
     base.Controls.AddRange(controls)

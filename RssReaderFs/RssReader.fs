@@ -28,7 +28,7 @@ module RssReader =
           |> tap (fun m -> m.Add(source.Uri, source))
     }
 
-  let remove uri rr =
+  let removeSource uri rr =
     { rr with
         SourceMap =
           rr
