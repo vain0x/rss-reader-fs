@@ -75,11 +75,6 @@ type SourceAddForm (onRegister: RssSource -> unit) as this =
         this.Close()
       )
 
-    this.Shown.Add (fun e ->
-      nameBox.Text    <- ""
-      uriBox.Text     <- ""
-      )
-
     base.Controls.AddRange(controls)
 
 type SourceListForm (rc: RssClient) as this =
@@ -150,18 +145,21 @@ type SourceListForm (rc: RssClient) as this =
       removeButton  :> Control
     |]
 
-  let addForm =
-    new SourceAddForm
-      (fun src ->
-        if src.Name <> "" then
-          rc.Add(src)
+  let showAddForm =
+    Form.singletonSubform
+      (fun () ->
+        new SourceAddForm
+          (fun src ->
+            if src.Name <> "" then
+              rc.Add(src)
 
-        listView.Items.Add(lvItemFromRssSource src) |> ignore
+            listView.Items.Add(lvItemFromRssSource src) |> ignore
+            )
         )
 
   do
     addButton.Click.Add (fun e ->
-      addForm.Show()
+      showAddForm ()
       )
 
     removeButton.Click.Add (fun e ->

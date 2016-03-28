@@ -120,7 +120,9 @@ type Main () as this =
       sourceListButton.Location <-  
         Point(5, this.ClientSize.Height - 30)
 
-  let sourceListForm = new SourceListForm(rc)
+  let showSourceListForm =
+    Form.singletonSubform
+      (fun () -> new SourceListForm(rc))
 
   let listViewItemsFromNewFeeds (items: RssItem []) =
     [|
@@ -223,7 +225,7 @@ type Main () as this =
       )
 
     sourceListButton.Click.Add (fun e ->
-      sourceListForm.Show()
+      showSourceListForm ()
       )
 
     this.SizeChanged.Add (fun e -> resize ())
