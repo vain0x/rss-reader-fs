@@ -160,7 +160,7 @@ type SourceListForm (rc: RssClient) as this =
         new SourceAddForm
           (fun src ->
             if src.Name <> "" then
-              rc.Add(src)
+              rc.AddSource(src)
 
             listView.Items.Add(lvItemFromRssSource src) |> ignore
             )

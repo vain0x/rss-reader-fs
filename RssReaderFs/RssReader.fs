@@ -20,7 +20,7 @@ module RssReader =
     |> Dictionary.toArray
     |> Array.map snd
 
-  let add (source: RssSource) rr =
+  let addSource (source: RssSource) rr =
     { rr with
         SourceMap =
           rr

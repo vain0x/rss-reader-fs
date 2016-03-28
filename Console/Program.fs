@@ -117,7 +117,7 @@ type RssReaderConsole (rc: RssClient) =
               let source = Rss.sourceFromUrl name url
               in
                 lock reader (fun () ->
-                  rc.Add(source)
+                  rc.AddSource(source)
                   )
 
           | "remove" :: url :: _ ->
