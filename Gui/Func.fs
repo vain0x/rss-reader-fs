@@ -24,14 +24,14 @@ module SourceListviewColumns =
   let toArray (self: SourceListviewColumns<_, _>) =
     [|
       self.Name
-      self.Uri
+      self.Url
     |]
 
   let ofSeq s =
     match s |> Seq.toList with
-    | name :: uri :: _ ->
+    | name :: url :: _ ->
         {
           Name        = name
-          Uri         = uri
+          Url         = url
         } |> Some
     | _ -> None

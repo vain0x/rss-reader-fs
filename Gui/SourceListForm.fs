@@ -19,12 +19,12 @@ type SourceAddForm (onRegister: RssSource -> unit) as this =
       , Text        = "Name:"
       )
 
-  let uriLabel =
+  let urlLabel =
     new Label
       ( Location    = Point(5, 5 + nameLabel.Size.Height + 5)
       , Size        = nameLabel.Size
       , Font        = yuGothic10
-      , Text        = "Uri:"
+      , Text        = "URL:"
       )
 
   let nameBox =
@@ -34,9 +34,9 @@ type SourceAddForm (onRegister: RssSource -> unit) as this =
       , Font        = yuGothic10
       )
 
-  let uriBox =
+  let urlBox =
     new TextBox
-      ( Location    = Point(nameBox.Location.X, uriLabel.Location.Y)
+      ( Location    = Point(nameBox.Location.X, urlLabel.Location.Y)
       , Size        = nameBox.Size
       , Font        = yuGothic10
       )
@@ -56,9 +56,9 @@ type SourceAddForm (onRegister: RssSource -> unit) as this =
   let controls =
     [|
       nameLabel     :> Control
-      uriLabel      :> Control
+      urlLabel      :> Control
       nameBox       :> Control
-      uriBox        :> Control
+      urlBox        :> Control
       okButton      :> Control
     |]
 
@@ -68,14 +68,14 @@ type SourceAddForm (onRegister: RssSource -> unit) as this =
         let item =
           {
             Name        = nameBox.Text
-            Uri         = Uri(uriBox.Text)  // Maybe throws exn
+            Url         = Url.ofString (urlBox.Text)
             LastUpdate  = DateTime.Now
           }
         do
           onRegister item
           this.Close()
       with
-      | e ->
+      | e ->  // never come
           MessageBox.Show
             ( e.Message
             , "RssReaderFs.Gui"
@@ -93,7 +93,7 @@ type SourceListForm (rc: RssClient) as this =
     )
 
   let lvItemFromRssSource (src: RssSource) =
-    ListViewItem([| src.Name; string src.Uri |])
+    ListViewItem([| src.Name; src.Url |> Url.toString |])
 
   let listView =
     new ListView
@@ -108,7 +108,7 @@ type SourceListForm (rc: RssClient) as this =
         let columns =
           ({
             Name      = "Name"
-            Uri       = "Uri"
+            Url       = "Url"
           }: SourceListviewColumns<_, _>)
           |> SourceListviewColumns.toArray
           |> Array.map (fun text -> new ColumnHeader(Text = text))
@@ -176,8 +176,8 @@ type SourceListForm (rc: RssClient) as this =
       for i in 0..(selectedItems.Count - 1) do
         let lvItem = selectedItems.Item(i)
         let columns = lvItem |> subitems
-        let uri = Uri(columns.Uri.Text)
-        do rc.RemoveSource(uri)
+        let url = Url.ofString (columns.Url.Text)
+        do rc.RemoveSource(url)
       )
 
     base.Controls.AddRange(controls)

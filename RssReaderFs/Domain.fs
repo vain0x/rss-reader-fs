@@ -11,8 +11,8 @@ module Domain =
       [<field: DataMember(Name = "name")>]
       Name: string
 
-      [<field: DataMember(Name = "uri")>]
-      Uri: Uri
+      [<field: DataMember(Name = "url")>]
+      Url: Url
       
       [<field: DataMember(Name = "lastUpdate")>]
       LastUpdate: DateTime
@@ -26,12 +26,12 @@ module Domain =
       Desc: string option
       Link: string option
       Date: DateTime
-      Uri: Uri
+      Url: Url
     }
 
   type RssReader =
     {
-      SourceMap     : Dictionary<Uri, RssSource>
+      SourceMap     : Dictionary<Url, RssSource>
       ReadFeeds     : HashSet<RssItem>
       UnreadFeeds   : HashSet<RssItem>
     }

@@ -31,7 +31,7 @@ type RssReaderConsole (rc: RssClient) =
       | Some h -> h + " "
       | None -> ""
     let src =
-      reader () |> RssReader.tryFindSource(item.Uri)
+      reader () |> RssReader.tryFindSource(item.Url)
     do
       printfn "%s%s" header (item.Title)
       printfn "* Date: %s" (item.Date.ToString("G"))
@@ -110,7 +110,7 @@ type RssReaderConsole (rc: RssClient) =
               |> RssReader.sources
               |> Array.iteri (fun i src ->
                   printfn "#%d: %s <%s>"
-                    i (src.Name) (src.Uri |> string)
+                    i (src.Name) (src.Url |> string)
                 )
 
           | "add" :: name :: url :: _ ->
@@ -121,15 +121,15 @@ type RssReaderConsole (rc: RssClient) =
                   )
 
           | "remove" :: url :: _ ->
-              let uri = Uri(url)
+              let url = Url.ofString url
               let body () =
                 reader ()
-                |> RssReader.tryFindSource(uri)
+                |> RssReader.tryFindSource(url)
                 |> Option.iter (fun src ->
-                    rc.RemoveSource(uri)
+                    rc.RemoveSource(url)
                     printfn "'%s <%s>' has been removed."
                       (src.Name)
-                      (src.Uri |> string)
+                      (src.Url |> Url.toString)
                     )
               in
                 lock reader body

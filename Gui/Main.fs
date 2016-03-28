@@ -132,7 +132,7 @@ type Main () as this =
             item.Title
             ""    // unchecked
             item.Date.ToString("G")
-            reader () |> RssReader.sourceName (item.Uri)
+            reader () |> RssReader.sourceName (item.Url)
           |]
           |> Array.map (fun text ->
               ListViewItem.ListViewSubItem(Text = text)
@@ -158,7 +158,7 @@ type Main () as this =
     titleLabel.Text     <- item.Title
     textBox.Text        <- item.Desc |> Option.getOr "(no_description)"
     linkLabel.Text      <- item.Link |> Option.getOr "(no_link)"
-    sourceLabel.Text    <- reader () |> RssReader.sourceName (item.Uri)
+    sourceLabel.Text    <- reader () |> RssReader.sourceName (item.Url)
 
   let readFeed item =
     do rc.ReadItem(item)

@@ -71,13 +71,22 @@ module Xml =
     xnode.SelectNodes(xpath)
     |> Seq.ofCollection
 
+[<AutoOpen>]
+module UrlType =
+  type Url = 
+    | Url of string
+
+module Url =
+  let ofString = Url
+  let toString (Url s) = s
+
 module Net =
   open System.Net
   open System.Xml
 
-  let downloadXmlAsync (feedUri: Uri) =
+  let downloadXmlAsync (feedUrl: Url) =
     async {
-      let req       = WebRequest.Create(feedUri)
+      let req       = WebRequest.Create(feedUrl |> Url.toString)
       let! resp     = req.GetResponseAsync() |> Async.AwaitTask
       let stream    = resp.GetResponseStream()
       let xmlReader = new XmlTextReader(stream)

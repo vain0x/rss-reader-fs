@@ -8,7 +8,7 @@ module RssReader =
     {
       SourceMap =
         sources
-        |> Array.map (fun src -> (src.Uri, src))
+        |> Array.map (fun src -> (src.Url, src))
         |> Dictionary.ofSeq
       ReadFeeds =
         HashSet<_>()
@@ -35,20 +35,20 @@ module RssReader =
         SourceMap =
           rr
           |> sourceMap
-          |> tap (fun m -> m.Add(source.Uri, source))
+          |> tap (fun m -> m.Add(source.Url, source))
     }
 
-  let removeSource uri rr =
+  let removeSource url rr =
     { rr with
         SourceMap =
           rr
           |> sourceMap
-          |> tap (fun s -> s.Remove(uri) |> ignore)
+          |> tap (fun s -> s.Remove(url) |> ignore)
     }
 
   let readItem item rr =
     let sourceMap' =
-      match (rr |> sourceMap).TryGetValue(item.Uri) |> Option.ofTrial with
+      match (rr |> sourceMap).TryGetValue(item.Url) |> Option.ofTrial with
       | None -> rr |> sourceMap
       | Some src ->
         let src =
@@ -56,7 +56,7 @@ module RssReader =
         in
           rr
           |> sourceMap
-          |> tap (fun m -> m.[item.Uri] <- src)
+          |> tap (fun m -> m.[item.Url] <- src)
     let unreadFeeds' =
       rr.UnreadFeeds
       |> tap (fun uf -> uf.Remove(item) |> ignore)
@@ -91,14 +91,14 @@ module RssReader =
       return newItems
     }
 
-  let tryFindSource uri rr =
-    (rr |> sourceMap).TryGetValue(uri)
+  let tryFindSource url rr =
+    (rr |> sourceMap).TryGetValue(url)
     |> Option.ofTrial
 
-  let sourceName uri rr =
+  let sourceName url rr =
     let name =
-      match rr |> tryFindSource uri with
+      match rr |> tryFindSource url with
       | Some { Name = name } -> name + " "
       | None -> ""
     in
-      sprintf "%s<%s>" name (uri |> string)
+      sprintf "%s<%s>" name (url |> string)
