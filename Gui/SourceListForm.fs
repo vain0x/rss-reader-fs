@@ -64,24 +64,15 @@ type SourceAddForm (onRegister: RssSource -> unit) as this =
 
   do
     okButton.Click.Add (fun e ->
-      try
-        let item =
-          {
-            Name        = nameBox.Text
-            Url         = Url.ofString (urlBox.Text)
-            LastUpdate  = DateTime.Now
-          }
-        do
-          onRegister item
-          this.Close()
-      with
-      | e ->  // never come
-          MessageBox.Show
-            ( e.Message
-            , "RssReaderFs.Gui"
-            , MessageBoxButtons.OK
-            , MessageBoxIcon.Error
-            ) |> ignore
+      let item =
+        {
+          Name        = nameBox.Text
+          Url         = Url.ofString (urlBox.Text)
+          LastUpdate  = DateTime.Now
+        }
+      do
+        onRegister item
+        this.Close()
       )
 
     base.Controls.AddRange(controls)
