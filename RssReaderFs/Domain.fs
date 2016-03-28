@@ -1,7 +1,6 @@
 ﻿namespace RssReaderFs
 
 open System
-open System.Collections.Generic
 open System.Runtime.Serialization
 
 [<AutoOpen>]
@@ -31,7 +30,7 @@ module Domain =
 
   type RssReader =
     {
-      SourceMap     : Dictionary<Url, RssSource>
-      ReadFeeds     : HashSet<RssItem>
-      UnreadFeeds   : HashSet<RssItem>
+      SourceMap     : Map<Url, RssSource>
+      ReadFeeds     : Set<RssItem>
+      UnreadFeeds   : Set<RssItem>
     }

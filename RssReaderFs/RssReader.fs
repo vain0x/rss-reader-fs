@@ -9,25 +9,25 @@ module RssReader =
       SourceMap =
         sources
         |> Array.map (fun src -> (src.Url, src))
-        |> Dictionary.ofSeq
+        |> Map.ofSeq
       ReadFeeds =
-        HashSet<_>()
+        Set.empty
       UnreadFeeds =
-        HashSet<_>()
+        Set.empty
     }
 
   let internal sourceMap (rr: RssReader) =
     rr.SourceMap
 
   let unreadFeeds (rr: RssReader) =
-    (rr.UnreadFeeds :> seq<RssItem>)
+    rr.UnreadFeeds
 
   let readFeeds (rr: RssReader) =
-    (rr.ReadFeeds :> seq<RssItem>)
+    rr.ReadFeeds
 
   let sources rr =
     rr.SourceMap
-    |> Dictionary.toArray
+    |> Map.toArray
     |> Array.map snd
 
   let addSource (source: RssSource) rr =
@@ -35,7 +35,7 @@ module RssReader =
         SourceMap =
           rr
           |> sourceMap
-          |> tap (fun m -> m.Add(source.Url, source))
+          |> Map.add source.Url source
     }
 
   let removeSource url rr =
@@ -48,7 +48,7 @@ module RssReader =
 
   let readItem item rr =
     let sourceMap' =
-      match (rr |> sourceMap).TryGetValue(item.Url) |> Option.ofTrial with
+      match rr |> sourceMap |> Map.tryFind item.Url with
       | None -> rr |> sourceMap
       | Some src ->
         let src =
@@ -56,13 +56,13 @@ module RssReader =
         in
           rr
           |> sourceMap
-          |> tap (fun m -> m.[item.Url] <- src)
+          |> Map.add item.Url src
     let unreadFeeds' =
       rr.UnreadFeeds
-      |> tap (fun uf -> uf.Remove(item) |> ignore)
+      |> Set.remove item
     let readFeeds' =
       rr.ReadFeeds
-      |> tap (fun rf -> rf.Add(item) |> ignore)
+      |> Set.add item
     in
       {
         SourceMap       = sourceMap'
@@ -86,14 +86,13 @@ module RssReader =
       let newItems =
         items
         |> Array.filter (fun item ->
-            rr.ReadFeeds.Contains(item) |> not
+            rr.ReadFeeds |> Set.contains item |> not
             )
       return newItems
     }
 
   let tryFindSource url rr =
-    (rr |> sourceMap).TryGetValue(url)
-    |> Option.ofTrial
+    rr |> sourceMap |> Map.tryFind url
 
   let sourceName url rr =
     let name =
