@@ -4,110 +4,105 @@ open System
 open System.Collections.Generic
 
 module RssReader =
-  let mutable observerId = 0
-
-  let private newObserverId () =
-    observerId
-    |> tap (fun obsId ->
-        observerId <- observerId + 1
-        )
-        
-  [<CompiledName("Create")>]
   let create(sources: RssSource []) =
     {
       SourceMap =
         sources
-        |> Array.map (fun src -> (src.Uri, src))
-        |> Dictionary.ofSeq
-      Subscriptions =
-        Map.empty
+        |> Array.map (fun src -> (src.Url, src))
+        |> Map.ofSeq
+      ReadFeeds =
+        Set.empty
+      UnreadFeeds =
+        Set.empty
     }
 
   let internal sourceMap (rr: RssReader) =
     rr.SourceMap
 
-  let internal subscriptions (rr: RssReader) =
-    rr.Subscriptions
-    
-  [<CompiledName("Sources")>]
+  let unreadFeeds (rr: RssReader) =
+    rr.UnreadFeeds
+
+  let readFeeds (rr: RssReader) =
+    rr.ReadFeeds
+
   let sources rr =
     rr.SourceMap
-    |> Dictionary.toArray
+    |> Map.toArray
     |> Array.map snd
 
-  [<CompiledName("Subscribe")>]
-  let subscribe obs rr =
-    let obsId = newObserverId () |> ObserverId
-    in
-      { rr with
-          Subscriptions = rr |> subscriptions |> Map.add obsId obs
-      }
-
-  [<CompiledName("Unsubscribe")>]
-  let unsubscribe obsId rr =
-    { rr with
-        Subscriptions = rr |> subscriptions |> Map.remove obsId
-        }
-
-  [<CompiledName("Add")>]
-  let add (source: RssSource) rr =
+  let addSource (source: RssSource) rr =
     { rr with
         SourceMap =
           rr
           |> sourceMap
-          |> tap (fun m -> m.Add(source.Uri, source))
+          |> Map.add source.Url source
     }
 
-  [<CompiledName("Remove")>]
-  let remove uri rr =
+  let removeSource url rr =
     { rr with
         SourceMap =
           rr
           |> sourceMap
-          |> tap (fun s -> s.Remove(uri) |> ignore)
+          |> tap (fun s -> s.Remove(url) |> ignore)
     }
 
-  [<CompiledName("NewItems")>]
-  let private newItems items rr =
-    for KeyValue (_, obs) in rr |> subscriptions do
-      obs.OnNewItems(items)
+  let addUnreadItems items rr =
+    { rr with
+        UnreadFeeds = rr.UnreadFeeds + (items |> Set.ofSeq)
+    }
 
-  [<CompiledName("ReadItem")>]
-  let readItem item now rr =
+  let readItem item rr =
     let sourceMap' =
-      match (rr |> sourceMap).TryGetValue(item.Uri) |> Option.ofTrial with
+      match rr |> sourceMap |> Map.tryFind item.Url with
       | None -> rr |> sourceMap
       | Some src ->
         let src =
-          { src with LastUpdate = max (src.LastUpdate) now }
+          { src with LastUpdate = max (src.LastUpdate) (item.Date) }
         in
           rr
           |> sourceMap
-          |> tap (fun m -> m.[item.Uri] <- src)
+          |> Map.add item.Url src
+    let unreadFeeds' =
+      rr.UnreadFeeds
+      |> Set.remove item
+    let readFeeds' =
+      rr.ReadFeeds
+      |> Set.add item
     in
-      { rr with
-          SourceMap = sourceMap'
+      {
+        SourceMap       = sourceMap'
+        ReadFeeds       = readFeeds'
+        UnreadFeeds     = unreadFeeds'
       }
 
-  let updateAllAsync rr =
+  let updateAsync pred rr =
     async {
-      let! itemsList =
+      let! items =
         rr
         |> sources
+        |> Array.filter pred
         |> Array.map (Rss.updateRssAsync)
         |> Async.Parallel
-      return
-        itemsList
+      let items =
+        items
         |> Seq.collect id
         |> Seq.toArray
-        |> flip newItems rr
+        |> Array.sortBy (fun item -> item.Date)
+      let newItems =
+        items
+        |> Array.filter (fun item ->
+            rr.ReadFeeds |> Set.contains item |> not
+            )
+      return newItems
     }
 
-  [<CompiledName("UpdateAll")>]
-  let updateAll rr =
-    rr |> updateAllAsync |> Async.StartAsTask
+  let tryFindSource url rr =
+    rr |> sourceMap |> Map.tryFind url
 
-  [<CompiledName("TryFindSource")>]
-  let tryFindSource uri rr =
-    (rr |> sourceMap).TryGetValue(uri)
-    |> Option.ofTrial
+  let sourceName url rr =
+    let name =
+      match rr |> tryFindSource url with
+      | Some { Name = name } -> name + " "
+      | None -> ""
+    in
+      sprintf "%s<%s>" name (url |> string)

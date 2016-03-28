@@ -1,7 +1,6 @@
 ﻿namespace RssReaderFs
 
 open System
-open System.Collections.Generic
 open System.Runtime.Serialization
 
 [<AutoOpen>]
@@ -11,8 +10,8 @@ module Domain =
       [<field: DataMember(Name = "name")>]
       Name: string
 
-      [<field: DataMember(Name = "uri")>]
-      Uri: Uri
+      [<field: DataMember(Name = "url")>]
+      Url: Url
       
       [<field: DataMember(Name = "lastUpdate")>]
       LastUpdate: DateTime
@@ -26,17 +25,12 @@ module Domain =
       Desc: string option
       Link: string option
       Date: DateTime
-      Uri: Uri
+      Url: Url
     }
-
-  type ObserverId =
-    | ObserverId of int
-
-  type RssSubscriber =
-    abstract member OnNewItems: RssItem [] -> unit
 
   type RssReader =
     {
-      SourceMap     : Dictionary<Uri, RssSource>
-      Subscriptions : Map<ObserverId, RssSubscriber>
+      SourceMap     : Map<Url, RssSource>
+      ReadFeeds     : Set<RssItem>
+      UnreadFeeds   : Set<RssItem>
     }
