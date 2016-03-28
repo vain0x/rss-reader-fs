@@ -52,11 +52,12 @@ module RssReader =
           SourceMap = sourceMap'
       }
 
-  let updateAllAsync rr =
+  let updateAsync pred rr =
     async {
       let! itemsList =
         rr
         |> sources
+        |> Array.filter pred
         |> Array.map (Rss.updateRssAsync)
         |> Async.Parallel
       return

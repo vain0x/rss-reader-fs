@@ -50,11 +50,14 @@ type RssClient private (path: string) =
     reader <- reader |> RssReader.readItem item
     feeds  <- feeds |> Map.remove (proj item)
 
-  member this.UpdateAllAsync =
+  member this.UpdateAsync(pred) =
     async {
-      let! items = reader |> RssReader.updateAllAsync
+      let! items = reader |> RssReader.updateAsync pred
       do procNewFeeds items
     }
+
+  member this.UpdateAllAsync =
+    this.UpdateAsync (fun _ -> true)
 
   static member Create(path) =
     new RssClient(path)
