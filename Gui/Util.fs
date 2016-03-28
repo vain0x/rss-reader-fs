@@ -2,6 +2,7 @@
 
 open System
 open System.Drawing
+open System.Windows.Forms
 
 [<AutoOpen>]
 module Misc =

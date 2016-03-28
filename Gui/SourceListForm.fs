@@ -102,10 +102,11 @@ type SourceListForm (rc: RssClient) as this =
         // Add columns
 
         let columns =
-          [|
-            "Name"
-            "Uri"
-          |]
+          ({
+            Name      = "Name"
+            Uri       = "Uri"
+          }: SourceListviewColumns<_, _>)
+          |> SourceListviewColumns.toArray
           |> Array.map (fun text -> new ColumnHeader(Text = text))
         do listView.Columns.AddRange(columns)
 
@@ -117,6 +118,14 @@ type SourceListForm (rc: RssClient) as this =
             listView.Items.AddRange(lvItems)
             )
         )
+
+  let subitems (item: ListViewItem) =
+    let sis = item.SubItems
+    let () = assert (sis.Count >= 2)
+    in
+      [ for i in 0..(sis.Count - 1) -> sis.[i] ]
+      |> SourceListviewColumns.ofSeq
+      |> Option.get  // use assumption
 
   let addButton =
     new Button
@@ -159,7 +168,8 @@ type SourceListForm (rc: RssClient) as this =
       let selectedItems = listView.SelectedItems
       for i in 0..(selectedItems.Count - 1) do
         let lvItem = selectedItems.Item(i)
-        let uri = Uri(lvItem.SubItems.Item(1).Text)
+        let columns = lvItem |> subitems
+        let uri = Uri(columns.Uri.Text)
         do rc.Remove(uri)
       )
 

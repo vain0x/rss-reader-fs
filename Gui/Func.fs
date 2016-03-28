@@ -19,3 +19,19 @@ module MainListviewColumns =
           Source      = source
         } |> Some
     | _ -> None
+
+module SourceListviewColumns =
+  let toArray (self: SourceListviewColumns<_, _>) =
+    [|
+      self.Name
+      self.Uri
+    |]
+
+  let ofSeq s =
+    match s |> Seq.toList with
+    | name :: uri :: _ ->
+        {
+          Name        = name
+          Uri         = uri
+        } |> Some
+    | _ -> None

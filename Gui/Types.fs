@@ -21,3 +21,9 @@ module Types =
       Date        : 'Date
       Source      : 'Source
     }
+
+  type SourceListviewColumns<'Name, 'Uri> =
+    {
+      Name        : 'Name
+      Uri         : 'Uri
+    }
