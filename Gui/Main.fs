@@ -132,7 +132,7 @@ type Main () as this =
             item.Title
             ""    // unchecked
             item.Date.ToString("G")
-            reader () |> RssReader.sourceName (item.Uri)
+            reader () |> RssReader.sourceName (item.Url)
           |]
           |> Array.map (fun text ->
               ListViewItem.ListViewSubItem(Text = text)
@@ -158,21 +158,14 @@ type Main () as this =
     titleLabel.Text     <- item.Title
     textBox.Text        <- item.Desc |> Option.getOr "(no_description)"
     linkLabel.Text      <- item.Link |> Option.getOr "(no_link)"
-    sourceLabel.Text    <- reader () |> RssReader.sourceName (item.Uri)
+    sourceLabel.Text    <- reader () |> RssReader.sourceName (item.Url)
 
   let readFeed item =
     do rc.ReadItem(item)
     do showFeed item
 
-  let observer =
-    { new RssSubscriber with
-        member this.OnNewItems(items: RssItem []) =
-          addNewFeeds items
-          }
-
   let checkUpdate () =
-    reader ()
-    |> RssReader.updateAllAsync
+    rc.UpdateAllAsync
     |> Async.RunSynchronously
 
   let updateTimer =
@@ -220,8 +213,13 @@ type Main () as this =
     listView.ItemSelectionChanged.Add (fun e ->
       let columns = e.Item |> subitems
       let title = columns.Title.Text
-      do feeds () |> Map.tryFind title |> Option.iter (readFeed)
-      do columns.Read.Text <- "✓"
+      do
+        feeds ()
+        |> Seq.tryFind (fun item -> item.Title = title)
+        |> Option.iter (fun item ->
+            readFeed item
+            columns.Read.Text <- "✓"
+            )
       )
 
     sourceListButton.Click.Add (fun e ->
@@ -244,6 +242,6 @@ type Main () as this =
 
   // Init reader
   do
-    rc.Subscribe(observer)
+    rc.Subscribe(addNewFeeds) |> ignore
     checkUpdate ()
     updateTimer.Start()

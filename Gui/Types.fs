@@ -22,8 +22,8 @@ module Types =
       Source      : 'Source
     }
 
-  type SourceListviewColumns<'Name, 'Uri> =
+  type SourceListviewColumns<'Name, 'Url> =
     {
       Name        : 'Name
-      Uri         : 'Uri
+      Url         : 'Url
     }

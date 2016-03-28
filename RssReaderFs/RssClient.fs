@@ -8,52 +8,43 @@ type RssClient private (path: string) =
     | Some sources -> RssReader.create(sources)
     | None -> failwithf "Invalid sources: %s" path
 
-  let mutable feeds =
-    (Map.empty: Map<string, RssItem>)
-
   let proj (item: RssItem) =
     item.Title
 
-  let procNewFeeds (items: RssItem []) =
-    items
-    |> Array.filter (fun item ->  // 取得済みのフィードを取り除く
-        feeds |> Map.containsKey (proj item) |> not
-        )
-    |> tap (fun items ->  // 新フィードを保存する
-        feeds <-
-          items
-          |> Array.fold (fun feeds item ->
-              feeds |> Map.add (item.Title) item
-              ) feeds
-        )
+  let newFeedsEvent =
+    Observable.Source<RssItem []>()
 
   member this.Reader = reader
 
-  member this.Feeds = feeds
+  member this.Feeds =
+    ( (reader |> RssReader.unreadFeeds)
+    + (reader |> RssReader.readFeeds)
+    )
 
-  member this.Add(src) =
-    reader <- reader |> RssReader.add src
+  member this.AddSource(src) =
+    reader <- reader |> RssReader.addSource src
 
-  member this.Remove(uri) =
-    reader <- reader |> RssReader.remove uri
+  member this.RemoveSource(url) =
+    reader <- reader |> RssReader.removeSource url
 
-  member this.Subscribe(obs: RssSubscriber) =
-    let myObs =
-      { new RssSubscriber with
-          member this.OnNewItems(items) =
-            let body () =
-              let items = procNewFeeds items
-              do obs.OnNewItems(items)
-            in
-              lock this body
-      }
-    reader <- reader |> RssReader.subscribe myObs
-
-  member this.Unsubscribe(obsId) =
-    reader <- reader |> RssReader.unsubscribe obsId
+  member this.Subscribe(obs) =
+    newFeedsEvent.AsObservable |> Observable.subscribe obs
 
   member this.ReadItem(item) =
     reader <- reader |> RssReader.readItem item
+
+  member this.UpdateAsync(pred) =
+    async {
+      let! items = reader |> RssReader.updateAsync pred
+
+      do reader <- reader |> RssReader.addUnreadItems items
+
+      // 新フィード受信の通知を出す
+      do newFeedsEvent.Next(items)
+    }
+
+  member this.UpdateAllAsync =
+    this.UpdateAsync (fun _ -> true)
 
   static member Create(path) =
     new RssClient(path)

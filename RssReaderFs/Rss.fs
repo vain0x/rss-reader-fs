@@ -4,7 +4,7 @@ open System
 open System.Xml
 
 module Rss =
-  let parseRss uri (xml: XmlDocument) =
+  let parseRss url (xml: XmlDocument) =
     let getTextElem xpath =
         Xml.selectSingleNode xpath
         >> Option.map (Xml.innerText)
@@ -24,7 +24,7 @@ module Rss =
                 Desc  = at "description"
                 Link  = at "link"
                 Date  = date
-                Uri   = uri
+                Url   = url
               } |> Some
           | _ -> None
     in
@@ -34,9 +34,9 @@ module Rss =
 
   let downloadRssAsync (source: RssSource) =
     async {
-      let uri = source.Uri
-      let! xml = Net.downloadXmlAsync(uri)
-      return (xml |> parseRss uri)
+      let url = source.Url
+      let! xml = Net.downloadXmlAsync(url)
+      return (xml |> parseRss url)
     }
 
   let updateRssAsync src =
@@ -50,7 +50,7 @@ module Rss =
   let sourceFromUrl name (url: string) =
     {
       Name        = name
-      Uri         = Uri(url)
+      Url         = Url.ofString (url)
       LastUpdate  = DateTime.MinValue
     }
     

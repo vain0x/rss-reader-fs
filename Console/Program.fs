@@ -4,42 +4,18 @@ open System.IO
 open System.Collections.Generic
 open RssReaderFs
 
-type Config (path) =
-  member this.LoadReader() =
-    let sources =
-      match Rss.Serialize.load path with
-      | Some r -> r
-      | None ->
-          eprintfn "Can't open file '%s'." path
-          [||]
-    in
-      RssReader.create(sources)
+type RssReaderConsole (rc: RssClient) =
+  let unreadItems () =
+    rc.Feeds
 
-  member this.SaveReader(r) =
-    Rss.Serialize.save path (r |> RssReader.sources)
-
-type RssReaderConsole (cfg: Config) =
-  let (* mutable *) unreadItems =
-    new HashSet<RssItem>()
-
-  let observer =
-    { new RssSubscriber with
-        member this.OnNewItems(items: RssItem []) =
-          for item in items do
-            unreadItems.Add(item) |> ignore
-          }
-
-  let mutable reader =
-    cfg.LoadReader()
-    |> RssReader.subscribe(observer)
-
-  member this.Save() =
-    cfg.SaveReader(reader)
+  let reader () =
+    rc.Reader
 
   member this.CheckUpdate() =
     async {
-      do! reader |> RssReader.updateAllAsync
-      let len = unreadItems.Count
+      do! rc.UpdateAllAsync
+      let feeds = unreadItems ()
+      let len = feeds |> Seq.length
       if len > 0 then
         do!
           Console.Out.WriteLineAsync(sprintf "New %d feeds!" len)
@@ -55,7 +31,7 @@ type RssReaderConsole (cfg: Config) =
       | Some h -> h + " "
       | None -> ""
     let src =
-      reader |> RssReader.tryFindSource(item.Uri)
+      reader () |> RssReader.tryFindSource(item.Url)
     do
       printfn "%s%s" header (item.Title)
       printfn "* Date: %s" (item.Date.ToString("G"))
@@ -65,16 +41,14 @@ type RssReaderConsole (cfg: Config) =
           )
       item.Desc |> Option.iter (printfn "* Desc:\r\n%s")
 
-      reader <- reader |> RssReader.readItem item
-      unreadItems.Remove(item) |> ignore
+      rc.ReadItem(item)
 
   member this.PrintTimeLine(newReader) =
     let body () =
-      reader <- newReader
-      let len = unreadItems.Count
-      unreadItems
-      |> Seq.toList  // unreadItems は可変なので Seq.iter だとダメ
-      |> List.iteri (fun i item ->
+      let feeds = unreadItems ()
+      let len = feeds |> Seq.length
+      feeds
+      |> Seq.iteri (fun i item ->
           if i > 0 then
             printfn "..."
             Console.ReadKey() |> ignore
@@ -132,30 +106,30 @@ type RssReaderConsole (cfg: Config) =
                   ()
 
           | "src" :: _ ->
-              reader
+              reader ()
               |> RssReader.sources
               |> Array.iteri (fun i src ->
                   printfn "#%d: %s <%s>"
-                    i (src.Name) (src.Uri |> string)
+                    i (src.Name) (src.Url |> string)
                 )
 
           | "add" :: name :: url :: _ ->
               let source = Rss.sourceFromUrl name url
               in
                 lock reader (fun () ->
-                  reader <- reader |> RssReader.add(source)
+                  rc.AddSource(source)
                   )
 
           | "remove" :: url :: _ ->
-              let uri = Uri(url)
+              let url = Url.ofString url
               let body () =
-                reader
-                |> RssReader.tryFindSource(uri)
+                reader ()
+                |> RssReader.tryFindSource(url)
                 |> Option.iter (fun src ->
-                    reader <- reader |> RssReader.remove(uri)
+                    rc.RemoveSource(url)
                     printfn "'%s <%s>' has been removed."
                       (src.Name)
-                      (src.Uri |> string)
+                      (src.Url |> Url.toString)
                     )
               in
                 lock reader body
@@ -168,8 +142,8 @@ type RssReaderConsole (cfg: Config) =
 
 [<EntryPoint>]
 let main argv =
-  let cfg = Config(@"feeds.json")
-  let rrc = RssReaderConsole(cfg)
+  let rc = RssClient.Create(@"feeds.json")
+  let rrc = RssReaderConsole(rc)
 
   try
     rrc.CheckNewFeedsAsync()
@@ -178,7 +152,7 @@ let main argv =
     rrc.Interactive()
     |> Async.RunSynchronously
   finally
-    rrc.Save()
+    rc.Save()
 
   // exit code
   0
