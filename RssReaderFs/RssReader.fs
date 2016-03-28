@@ -13,7 +13,6 @@ module RssReader =
         )
     |> ObserverId
 
-  [<CompiledName("Create")>]
   let create(sources: RssSource []) =
     {
       SourceMap =
@@ -30,13 +29,11 @@ module RssReader =
   let internal subscriptions (rr: RssReader) =
     rr.Subscriptions
     
-  [<CompiledName("Sources")>]
   let sources rr =
     rr.SourceMap
     |> Dictionary.toArray
     |> Array.map snd
 
-  [<CompiledName("Subscribe")>]
   let subscribe obs rr =
     let obsId = newObserverId ()
     in
@@ -44,13 +41,11 @@ module RssReader =
           Subscriptions = rr |> subscriptions |> Map.add obsId obs
       }
 
-  [<CompiledName("Unsubscribe")>]
   let unsubscribe obsId rr =
     { rr with
         Subscriptions = rr |> subscriptions |> Map.remove obsId
         }
 
-  [<CompiledName("Add")>]
   let add (source: RssSource) rr =
     { rr with
         SourceMap =
@@ -59,7 +54,6 @@ module RssReader =
           |> tap (fun m -> m.Add(source.Uri, source))
     }
 
-  [<CompiledName("Remove")>]
   let remove uri rr =
     { rr with
         SourceMap =
@@ -68,12 +62,10 @@ module RssReader =
           |> tap (fun s -> s.Remove(uri) |> ignore)
     }
 
-  [<CompiledName("NewItems")>]
   let private newItems items rr =
     for KeyValue (_, obs) in rr |> subscriptions do
       obs.OnNewItems(items)
 
-  [<CompiledName("ReadItem")>]
   let readItem item rr =
     let sourceMap' =
       match (rr |> sourceMap).TryGetValue(item.Uri) |> Option.ofTrial with
@@ -105,16 +97,13 @@ module RssReader =
         |> flip newItems rr
     }
 
-  [<CompiledName("UpdateAll")>]
   let updateAll rr =
     rr |> updateAllAsync |> Async.StartAsTask
 
-  [<CompiledName("TryFindSource")>]
   let tryFindSource uri rr =
     (rr |> sourceMap).TryGetValue(uri)
     |> Option.ofTrial
 
-  [<CompiledName("SourceName")>]
   let sourceName uri rr =
     let name =
       match rr |> tryFindSource uri with
