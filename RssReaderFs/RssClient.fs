@@ -54,6 +54,7 @@ type RssClient private (path: string) =
 
   member this.ReadItem(item) =
     reader <- reader |> RssReader.readItem item
+    feeds  <- feeds |> Map.remove (proj item)
 
   static member Create(path) =
     new RssClient(path)
