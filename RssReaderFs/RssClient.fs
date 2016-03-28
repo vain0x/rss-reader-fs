@@ -16,7 +16,10 @@ type RssClient private (path: string) =
 
   member this.Reader = reader
 
-  member this.Feeds = reader |> RssReader.unreadFeeds
+  member this.Feeds =
+    ( (reader |> RssReader.unreadFeeds)
+    + (reader |> RssReader.readFeeds)
+    )
 
   member this.AddSource(src) =
     reader <- reader |> RssReader.addSource src

@@ -216,8 +216,10 @@ type Main () as this =
       do
         feeds ()
         |> Seq.tryFind (fun item -> item.Title = title)
-        |> Option.iter (readFeed)
-      do columns.Read.Text <- "✓"
+        |> Option.iter (fun item ->
+            readFeed item
+            columns.Read.Text <- "✓"
+            )
       )
 
     sourceListButton.Click.Add (fun e ->
