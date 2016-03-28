@@ -164,15 +164,8 @@ type Main () as this =
     do rc.ReadItem(item)
     do showFeed item
 
-  let observer =
-    { new RssSubscriber with
-        member this.OnNewItems(items: RssItem []) =
-          addNewFeeds items
-          }
-
   let checkUpdate () =
-    reader ()
-    |> RssReader.updateAllAsync
+    rc.UpdateAllAsync
     |> Async.RunSynchronously
 
   let updateTimer =
@@ -244,6 +237,6 @@ type Main () as this =
 
   // Init reader
   do
-    rc.Subscribe(observer)
+    rc.Subscribe(addNewFeeds) |> ignore
     checkUpdate ()
     updateTimer.Start()

@@ -14,6 +14,9 @@ type RssClient private (path: string) =
   let proj (item: RssItem) =
     item.Title
 
+  let newFeedsEvent =
+    Observable.Source<RssItem []>()
+
   let procNewFeeds (items: RssItem []) =
     items
     |> Array.filter (fun item ->  // 取得済みのフィードを取り除く
@@ -26,6 +29,9 @@ type RssClient private (path: string) =
               feeds |> Map.add (item.Title) item
               ) feeds
         )
+    |> (fun items ->
+        newFeedsEvent.Next(items)
+        )
 
   member this.Reader = reader
 
@@ -37,24 +43,18 @@ type RssClient private (path: string) =
   member this.Remove(uri) =
     reader <- reader |> RssReader.remove uri
 
-  member this.Subscribe(obs: RssSubscriber) =
-    let myObs =
-      { new RssSubscriber with
-          member this.OnNewItems(items) =
-            let body () =
-              let items = procNewFeeds items
-              do obs.OnNewItems(items)
-            in
-              lock this body
-      }
-    reader <- reader |> RssReader.subscribe myObs
-
-  member this.Unsubscribe(obsId) =
-    reader <- reader |> RssReader.unsubscribe obsId
+  member this.Subscribe(obs) =
+    newFeedsEvent.AsObservable |> Observable.subscribe obs
 
   member this.ReadItem(item) =
     reader <- reader |> RssReader.readItem item
     feeds  <- feeds |> Map.remove (proj item)
+
+  member this.UpdateAllAsync =
+    async {
+      let! items = reader |> RssReader.updateAllAsync
+      do procNewFeeds items
+    }
 
   static member Create(path) =
     new RssClient(path)

@@ -29,15 +29,7 @@ module Domain =
       Uri: Uri
     }
 
-  type ObserverId =
-    internal
-    | ObserverId of int
-
-  type RssSubscriber =
-    abstract member OnNewItems: RssItem [] -> unit
-
   type RssReader =
     {
       SourceMap     : Dictionary<Uri, RssSource>
-      Subscriptions : Map<ObserverId, RssSubscriber>
     }
