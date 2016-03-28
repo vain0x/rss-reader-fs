@@ -46,6 +46,11 @@ module RssReader =
           |> tap (fun s -> s.Remove(url) |> ignore)
     }
 
+  let addUnreadItems items rr =
+    { rr with
+        UnreadFeeds = rr.UnreadFeeds + (items |> Set.ofSeq)
+    }
+
   let readItem item rr =
     let sourceMap' =
       match rr |> sourceMap |> Map.tryFind item.Url with

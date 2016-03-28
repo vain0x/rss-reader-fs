@@ -34,6 +34,8 @@ type RssClient private (path: string) =
     async {
       let! items = reader |> RssReader.updateAsync pred
 
+      do reader <- reader |> RssReader.addUnreadItems items
+
       // 新フィード受信の通知を出す
       do newFeedsEvent.Next(items)
     }
