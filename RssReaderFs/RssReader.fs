@@ -10,10 +10,20 @@ module RssReader =
         sources
         |> Array.map (fun src -> (src.Uri, src))
         |> Dictionary.ofSeq
+      ReadFeeds =
+        HashSet<_>()
+      UnreadFeeds =
+        HashSet<_>()
     }
 
   let internal sourceMap (rr: RssReader) =
     rr.SourceMap
+
+  let unreadFeeds (rr: RssReader) =
+    (rr.UnreadFeeds :> seq<RssItem>)
+
+  let readFeeds (rr: RssReader) =
+    (rr.ReadFeeds :> seq<RssItem>)
 
   let sources rr =
     rr.SourceMap
@@ -47,24 +57,38 @@ module RssReader =
           rr
           |> sourceMap
           |> tap (fun m -> m.[item.Uri] <- src)
+    let unreadFeeds' =
+      rr.UnreadFeeds
+      |> tap (fun uf -> uf.Remove(item) |> ignore)
+    let readFeeds' =
+      rr.ReadFeeds
+      |> tap (fun rf -> rf.Add(item) |> ignore)
     in
-      { rr with
-          SourceMap = sourceMap'
+      {
+        SourceMap       = sourceMap'
+        ReadFeeds       = readFeeds'
+        UnreadFeeds     = unreadFeeds'
       }
 
   let updateAsync pred rr =
     async {
-      let! itemsList =
+      let! items =
         rr
         |> sources
         |> Array.filter pred
         |> Array.map (Rss.updateRssAsync)
         |> Async.Parallel
-      return
-        itemsList
+      let items =
+        items
         |> Seq.collect id
         |> Seq.toArray
         |> Array.sortBy (fun item -> item.Date)
+      let newItems =
+        items
+        |> Array.filter (fun item ->
+            rr.ReadFeeds.Contains(item) |> not
+            )
+      return newItems
     }
 
   let tryFindSource uri rr =

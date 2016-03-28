@@ -32,4 +32,6 @@ module Domain =
   type RssReader =
     {
       SourceMap     : Dictionary<Uri, RssSource>
+      ReadFeeds     : HashSet<RssItem>
+      UnreadFeeds   : HashSet<RssItem>
     }

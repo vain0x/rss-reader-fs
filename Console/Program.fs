@@ -15,7 +15,7 @@ type RssReaderConsole (rc: RssClient) =
     async {
       do! rc.UpdateAllAsync
       let feeds = unreadItems ()
-      let len = feeds.Count
+      let len = feeds |> Seq.length
       if len > 0 then
         do!
           Console.Out.WriteLineAsync(sprintf "New %d feeds!" len)
@@ -46,9 +46,9 @@ type RssReaderConsole (rc: RssClient) =
   member this.PrintTimeLine(newReader) =
     let body () =
       let feeds = unreadItems ()
-      let len = feeds.Count
+      let len = feeds |> Seq.length
       feeds
-      |> Seq.iteri (fun i (KeyValue (_, item)) ->
+      |> Seq.iteri (fun i item ->
           if i > 0 then
             printfn "..."
             Console.ReadKey() |> ignore

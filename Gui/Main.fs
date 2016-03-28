@@ -213,7 +213,10 @@ type Main () as this =
     listView.ItemSelectionChanged.Add (fun e ->
       let columns = e.Item |> subitems
       let title = columns.Title.Text
-      do feeds () |> Map.tryFind title |> Option.iter (readFeed)
+      do
+        feeds ()
+        |> Seq.tryFind (fun item -> item.Title = title)
+        |> Option.iter (readFeed)
       do columns.Read.Text <- "✓"
       )
 
