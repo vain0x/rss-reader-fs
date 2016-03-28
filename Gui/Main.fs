@@ -29,17 +29,27 @@ type Main () as this =
     // Add columns
     |> tap (fun listView ->
         let columns =
-          [|
-            "Title"
-            "✓"
-            "Date"
-            "Source"
-          |]
+          {
+            Title     = "Title"
+            Read      = "✓"
+            Date      = "Date"
+            Source    = "Source"
+          }
+          |> MainListviewColumns.toArray
           |> Array.map (fun text ->
               new ColumnHeader(Text = text)
               )
         do listView.Columns.AddRange(columns)
         )
+
+  let subitems (item: ListViewItem) =
+    let sis = item.SubItems
+    let () =
+      assert (sis.Count >= 4)
+    in
+      [ for i in 0..(sis.Count - 1) -> sis.[i] ]
+      |> MainListviewColumns.ofSeq
+      |> Option.get  // use assumption
 
   let titleLabel =
     new Label
@@ -206,9 +216,10 @@ type Main () as this =
   // Add handlers
   do
     listView.ItemSelectionChanged.Add (fun e ->
-      let title = e.Item.SubItems.Item(0).Text
+      let columns = e.Item |> subitems
+      let title = columns.Title.Text
       do feeds () |> Map.tryFind title |> Option.iter (readFeed)
-      do e.Item.SubItems.Item(1).Text <- "✓"
+      do columns.Read.Text <- "✓"
       )
 
     sourceListButton.Click.Add (fun e ->

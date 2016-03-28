@@ -48,6 +48,7 @@
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Util.fs" />
     <Compile Include="Types.fs" />
+    <Compile Include="Func.fs" />
     <Compile Include="SourceListForm.fs" />
     <Compile Include="Main.fs" />
     <Compile Include="Program.fs" />

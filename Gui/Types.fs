@@ -13,3 +13,11 @@ module Types =
       Size                    : Size
       ListViewColumnWidths    : int []
     }
+
+  type MainListviewColumns<'Title, 'Read, 'Date, 'Source> =
+    {
+      Title       : 'Title
+      Read        : 'Read
+      Date        : 'Date
+      Source      : 'Source
+    }
