@@ -17,22 +17,6 @@ type RssClient private (path: string) =
   let newFeedsEvent =
     Observable.Source<RssItem []>()
 
-  let procNewFeeds (items: RssItem []) =
-    items
-    |> Array.filter (fun item ->  // 取得済みのフィードを取り除く
-        feeds |> Map.containsKey (proj item) |> not
-        )
-    |> tap (fun items ->  // 新フィードを保存する
-        feeds <-
-          items
-          |> Array.fold (fun feeds item ->
-              feeds |> Map.add (item.Title) item
-              ) feeds
-        )
-    |> (fun items ->
-        newFeedsEvent.Next(items)
-        )
-
   member this.Reader = reader
 
   member this.Feeds = feeds
@@ -53,7 +37,23 @@ type RssClient private (path: string) =
   member this.UpdateAsync(pred) =
     async {
       let! items = reader |> RssReader.updateAsync pred
-      do procNewFeeds items
+
+      // 取得済みのフィードを取り除いたもの
+      let items =
+        items |> Array.filter (fun item ->
+          feeds |> Map.containsKey (proj item) |> not
+          )
+
+      // 新フィードを保存する
+      let feeds' =
+        items |> Array.fold (fun feeds item ->
+          feeds |> Map.add (item.Title) item
+          ) feeds
+
+      do feeds <- feeds'
+
+      // 新フィード受信の通知を出す
+      do newFeedsEvent.Next(items)
     }
 
   member this.UpdateAllAsync =
