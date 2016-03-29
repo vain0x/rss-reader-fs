@@ -106,6 +106,9 @@ module RssReader =
       return (rr, unreadItems)
     }
 
+  let updateAllAsync rr =
+    rr |> updateAsync (fun _ -> true)
+
   let tryFindSource url rr =
     rr |> sourceMap |> Map.tryFind url
 
