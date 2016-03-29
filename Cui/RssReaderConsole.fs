@@ -14,7 +14,7 @@ type RssReaderConsole (rc: RssClient) =
 
   member this.CheckUpdate() =
     async {
-      do! rc.UpdateAllAsync
+      do! rc.UpdateAllAsync |> Async.Ignore
       let feeds = feeds ()
       let len = feeds |> Seq.length
       if len > 0 then

@@ -41,6 +41,7 @@ type RssClient private (path: string) =
 
         // 新フィード受信の通知を出す
         do newFeedsEvent.Next(items)
+      return items
     }
 
   member this.UpdateAllAsync =
