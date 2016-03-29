@@ -100,3 +100,5 @@ type SourceListForm (rc: RssClient) as this =
       )
 
     base.Controls.AddRange(controls)
+
+    listView.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent)
