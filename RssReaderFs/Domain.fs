@@ -18,6 +18,7 @@ module Domain =
     {
       Name          : string
       Url           : Url
+      DoneSet       : Set<RssItem>
 
       // Category, UpdateSpan, etc.
     }
@@ -25,6 +26,5 @@ module Domain =
   type RssReader =
     {
       SourceMap     : Map<Url, RssSource>
-      ReadFeeds     : Set<RssItem>
       UnreadFeeds   : Set<RssItem>
     }

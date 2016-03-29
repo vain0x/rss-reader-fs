@@ -7,6 +7,7 @@ module RssSource =
     {
       Name        = name
       Url         = Url.ofString (url)
+      DoneSet     = Set.empty
     }
     
   let downloadAsync (source: RssSource) =
@@ -19,6 +20,11 @@ module RssSource =
   let updateAsync src =
     async {
       return! src |> downloadAsync
+    }
+
+  let addDoneItem item src =
+    { src with
+        DoneSet = src.DoneSet |> Set.add item
     }
 
   module Serialize =

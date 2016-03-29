@@ -10,8 +10,6 @@ module RssReader =
         sources
         |> Array.map (fun src -> (src.Url, src))
         |> Map.ofSeq
-      ReadFeeds =
-        Set.empty
       UnreadFeeds =
         Set.empty
     }
@@ -22,13 +20,16 @@ module RssReader =
   let unreadFeeds (rr: RssReader) =
     rr.UnreadFeeds
 
-  let readFeeds (rr: RssReader) =
-    rr.ReadFeeds
-
   let sources rr =
     rr.SourceMap
     |> Map.toArray
     |> Array.map snd
+
+  let readFeeds rr =
+    rr
+    |> sources
+    |> Array.map (fun src -> src.DoneSet)
+    |> Array.fold (+) Set.empty
 
   let addSource (source: RssSource) rr =
     { rr with
@@ -51,17 +52,22 @@ module RssReader =
         UnreadFeeds = rr.UnreadFeeds + (items |> Set.ofSeq)
     }
 
-  let readItem item rr =
+  let readItem (item: RssItem) rr =
+    let sourceMap' =
+      match rr |> sourceMap |> Map.tryFind (item.Url) with
+      | None -> rr |> sourceMap
+      | Some src ->
+          let src' =
+            { src with DoneSet = src.DoneSet |> Set.add item }
+          in
+            rr |> sourceMap |> Map.add (src.Url) src'
     let unreadFeeds' =
       rr.UnreadFeeds
       |> Set.remove item
-    let readFeeds' =
-      rr.ReadFeeds
-      |> Set.add item
     in
       { rr with
-          ReadFeeds       = readFeeds'
-          UnreadFeeds     = unreadFeeds'
+          SourceMap   = sourceMap'
+          UnreadFeeds = unreadFeeds'
       }
 
   let updateAsync pred rr =
@@ -80,7 +86,7 @@ module RssReader =
       let newItems =
         items
         |> Array.filter (fun item ->
-            rr.ReadFeeds |> Set.contains item |> not
+            rr |> readFeeds |> Set.contains item |> not
             )
       return newItems
     }
