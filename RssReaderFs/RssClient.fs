@@ -10,9 +10,6 @@ type RssClient private (path: string) =
     | Some rr -> rr
     | None -> failwithf "Invalid sources: %s" path
 
-  let proj (item: RssItem) =
-    item.Title
-
   member this.Reader = reader
 
   member this.AddSource(src) =
