@@ -7,13 +7,8 @@ open System.Runtime.Serialization
 module Domain =
   type RssSource =
     {
-      [<field: DataMember(Name = "name")>]
       Name: string
-
-      [<field: DataMember(Name = "url")>]
       Url: Url
-      
-      [<field: DataMember(Name = "lastUpdate")>]
       LastUpdate: DateTime
 
       // Category, UpdateSpan, etc.
