@@ -12,18 +12,14 @@ type RssReaderConsole (rc: RssClient) =
   let reader () =
     rc.Reader
 
-  member this.CheckUpdate() =
+  do rc.Subscribe (fun items ->
+      printfn "New %d feeds!" (items |> Array.length)
+      ) |> ignore
+
+  member this.TryUpdate() =
     async {
-      do! rc.UpdateAllAsync |> Async.Ignore
-      let feeds = feeds ()
-      let len = feeds |> Seq.length
-      if len > 0 then
-        do!
-          Console.Out.WriteLineAsync(sprintf "New %d feeds!" len)
-          |> Async.AwaitTaskVoid
-        return reader |> Some
-      else
-        return None
+      let! newItems = rc.UpdateAllAsync
+      return newItems |> Array.isEmpty |> not
     }
 
   member this.PrintItem(item, ?header) =
@@ -69,7 +65,7 @@ type RssReaderConsole (rc: RssClient) =
 
     let rec loop () =
       async {
-        let! _ = this.CheckUpdate()
+        let! _ = rc.UpdateAllAsync
         do! Async.Sleep(timeout)
         return! loop ()
       }
@@ -90,21 +86,16 @@ type RssReaderConsole (rc: RssClient) =
             |> Array.toList
           match command with
           | "up" :: _ | "update" :: _ ->
-              let! newReaderOpt = this.CheckUpdate()
-              match newReaderOpt with
-              | None ->
-                  printfn "No new feeds available."
-              | Some _ ->
-                  ()
+              let! success = this.TryUpdate()
+              if success |> not then
+                printfn "No new feeds available."
 
           | "show" :: _ ->
-              let! newReaderOpt = this.CheckUpdate()
-              match newReaderOpt with
-              | None ->
-                  printfn "No new feeds available."
-              | Some _ ->
-                  this.PrintTimeLine()
-                  ()
+              let! success = this.TryUpdate()
+              if success then
+                this.PrintTimeLine()
+              else
+                printfn "No new feeds available."
 
           | "src" :: _ ->
               reader ()
