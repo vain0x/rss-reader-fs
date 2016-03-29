@@ -66,8 +66,8 @@ module RssReader =
       |> Set.remove item
     in
       { rr with
-          SourceMap   = sourceMap'
-          UnreadFeeds = unreadFeeds'
+          SourceMap       = sourceMap'
+          UnreadFeeds     = unreadFeeds'
       }
 
   let updateAsync pred rr =

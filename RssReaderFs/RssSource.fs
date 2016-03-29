@@ -22,11 +22,6 @@ module RssSource =
       return! src |> downloadAsync
     }
 
-  let addDoneItem item src =
-    { src with
-        DoneSet = src.DoneSet |> Set.add item
-    }
-
   module Serialize =
     open System.IO
 
