@@ -39,7 +39,7 @@ type View (rc: RssClient) =
 
   member this.PrintTimeLine() =
     let body () =
-      let items = items ()
+      let items = rc.Reader.UnreadItems
       let len = items |> Seq.length
       items
       |> Seq.iteri (fun i item ->
