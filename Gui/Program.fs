@@ -8,5 +8,5 @@ module Program =
   let main argv =
     Application.EnableVisualStyles()
     Application.SetCompatibleTextRenderingDefault(false)
-    Application.Run(new Main())
+    Application.Run(new MainForm())
     0

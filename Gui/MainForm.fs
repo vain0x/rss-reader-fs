@@ -6,7 +6,7 @@ open System.IO
 open System.Windows.Forms
 open RssReaderFs
 
-type Main () as this =
+type MainForm () as this =
   inherit Form
     ( Text        = "RssReaderFs.Gui"
     , MinimumSize = Size(320, 240)
@@ -128,12 +128,13 @@ type Main () as this =
     [|
       for item in items do
         let subItems =
-          [|
-            item.Title
-            ""    // unchecked
-            item.Date.ToString("G")
-            reader () |> RssReader.sourceName (item.Url)
-          |]
+          {
+            Title     = item.Title
+            Read      = ""
+            Date      = item.Date.ToString("G")
+            Source    = reader () |> RssReader.sourceName (item.Url)
+          }
+          |> MainListviewColumns.toArray
           |> Array.map (fun text ->
               ListViewItem.ListViewSubItem(Text = text)
               )
