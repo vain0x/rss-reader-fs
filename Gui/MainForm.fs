@@ -15,9 +15,10 @@ type MainForm () as this =
   let pathState = @"RssReaderFsGuiMainFormState.json"
   let path = @"feeds.json"
 
-  let rc = RssClient.Create(path)
-  
-  let reader () = rc.Reader
+  let rr =
+    path
+    |> RssReader.Serialize.loadOrEmpty 
+    |> ref
 
   let listView =
     new ListView
@@ -121,7 +122,7 @@ type MainForm () as this =
 
   let showSourceListForm =
     Form.singletonSubform
-      (fun () -> new SourceListForm(rc))
+      (fun () -> new SourceListForm(rr))
 
   let listViewItemsFromNewItems (items: RssItem []) =
     [|
@@ -131,7 +132,7 @@ type MainForm () as this =
             Title     = item.Title
             Read      = ""
             Date      = item.Date.ToString("G")
-            Source    = reader () |> RssReader.sourceName (item.Url)
+            Source    = (! rr) |> RssReader.sourceName (item.Url)
           }
           |> MainListviewColumns.toArray
           |> Array.map (fun text ->
@@ -158,15 +159,16 @@ type MainForm () as this =
     titleLabel.Text     <- item.Title
     textBox.Text        <- item.Desc |> Option.getOr "(no_description)"
     linkLabel.Text      <- item.Link |> Option.getOr "(no_link)"
-    sourceLabel.Text    <- reader () |> RssReader.sourceName (item.Url)
+    sourceLabel.Text    <- (! rr) |> RssReader.sourceName (item.Url)
 
   let readItem item =
-    do rc.ReadItem(item)
+    do rr := (! rr) |> RssReader.readItem item
     do showItem item
 
   let checkUpdate () =
     async {
-      let! newItems = rc.UpdateAllAsync
+      let! (rr', newItems) = (! rr) |> RssReader.updateAllAsync
+      do rr := rr'
       do
         if newItems |> Array.isEmpty |> not then
           addNewItems newItems
@@ -219,7 +221,7 @@ type MainForm () as this =
       let columns = e.Item |> subitems
       let title = columns.Title.Text
       do
-        reader ()
+        (! rr)
         |> RssReader.unreadItems
         |> Seq.tryFind (fun item -> item.Title = title)
         |> Option.iter (fun item ->
@@ -235,7 +237,7 @@ type MainForm () as this =
     this.SizeChanged.Add (fun e -> resize ())
 
     this.FormClosed.Add (fun e ->
-      rc.Save()
+      (! rr) |> RssReader.Serialize.save path
       saveState()
       )
 

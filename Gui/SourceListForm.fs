@@ -5,7 +5,7 @@ open System.Drawing
 open System.Windows.Forms
 open RssReaderFs
 
-type SourceListForm (rc: RssClient) as this =
+type SourceListForm (rr: ref<RssReader>) as this =
   inherit Form
     ( Text    = "Sources - RssReaderFs.Gui"
     , Size    = Size(480, 360)
@@ -35,7 +35,7 @@ type SourceListForm (rc: RssClient) as this =
 
         // Add initial rows
 
-        rc.Reader |> RssReader.sources
+        (! rr) |> RssReader.sources
         |> Array.map lvItemFromRssSource
         |> (fun lvItems ->
             listView.Items.AddRange(lvItems)
@@ -79,7 +79,9 @@ type SourceListForm (rc: RssClient) as this =
         new SourceAddForm
           (fun src ->
             if src.Name <> "" then
-              rc.AddSource(src)
+              lock rr (fun () ->
+                rr := (! rr) |> RssReader.addSource src
+                )
 
             listView.Items.Add(lvItemFromRssSource src) |> ignore
             )
@@ -96,7 +98,9 @@ type SourceListForm (rc: RssClient) as this =
         let lvItem = selectedItems.Item(i)
         let columns = lvItem |> subitems
         let url = Url.ofString (columns.Url.Text)
-        do rc.RemoveSource(url)
+        do lock rr (fun () ->
+            rr := (! rr) |> RssReader.removeSource url
+            )
       )
 
     base.Controls.AddRange(controls)

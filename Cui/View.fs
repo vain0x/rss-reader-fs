@@ -5,10 +5,7 @@ open System.IO
 open System.Collections.Generic
 open RssReaderFs
 
-type View (rc: RssClient) =
-  let reader () =
-    rc.Reader
-
+type View(rr: ref<RssReader>) =
   member this.OnNewFeeds(items) =
     let body () =
       printfn "New %d items!" (items |> Array.length)
@@ -20,7 +17,7 @@ type View (rc: RssClient) =
       | Some h -> h + " "
       | None -> ""
     let src =
-      reader () |> RssReader.tryFindSource(item.Url)
+      (! rr) |> RssReader.tryFindSource(item.Url)
     let body () =
       printfn "%s%s" header (item.Title)
       printfn "* Date: %s" (item.Date.ToString("G"))
@@ -30,12 +27,12 @@ type View (rc: RssClient) =
           )
       item.Desc |> Option.iter (printfn "* Desc:\r\n%s")
 
-      rc.ReadItem(item)
+      rr := (! rr) |> RssReader.readItem item
     in lockConsole body
 
   member this.PrintTimeLine() =
     let body () =
-      let items = rc.Reader.UnreadItems
+      let items = (! rr) |> RssReader.unreadItems
       let len = items |> Seq.length
       items
       |> Seq.iteri (fun i item ->

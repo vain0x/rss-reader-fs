@@ -125,6 +125,11 @@ module RssReader =
       path
       |> RssSource.Serialize.load
       |> Option.map create
+
+    let loadOrEmpty path =
+      match load path with
+      | Some rr -> rr
+      | None -> create [||]
       
     let save path rr =
       rr

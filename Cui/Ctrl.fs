@@ -5,13 +5,20 @@ open System.IO
 open System.Collections.Generic
 open RssReaderFs
 
-type Ctrl (rc: RssClient) =
+type Ctrl (rr0: RssReader) =
+  let rr = ref rr0
+
   let view =
-    new View(rc)
+    new View(rr)
+
+  member this.Reader =
+    (! rr)
 
   member this.TryUpdate() =
     async {
-      let! newItems = rc.UpdateAllAsync
+      let! (rr', newItems) =
+        (! rr) |> RssReader.updateAllAsync
+      do rr := rr'
       do
         if newItems |> Array.isEmpty |> not then
           view.OnNewFeeds(newItems)
@@ -24,7 +31,7 @@ type Ctrl (rc: RssClient) =
 
     let rec loop () =
       async {
-        let! _ = rc.UpdateAllAsync
+        let! _ = this.TryUpdate()
         do! Async.Sleep(timeout)
         return! loop ()
       }
@@ -57,7 +64,7 @@ type Ctrl (rc: RssClient) =
 
           | "src" :: _ ->
               let body () =
-                rc.Reader
+                (! rr)
                 |> RssReader.sources
                 |> Array.iteri (fun i src ->
                     printfn "#%d: %s <%s>"
@@ -68,16 +75,16 @@ type Ctrl (rc: RssClient) =
           | "add" :: name :: url :: _ ->
               let source = RssSource.create name url
               let body () =
-                rc.AddSource(source)
+                rr := (! rr) |> RssReader.addSource source
               in lockConsole body
 
           | "remove" :: url :: _ ->
               let url = Url.ofString url
               let body () =
-                rc.Reader
+                (! rr)
                 |> RssReader.tryFindSource(url)
                 |> Option.iter (fun src ->
-                    rc.RemoveSource(url)
+                    rr := (! rr) |> RssReader.removeSource url
                     printfn "'%s <%s>' has been removed."
                       (src.Name)
                       (src.Url |> Url.toString)

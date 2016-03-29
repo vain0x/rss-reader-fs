@@ -6,8 +6,9 @@ open RssReaderFs
 module Program =
   [<EntryPoint>]
   let main argv =
-    let rc = RssClient.Create(@"feeds.json")
-    let rrc = Ctrl(rc)
+    let path = @"feeds.json"
+    let rr = RssReader.Serialize.loadOrEmpty path
+    let rrc = Ctrl(rr)
 
     try
       rrc.CheckNewItemsAsync()
@@ -16,7 +17,7 @@ module Program =
       rrc.Interactive()
       |> Async.RunSynchronously
     finally
-      rc.Save()
+      rrc.Reader |> RssReader.Serialize.save path
 
     // exit code
     0
