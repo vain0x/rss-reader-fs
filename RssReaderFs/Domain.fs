@@ -5,32 +5,26 @@ open System.Runtime.Serialization
 
 [<AutoOpen>]
 module Domain =
-  type RssSource =
-    {
-      [<field: DataMember(Name = "name")>]
-      Name: string
-
-      [<field: DataMember(Name = "url")>]
-      Url: Url
-      
-      [<field: DataMember(Name = "lastUpdate")>]
-      LastUpdate: DateTime
-
-      // Category, UpdateSpan, etc.
-    }
-
   type RssItem =
     {
-      Title: string
-      Desc: string option
-      Link: string option
-      Date: DateTime
-      Url: Url
+      Title         : string
+      Desc          : option<string>
+      Link          : option<string>
+      Date          : DateTime
+      Url           : Url
+    }
+
+  type RssSource =
+    {
+      Name          : string
+      Url           : Url
+      DoneSet       : Set<RssItem>
+
+      // Category, UpdateSpan, etc.
     }
 
   type RssReader =
     {
       SourceMap     : Map<Url, RssSource>
-      ReadFeeds     : Set<RssItem>
-      UnreadFeeds   : Set<RssItem>
+      UnreadItems   : Set<RssItem>
     }

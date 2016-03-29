@@ -6,7 +6,7 @@ open System.IO
 open System.Windows.Forms
 open RssReaderFs
 
-type Main () as this =
+type MainForm () as this =
   inherit Form
     ( Text        = "RssReaderFs.Gui"
     , MinimumSize = Size(320, 240)
@@ -18,7 +18,6 @@ type Main () as this =
   let rc = RssClient.Create(path)
   
   let reader () = rc.Reader
-  let feeds  () = rc.Feeds
 
   let listView =
     new ListView
@@ -124,24 +123,25 @@ type Main () as this =
     Form.singletonSubform
       (fun () -> new SourceListForm(rc))
 
-  let listViewItemsFromNewFeeds (items: RssItem []) =
+  let listViewItemsFromNewItems (items: RssItem []) =
     [|
       for item in items do
         let subItems =
-          [|
-            item.Title
-            ""    // unchecked
-            item.Date.ToString("G")
-            reader () |> RssReader.sourceName (item.Url)
-          |]
+          {
+            Title     = item.Title
+            Read      = ""
+            Date      = item.Date.ToString("G")
+            Source    = reader () |> RssReader.sourceName (item.Url)
+          }
+          |> MainListviewColumns.toArray
           |> Array.map (fun text ->
               ListViewItem.ListViewSubItem(Text = text)
               )
         yield ListViewItem(subItems, 0)
     |]
 
-  let addNewFeeds items =
-    let lvItems = listViewItemsFromNewFeeds items
+  let addNewItems items =
+    let lvItems = listViewItemsFromNewItems items
     let body () = listView.Items.AddRange(lvItems)
     do
       if listView.InvokeRequired
@@ -154,18 +154,23 @@ type Main () as this =
     linkLabel.Text      <- ""
     sourceLabel.Text    <- ""
 
-  let showFeed (item: RssItem) =
+  let showItem (item: RssItem) =
     titleLabel.Text     <- item.Title
     textBox.Text        <- item.Desc |> Option.getOr "(no_description)"
     linkLabel.Text      <- item.Link |> Option.getOr "(no_link)"
     sourceLabel.Text    <- reader () |> RssReader.sourceName (item.Url)
 
-  let readFeed item =
+  let readItem item =
     do rc.ReadItem(item)
-    do showFeed item
+    do showItem item
 
   let checkUpdate () =
-    rc.UpdateAllAsync
+    async {
+      let! newItems = rc.UpdateAllAsync
+      do
+        if newItems |> Array.isEmpty |> not then
+          addNewItems newItems
+    }
     |> Async.RunSynchronously
 
   let updateTimer =
@@ -214,10 +219,11 @@ type Main () as this =
       let columns = e.Item |> subitems
       let title = columns.Title.Text
       do
-        feeds ()
+        reader ()
+        |> RssReader.unreadItems
         |> Seq.tryFind (fun item -> item.Title = title)
         |> Option.iter (fun item ->
-            readFeed item
+            readItem item
             columns.Read.Text <- "✓"
             )
       )
@@ -242,6 +248,5 @@ type Main () as this =
 
   // Init reader
   do
-    rc.Subscribe(addNewFeeds) |> ignore
     checkUpdate ()
     updateTimer.Start()
