@@ -3,6 +3,12 @@
 open System
 
 module RssSource =
+  let create name (url: string) =
+    {
+      Name        = name
+      Url         = Url.ofString (url)
+    }
+    
   let downloadAsync (source: RssSource) =
     async {
       let url = source.Url
@@ -15,12 +21,6 @@ module RssSource =
       return! src |> downloadAsync
     }
 
-  let create name (url: string) =
-    {
-      Name        = name
-      Url         = Url.ofString (url)
-    }
-    
   module Serialize =
     open System.IO
 
