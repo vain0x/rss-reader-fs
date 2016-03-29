@@ -6,7 +6,7 @@ open System.IO
 open System.Windows.Forms
 open RssReaderFs
 
-type Main () as this =
+type MainForm () as this =
   inherit Form
     ( Text        = "RssReaderFs.Gui"
     , MinimumSize = Size(320, 240)

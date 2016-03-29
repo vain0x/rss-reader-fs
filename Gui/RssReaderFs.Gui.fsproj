@@ -51,7 +51,7 @@
     <Compile Include="Func.fs" />
     <Compile Include="SourceAddForm.fs" />
     <Compile Include="SourceListForm.fs" />
-    <Compile Include="Main.fs" />
+    <Compile Include="MainForm.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
