@@ -6,8 +6,8 @@ open System
 /// 純粋である RssReader に、自己更新、イベント生成、ファイルIOの機能を加えたもの。
 type RssClient private (path: string) =
   let mutable reader =
-    match path |> RssSource.Serialize.load with
-    | Some sources -> RssReader.create(sources)
+    match path |> RssReader.Serialize.load with
+    | Some rr -> rr
     | None -> failwithf "Invalid sources: %s" path
 
   let proj (item: RssItem) =
@@ -47,4 +47,4 @@ type RssClient private (path: string) =
     new RssClient(path)
 
   member this.Save() =
-    reader |> RssReader.sources |> RssSource.Serialize.save path
+    reader |> RssReader.Serialize.save path

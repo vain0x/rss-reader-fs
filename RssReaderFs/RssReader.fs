@@ -116,3 +116,14 @@ module RssReader =
       | None -> ""
     in
       sprintf "%s<%s>" name (url |> string)
+
+  module Serialize =
+    let load path =
+      path
+      |> RssSource.Serialize.load
+      |> Option.map create
+      
+    let save path rr =
+      rr
+      |> sources
+      |> RssSource.Serialize.save path
