@@ -7,19 +7,19 @@ open System.Runtime.Serialization
 module Domain =
   type RssSource =
     {
-      Name: string
-      Url: Url
+      Name          : string
+      Url           : Url
 
       // Category, UpdateSpan, etc.
     }
 
   type RssItem =
     {
-      Title: string
-      Desc: string option
-      Link: string option
-      Date: DateTime
-      Url: Url
+      Title         : string
+      Desc          : option<string>
+      Link          : option<string>
+      Date          : DateTime
+      Url           : Url
     }
 
   type RssReader =
