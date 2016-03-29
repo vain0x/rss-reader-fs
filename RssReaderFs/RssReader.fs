@@ -44,7 +44,7 @@ module RssReader =
         SourceMap =
           rr
           |> sourceMap
-          |> tap (fun s -> s.Remove(url) |> ignore)
+          |> Map.remove url
     }
 
   let updateSources sources rr =
