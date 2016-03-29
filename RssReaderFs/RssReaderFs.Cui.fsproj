@@ -8,11 +8,11 @@
     <ProjectGuid>e37a1131-b10d-4dfd-b7dd-ff52a2397f52</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>Console</RootNamespace>
-    <AssemblyName>Console</AssemblyName>
+    <AssemblyName>rss_reader_cui</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <TargetFSharpCoreVersion>4.3.1.0</TargetFSharpCoreVersion>
-    <Name>Console</Name>
+    <Name>RssReaderFs.Cui</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>

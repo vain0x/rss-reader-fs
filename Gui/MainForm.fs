@@ -167,6 +167,7 @@ type MainForm () as this =
 
   let checkUpdate () =
     rc.UpdateAllAsync
+    |> Async.Ignore
     |> Async.RunSynchronously
 
   let updateTimer =
