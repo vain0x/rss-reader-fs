@@ -11,9 +11,13 @@ type RssReaderConsole (rc: RssClient) =
 
   let reader () =
     rc.Reader
+    
+  let lockThis = lock (new obj())
 
   do rc.Subscribe (fun items ->
-      printfn "New %d feeds!" (items |> Array.length)
+      let body () =
+        printfn "New %d feeds!" (items |> Array.length)
+      in lockThis body
       ) |> ignore
 
   member this.TryUpdate() =
@@ -29,7 +33,7 @@ type RssReaderConsole (rc: RssClient) =
       | None -> ""
     let src =
       reader () |> RssReader.tryFindSource(item.Url)
-    do
+    let body () =
       printfn "%s%s" header (item.Title)
       printfn "* Date: %s" (item.Date.ToString("G"))
       printfn "* Link: %s" (item.Link |> Option.getOr "(no link)")
@@ -39,6 +43,7 @@ type RssReaderConsole (rc: RssClient) =
       item.Desc |> Option.iter (printfn "* Desc:\r\n%s")
 
       rc.ReadItem(item)
+    in lockThis body
 
   member this.PrintTimeLine() =
     let body () =
@@ -56,8 +61,7 @@ type RssReaderConsole (rc: RssClient) =
             , (sprintf "[%3d/%3d]" i len)
             )
           )
-    in
-      lock reader body
+    in lockThis body
 
   member this.CheckNewFeedsAsync(?timeout, ?thresh) =
     let timeout = defaultArg timeout  (5 * 60 * 1000)  // 5 min
@@ -98,19 +102,20 @@ type RssReaderConsole (rc: RssClient) =
                 printfn "No new feeds available."
 
           | "src" :: _ ->
-              reader ()
-              |> RssReader.sources
-              |> Array.iteri (fun i src ->
-                  printfn "#%d: %s <%s>"
-                    i (src.Name) (src.Url |> string)
-                )
+              let body () =
+                reader ()
+                |> RssReader.sources
+                |> Array.iteri (fun i src ->
+                    printfn "#%d: %s <%s>"
+                      i (src.Name) (src.Url |> string)
+                  )
+              in lockThis body
 
           | "add" :: name :: url :: _ ->
               let source = Rss.sourceFromUrl name url
-              in
-                lock reader (fun () ->
-                  rc.AddSource(source)
-                  )
+              let body () =
+                rc.AddSource(source)
+              in lockThis body
 
           | "remove" :: url :: _ ->
               let url = Url.ofString url
@@ -123,8 +128,7 @@ type RssReaderConsole (rc: RssClient) =
                       (src.Name)
                       (src.Url |> Url.toString)
                     )
-              in
-                lock reader body
+              in lockThis body
 
           | _ -> ()
           return! loop ()
