@@ -3,7 +3,7 @@
 open System
 
 /// RSSクライアントクラス。
-/// 純粋である RssReader に、自己更新、イベント生成、ファイルIOの機能を加えたもの。
+/// 純粋である RssReader に、自己更新、ファイルIOの機能を加えたもの。
 type RssClient private (path: string) =
   let mutable reader =
     match path |> RssReader.Serialize.load with
@@ -13,9 +13,6 @@ type RssClient private (path: string) =
   let proj (item: RssItem) =
     item.Title
 
-  let newItemsEvent =
-    Observable.Source<RssItem []>()
-
   member this.Reader = reader
 
   member this.AddSource(src) =
@@ -24,9 +21,6 @@ type RssClient private (path: string) =
   member this.RemoveSource(url) =
     reader <- reader |> RssReader.removeSource url
 
-  member this.Subscribe(obs) =
-    newItemsEvent.AsObservable |> Observable.subscribe obs
-
   member this.ReadItem(item) =
     reader <- reader |> RssReader.readItem item
 
@@ -34,9 +28,6 @@ type RssClient private (path: string) =
     async {
       let! (reader', items) = reader |> RssReader.updateAsync pred
       do reader <- reader'
-      if items |> Array.isEmpty |> not then
-        // 新フィード受信の通知を出す
-        do newItemsEvent.Next(items)
       return items
     }
 

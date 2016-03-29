@@ -12,6 +12,9 @@ type Ctrl (rc: RssClient) =
   member this.TryUpdate() =
     async {
       let! newItems = rc.UpdateAllAsync
+      do
+        if newItems |> Array.isEmpty |> not then
+          view.OnNewFeeds(newItems)
       return newItems |> Array.isEmpty |> not
     }
 

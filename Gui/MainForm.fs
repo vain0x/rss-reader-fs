@@ -165,8 +165,12 @@ type MainForm () as this =
     do showItem item
 
   let checkUpdate () =
-    rc.UpdateAllAsync
-    |> Async.Ignore
+    async {
+      let! newItems = rc.UpdateAllAsync
+      do
+        if newItems |> Array.isEmpty |> not then
+          addNewItems newItems
+    }
     |> Async.RunSynchronously
 
   let updateTimer =
@@ -244,6 +248,5 @@ type MainForm () as this =
 
   // Init reader
   do
-    rc.Subscribe(addNewItems) |> ignore
     checkUpdate ()
     updateTimer.Start()
