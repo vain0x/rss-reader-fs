@@ -6,9 +6,7 @@ open System
 /// 純粋である RssReader に、自己更新、ファイルIOの機能を加えたもの。
 type RssClient private (path: string) =
   let mutable reader =
-    match path |> RssReader.Serialize.load with
-    | Some rr -> rr
-    | None -> failwithf "Invalid sources: %s" path
+    RssReader.Serialize.loadOrEmpty path
 
   member this.Reader = reader
 
