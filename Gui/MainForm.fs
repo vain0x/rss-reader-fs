@@ -128,12 +128,13 @@ type MainForm () as this =
     [|
       for item in items do
         let subItems =
-          [|
-            item.Title
-            ""    // unchecked
-            item.Date.ToString("G")
-            reader () |> RssReader.sourceName (item.Url)
-          |]
+          {
+            Title     = item.Title
+            Read      = ""
+            Date      = item.Date.ToString("G")
+            Source    = reader () |> RssReader.sourceName (item.Url)
+          }
+          |> MainListviewColumns.toArray
           |> Array.map (fun text ->
               ListViewItem.ListViewSubItem(Text = text)
               )
