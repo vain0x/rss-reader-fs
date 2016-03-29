@@ -15,7 +15,7 @@ type Ctrl (rc: RssClient) =
       return newItems |> Array.isEmpty |> not
     }
 
-  member this.CheckNewFeedsAsync(?timeout, ?thresh) =
+  member this.CheckNewItemsAsync(?timeout, ?thresh) =
     let timeout = defaultArg timeout  (5 * 60 * 1000)  // 5 min
     let thresh  = defaultArg thresh   1
 
@@ -43,14 +43,14 @@ type Ctrl (rc: RssClient) =
           | "up" :: _ | "update" :: _ ->
               let! success = this.TryUpdate()
               if success |> not then
-                printfn "No new feeds available."
+                printfn "No new items available."
 
           | "show" :: _ ->
               let! success = this.TryUpdate()
               if success then
                 view.PrintTimeLine()
               else
-                printfn "No new feeds available."
+                printfn "No new items available."
 
           | "src" :: _ ->
               let body () =

@@ -11,14 +11,14 @@ type RssClient private (path: string) =
   let proj (item: RssItem) =
     item.Title
 
-  let newFeedsEvent =
+  let newItemsEvent =
     Observable.Source<RssItem []>()
 
   member this.Reader = reader
 
-  member this.Feeds =
-    ( (reader |> RssReader.unreadFeeds)
-    + (reader |> RssReader.readFeeds)
+  member this.Items =
+    ( (reader |> RssReader.unreadItems)
+    + (reader |> RssReader.alreadyReadItems)
     )
 
   member this.AddSource(src) =
@@ -28,7 +28,7 @@ type RssClient private (path: string) =
     reader <- reader |> RssReader.removeSource url
 
   member this.Subscribe(obs) =
-    newFeedsEvent.AsObservable |> Observable.subscribe obs
+    newItemsEvent.AsObservable |> Observable.subscribe obs
 
   member this.ReadItem(item) =
     reader <- reader |> RssReader.readItem item
@@ -39,7 +39,7 @@ type RssClient private (path: string) =
       do reader <- reader'
       if items |> Array.isEmpty |> not then
         // 新フィード受信の通知を出す
-        do newFeedsEvent.Next(items)
+        do newItemsEvent.Next(items)
       return items
     }
 

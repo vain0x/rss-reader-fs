@@ -10,22 +10,22 @@ module RssReader =
         sources
         |> Array.map (fun src -> (src.Url, src))
         |> Map.ofSeq
-      UnreadFeeds =
+      UnreadItems =
         Set.empty
     }
 
   let internal sourceMap (rr: RssReader) =
     rr.SourceMap
 
-  let unreadFeeds (rr: RssReader) =
-    rr.UnreadFeeds
+  let unreadItems (rr: RssReader) =
+    rr.UnreadItems
 
   let sources rr =
     rr.SourceMap
     |> Map.toArray
     |> Array.map snd
 
-  let readFeeds rr =
+  let alreadyReadItems rr =
     rr
     |> sources
     |> Array.map (fun src -> src.DoneSet)
@@ -60,7 +60,7 @@ module RssReader =
 
   let addUnreadItems items rr =
     { rr with
-        UnreadFeeds = rr.UnreadFeeds + (items |> Set.ofSeq)
+        UnreadItems = rr.UnreadItems + (items |> Set.ofSeq)
     }
 
   let readItem (item: RssItem) rr =
@@ -72,13 +72,13 @@ module RssReader =
             { src with DoneSet = src.DoneSet |> Set.add item }
           in
             rr |> sourceMap |> Map.add (src.Url) src'
-    let unreadFeeds' =
-      rr.UnreadFeeds
+    let unreadItems' =
+      rr.UnreadItems
       |> Set.remove item
     in
       { rr with
           SourceMap       = sourceMap'
-          UnreadFeeds     = unreadFeeds'
+          UnreadItems     = unreadItems'
       }
 
   let updateAsync pred rr =

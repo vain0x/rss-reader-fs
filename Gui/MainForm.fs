@@ -18,7 +18,7 @@ type MainForm () as this =
   let rc = RssClient.Create(path)
   
   let reader () = rc.Reader
-  let feeds  () = rc.Feeds
+  let items  () = rc.Items
 
   let listView =
     new ListView
@@ -124,7 +124,7 @@ type MainForm () as this =
     Form.singletonSubform
       (fun () -> new SourceListForm(rc))
 
-  let listViewItemsFromNewFeeds (items: RssItem []) =
+  let listViewItemsFromNewItems (items: RssItem []) =
     [|
       for item in items do
         let subItems =
@@ -141,8 +141,8 @@ type MainForm () as this =
         yield ListViewItem(subItems, 0)
     |]
 
-  let addNewFeeds items =
-    let lvItems = listViewItemsFromNewFeeds items
+  let addNewItems items =
+    let lvItems = listViewItemsFromNewItems items
     let body () = listView.Items.AddRange(lvItems)
     do
       if listView.InvokeRequired
@@ -155,15 +155,15 @@ type MainForm () as this =
     linkLabel.Text      <- ""
     sourceLabel.Text    <- ""
 
-  let showFeed (item: RssItem) =
+  let showItem (item: RssItem) =
     titleLabel.Text     <- item.Title
     textBox.Text        <- item.Desc |> Option.getOr "(no_description)"
     linkLabel.Text      <- item.Link |> Option.getOr "(no_link)"
     sourceLabel.Text    <- reader () |> RssReader.sourceName (item.Url)
 
-  let readFeed item =
+  let readItem item =
     do rc.ReadItem(item)
-    do showFeed item
+    do showItem item
 
   let checkUpdate () =
     rc.UpdateAllAsync
@@ -216,10 +216,10 @@ type MainForm () as this =
       let columns = e.Item |> subitems
       let title = columns.Title.Text
       do
-        feeds ()
+        items ()
         |> Seq.tryFind (fun item -> item.Title = title)
         |> Option.iter (fun item ->
-            readFeed item
+            readItem item
             columns.Read.Text <- "✓"
             )
       )
@@ -244,6 +244,6 @@ type MainForm () as this =
 
   // Init reader
   do
-    rc.Subscribe(addNewFeeds) |> ignore
+    rc.Subscribe(addNewItems) |> ignore
     checkUpdate ()
     updateTimer.Start()

@@ -10,7 +10,7 @@ module Program =
     let rrc = Ctrl(rc)
 
     try
-      rrc.CheckNewFeedsAsync()
+      rrc.CheckNewItemsAsync()
       |> Async.Start
 
       rrc.Interactive()

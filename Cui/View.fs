@@ -6,15 +6,15 @@ open System.Collections.Generic
 open RssReaderFs
 
 type View (rc: RssClient) =
-  let feeds () =
-    rc.Feeds
+  let items () =
+    rc.Items
 
   let reader () =
     rc.Reader
 
   do rc.Subscribe (fun items ->
       let body () =
-        printfn "New %d feeds!" (items |> Array.length)
+        printfn "New %d items!" (items |> Array.length)
       in lockConsole body
       ) |> ignore
 
@@ -39,9 +39,9 @@ type View (rc: RssClient) =
 
   member this.PrintTimeLine() =
     let body () =
-      let feeds = feeds ()
-      let len = feeds |> Seq.length
-      feeds
+      let items = items ()
+      let len = items |> Seq.length
+      items
       |> Seq.iteri (fun i item ->
           if i > 0 then
             printfn "..."
