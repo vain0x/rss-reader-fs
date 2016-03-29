@@ -44,7 +44,7 @@ type RssReaderConsole (rc: RssClient) =
 
       rc.ReadItem(item)
 
-  member this.PrintTimeLine(newReader) =
+  member this.PrintTimeLine() =
     let body () =
       let feeds = feeds ()
       let len = feeds |> Seq.length
@@ -102,8 +102,8 @@ type RssReaderConsole (rc: RssClient) =
               match newReaderOpt with
               | None ->
                   printfn "No new feeds available."
-              | Some newReader ->
-                  this.PrintTimeLine(newReader)
+              | Some _ ->
+                  this.PrintTimeLine()
                   ()
 
           | "src" :: _ ->
