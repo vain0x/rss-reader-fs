@@ -36,11 +36,11 @@ type RssClient private (path: string) =
   member this.UpdateAsync(pred) =
     async {
       let! items = reader |> RssReader.updateAsync pred
+      if items |> Array.isEmpty |> not then
+        do reader <- reader |> RssReader.addUnreadItems items
 
-      do reader <- reader |> RssReader.addUnreadItems items
-
-      // 新フィード受信の通知を出す
-      do newFeedsEvent.Next(items)
+        // 新フィード受信の通知を出す
+        do newFeedsEvent.Next(items)
     }
 
   member this.UpdateAllAsync =
