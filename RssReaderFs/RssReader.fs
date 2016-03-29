@@ -52,16 +52,6 @@ module RssReader =
     }
 
   let readItem item rr =
-    let sourceMap' =
-      match rr |> sourceMap |> Map.tryFind item.Url with
-      | None -> rr |> sourceMap
-      | Some src ->
-        let src =
-          { src with LastUpdate = max (src.LastUpdate) (item.Date) }
-        in
-          rr
-          |> sourceMap
-          |> Map.add item.Url src
     let unreadFeeds' =
       rr.UnreadFeeds
       |> Set.remove item
@@ -69,10 +59,9 @@ module RssReader =
       rr.ReadFeeds
       |> Set.add item
     in
-      {
-        SourceMap       = sourceMap'
-        ReadFeeds       = readFeeds'
-        UnreadFeeds     = unreadFeeds'
+      { rr with
+          ReadFeeds       = readFeeds'
+          UnreadFeeds     = unreadFeeds'
       }
 
   let updateAsync pred rr =

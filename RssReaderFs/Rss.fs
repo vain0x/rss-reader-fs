@@ -41,17 +41,13 @@ module Rss =
 
   let updateRssAsync src =
     async {
-      let! items = src |> downloadRssAsync
-      return
-        items
-        |> Seq.filter (fun item -> item.Date > src.LastUpdate)
+      return! src |> downloadRssAsync
     }
 
   let sourceFromUrl name (url: string) =
     {
       Name        = name
       Url         = Url.ofString (url)
-      LastUpdate  = DateTime.MinValue
     }
     
   module Serialize =

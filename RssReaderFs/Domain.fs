@@ -9,7 +9,6 @@ module Domain =
     {
       Name: string
       Url: Url
-      LastUpdate: DateTime
 
       // Category, UpdateSpan, etc.
     }

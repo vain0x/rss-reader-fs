@@ -68,7 +68,6 @@ type SourceAddForm (onRegister: RssSource -> unit) as this =
         {
           Name        = nameBox.Text
           Url         = Url.ofString (urlBox.Text)
-          LastUpdate  = DateTime.Now
         }
       do
         onRegister item
