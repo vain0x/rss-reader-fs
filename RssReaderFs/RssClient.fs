@@ -2,6 +2,8 @@
 
 open System
 
+/// RSSクライアントクラス。
+/// 純粋である RssReader に、自己更新、イベント生成、ファイルIOの機能を加えたもの。
 type RssClient private (path: string) =
   let mutable reader =
     match path |> RssSource.Serialize.load with
