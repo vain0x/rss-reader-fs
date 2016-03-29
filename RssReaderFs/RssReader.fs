@@ -99,7 +99,9 @@ module RssReader =
         |> Array.sortBy (fun item -> item.Date)
 
       let rr =
-        rr |> updateSources sources'
+        rr
+        |> updateSources sources'
+        |> addUnreadItems unreadItems
 
       return (rr, unreadItems)
     }
