@@ -19,7 +19,20 @@ module RssSource =
 
   let updateAsync src =
     async {
-      return! src |> downloadAsync
+      let! items = src |> downloadAsync
+
+      // 読了済みのものと分離する
+      let (dones, undones) =
+        items
+        |> Seq.toArray
+        |> Array.partition (fun item -> src.DoneSet |> Set.contains item)
+
+      let src =
+        { src with
+            DoneSet = dones |> Set.ofArray
+        }
+
+      return (src, undones)
     }
 
   module Serialize =

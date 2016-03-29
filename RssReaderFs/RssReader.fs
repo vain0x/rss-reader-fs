@@ -47,6 +47,17 @@ module RssReader =
           |> tap (fun s -> s.Remove(url) |> ignore)
     }
 
+  let updateSources sources rr =
+    let sourceMap' =
+      sources
+      |> Seq.fold
+          (fun sourceMap src -> sourceMap |> Map.add (src.Url) src)
+          (rr |> sourceMap)
+    in
+      { rr with
+          SourceMap = sourceMap'
+      }
+
   let addUnreadItems items rr =
     { rr with
         UnreadFeeds = rr.UnreadFeeds + (items |> Set.ofSeq)
@@ -72,23 +83,25 @@ module RssReader =
 
   let updateAsync pred rr =
     async {
-      let! items =
+      let! srcItemsArray =
         rr
         |> sources
         |> Array.filter pred
         |> Array.map (RssSource.updateAsync)
         |> Async.Parallel
-      let items =
-        items
-        |> Seq.collect id
-        |> Seq.toArray
+
+      let (sources', unreadItemsArray) =
+        srcItemsArray |> Array.unzip
+
+      let unreadItems =
+        unreadItemsArray
+        |> Array.collect id
         |> Array.sortBy (fun item -> item.Date)
-      let newItems =
-        items
-        |> Array.filter (fun item ->
-            rr |> readFeeds |> Set.contains item |> not
-            )
-      return newItems
+
+      let rr =
+        rr |> updateSources sources'
+
+      return (rr, unreadItems)
     }
 
   let tryFindSource url rr =

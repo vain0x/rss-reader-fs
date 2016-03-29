@@ -35,7 +35,8 @@ type RssClient private (path: string) =
 
   member this.UpdateAsync(pred) =
     async {
-      let! items = reader |> RssReader.updateAsync pred
+      let! (reader', items) = reader |> RssReader.updateAsync pred
+      do reader <- reader'
       if items |> Array.isEmpty |> not then
         do reader <- reader |> RssReader.addUnreadItems items
 
