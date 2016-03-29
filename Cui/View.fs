@@ -6,9 +6,6 @@ open System.Collections.Generic
 open RssReaderFs
 
 type View (rc: RssClient) =
-  let items () =
-    rc.Items
-
   let reader () =
     rc.Reader
 

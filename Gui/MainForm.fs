@@ -18,7 +18,6 @@ type MainForm () as this =
   let rc = RssClient.Create(path)
   
   let reader () = rc.Reader
-  let items  () = rc.Items
 
   let listView =
     new ListView
@@ -216,7 +215,8 @@ type MainForm () as this =
       let columns = e.Item |> subitems
       let title = columns.Title.Text
       do
-        items ()
+        reader ()
+        |> RssReader.unreadItems
         |> Seq.tryFind (fun item -> item.Title = title)
         |> Option.iter (fun item ->
             readItem item
