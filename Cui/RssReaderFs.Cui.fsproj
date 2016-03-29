@@ -47,7 +47,9 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="RssReaderConsole.fs" />
+    <Compile Include="Util.fs" />
+    <Compile Include="View.fs" />
+    <Compile Include="Ctrl.fs" />
     <Compile Include="Program.fs" />
     <None Include="App.config" />
   </ItemGroup>

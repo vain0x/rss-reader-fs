@@ -7,7 +7,7 @@ module Program =
   [<EntryPoint>]
   let main argv =
     let rc = RssClient.Create(@"feeds.json")
-    let rrc = RssReaderConsole(rc)
+    let rrc = Ctrl(rc)
 
     try
       rrc.CheckNewFeedsAsync()
