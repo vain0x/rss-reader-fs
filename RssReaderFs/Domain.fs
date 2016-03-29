@@ -5,14 +5,6 @@ open System.Runtime.Serialization
 
 [<AutoOpen>]
 module Domain =
-  type RssSource =
-    {
-      Name          : string
-      Url           : Url
-
-      // Category, UpdateSpan, etc.
-    }
-
   type RssItem =
     {
       Title         : string
@@ -20,6 +12,14 @@ module Domain =
       Link          : option<string>
       Date          : DateTime
       Url           : Url
+    }
+
+  type RssSource =
+    {
+      Name          : string
+      Url           : Url
+
+      // Category, UpdateSpan, etc.
     }
 
   type RssReader =
