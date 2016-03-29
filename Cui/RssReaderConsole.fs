@@ -11,7 +11,7 @@ type RssReaderConsole (rc: RssClient) =
 
   let reader () =
     rc.Reader
-    
+
   let lockThis = lock (new obj())
 
   do rc.Subscribe (fun items ->
@@ -73,8 +73,7 @@ type RssReaderConsole (rc: RssClient) =
         do! Async.Sleep(timeout)
         return! loop ()
       }
-    in
-      loop ()
+    in loop ()
 
   member this.Interactive() =
     let rec loop () = async {
@@ -133,5 +132,4 @@ type RssReaderConsole (rc: RssClient) =
           | _ -> ()
           return! loop ()
       }
-    in
-      loop ()
+    in loop ()
