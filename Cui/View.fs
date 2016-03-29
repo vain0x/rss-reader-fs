@@ -9,11 +9,10 @@ type View (rc: RssClient) =
   let reader () =
     rc.Reader
 
-  do rc.Subscribe (fun items ->
-      let body () =
-        printfn "New %d items!" (items |> Array.length)
-      in lockConsole body
-      ) |> ignore
+  member this.OnNewFeeds(items) =
+    let body () =
+      printfn "New %d items!" (items |> Array.length)
+    in lockConsole body
 
   member this.PrintItem(item: RssItem, ?header) =
     let header =

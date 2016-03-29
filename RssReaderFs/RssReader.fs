@@ -106,6 +106,9 @@ module RssReader =
       return (rr, unreadItems)
     }
 
+  let updateAllAsync rr =
+    rr |> updateAsync (fun _ -> true)
+
   let tryFindSource url rr =
     rr |> sourceMap |> Map.tryFind url
 
@@ -116,3 +119,14 @@ module RssReader =
       | None -> ""
     in
       sprintf "%s<%s>" name (url |> string)
+
+  module Serialize =
+    let load path =
+      path
+      |> RssSource.Serialize.load
+      |> Option.map create
+      
+    let save path rr =
+      rr
+      |> sources
+      |> RssSource.Serialize.save path
