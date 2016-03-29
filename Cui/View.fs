@@ -18,7 +18,7 @@ type View (rc: RssClient) =
       in lockConsole body
       ) |> ignore
 
-  member this.PrintItem(item, ?header) =
+  member this.PrintItem(item: RssItem, ?header) =
     let header =
       match header with
       | Some h -> h + " "

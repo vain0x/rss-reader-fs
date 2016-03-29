@@ -63,7 +63,7 @@ type Ctrl (rc: RssClient) =
               in lockConsole body
 
           | "add" :: name :: url :: _ ->
-              let source = Rss.sourceFromUrl name url
+              let source = RssSource.create name url
               let body () =
                 rc.AddSource(source)
               in lockConsole body

@@ -10,8 +10,6 @@ module RssReader =
         sources
         |> Array.map (fun src -> (src.Url, src))
         |> Map.ofSeq
-      ReadFeeds =
-        Set.empty
       UnreadFeeds =
         Set.empty
     }
@@ -22,13 +20,16 @@ module RssReader =
   let unreadFeeds (rr: RssReader) =
     rr.UnreadFeeds
 
-  let readFeeds (rr: RssReader) =
-    rr.ReadFeeds
-
   let sources rr =
     rr.SourceMap
     |> Map.toArray
     |> Array.map snd
+
+  let readFeeds rr =
+    rr
+    |> sources
+    |> Array.map (fun src -> src.DoneSet)
+    |> Array.fold (+) Set.empty
 
   let addSource (source: RssSource) rr =
     { rr with
@@ -46,54 +47,63 @@ module RssReader =
           |> tap (fun s -> s.Remove(url) |> ignore)
     }
 
+  let updateSources sources rr =
+    let sourceMap' =
+      sources
+      |> Seq.fold
+          (fun sourceMap src -> sourceMap |> Map.add (src.Url) src)
+          (rr |> sourceMap)
+    in
+      { rr with
+          SourceMap = sourceMap'
+      }
+
   let addUnreadItems items rr =
     { rr with
         UnreadFeeds = rr.UnreadFeeds + (items |> Set.ofSeq)
     }
 
-  let readItem item rr =
+  let readItem (item: RssItem) rr =
     let sourceMap' =
-      match rr |> sourceMap |> Map.tryFind item.Url with
+      match rr |> sourceMap |> Map.tryFind (item.Url) with
       | None -> rr |> sourceMap
       | Some src ->
-        let src =
-          { src with LastUpdate = max (src.LastUpdate) (item.Date) }
-        in
-          rr
-          |> sourceMap
-          |> Map.add item.Url src
+          let src' =
+            { src with DoneSet = src.DoneSet |> Set.add item }
+          in
+            rr |> sourceMap |> Map.add (src.Url) src'
     let unreadFeeds' =
       rr.UnreadFeeds
       |> Set.remove item
-    let readFeeds' =
-      rr.ReadFeeds
-      |> Set.add item
     in
-      {
-        SourceMap       = sourceMap'
-        ReadFeeds       = readFeeds'
-        UnreadFeeds     = unreadFeeds'
+      { rr with
+          SourceMap       = sourceMap'
+          UnreadFeeds     = unreadFeeds'
       }
 
   let updateAsync pred rr =
     async {
-      let! items =
+      let! srcItemsArray =
         rr
         |> sources
         |> Array.filter pred
-        |> Array.map (Rss.updateRssAsync)
+        |> Array.map (RssSource.updateAsync)
         |> Async.Parallel
-      let items =
-        items
-        |> Seq.collect id
-        |> Seq.toArray
+
+      let (sources', unreadItemsArray) =
+        srcItemsArray |> Array.unzip
+
+      let unreadItems =
+        unreadItemsArray
+        |> Array.collect id
         |> Array.sortBy (fun item -> item.Date)
-      let newItems =
-        items
-        |> Array.filter (fun item ->
-            rr.ReadFeeds |> Set.contains item |> not
-            )
-      return newItems
+
+      let rr =
+        rr
+        |> updateSources sources'
+        |> addUnreadItems unreadItems
+
+      return (rr, unreadItems)
     }
 
   let tryFindSource url rr =

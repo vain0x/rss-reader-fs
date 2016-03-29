@@ -64,14 +64,10 @@ type SourceAddForm (onRegister: RssSource -> unit) as this =
 
   do
     okButton.Click.Add (fun e ->
-      let item =
-        {
-          Name        = nameBox.Text
-          Url         = Url.ofString (urlBox.Text)
-          LastUpdate  = DateTime.Now
-        }
+      let src =
+        RssSource.create (nameBox.Text) (urlBox.Text)
       do
-        onRegister item
+        onRegister src
         this.Close()
       )
 

@@ -4,7 +4,7 @@ open System
 
 type RssClient private (path: string) =
   let mutable reader =
-    match path |> Rss.Serialize.load with
+    match path |> RssSource.Serialize.load with
     | Some sources -> RssReader.create(sources)
     | None -> failwithf "Invalid sources: %s" path
 
@@ -35,10 +35,9 @@ type RssClient private (path: string) =
 
   member this.UpdateAsync(pred) =
     async {
-      let! items = reader |> RssReader.updateAsync pred
+      let! (reader', items) = reader |> RssReader.updateAsync pred
+      do reader <- reader'
       if items |> Array.isEmpty |> not then
-        do reader <- reader |> RssReader.addUnreadItems items
-
         // 新フィード受信の通知を出す
         do newFeedsEvent.Next(items)
       return items
@@ -51,4 +50,4 @@ type RssClient private (path: string) =
     new RssClient(path)
 
   member this.Save() =
-    reader |> RssReader.sources |> Rss.Serialize.save path
+    reader |> RssReader.sources |> RssSource.Serialize.save path
