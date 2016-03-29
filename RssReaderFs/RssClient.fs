@@ -4,7 +4,7 @@ open System
 
 type RssClient private (path: string) =
   let mutable reader =
-    match path |> Rss.Serialize.load with
+    match path |> RssSource.Serialize.load with
     | Some sources -> RssReader.create(sources)
     | None -> failwithf "Invalid sources: %s" path
 
@@ -51,4 +51,4 @@ type RssClient private (path: string) =
     new RssClient(path)
 
   member this.Save() =
-    reader |> RssReader.sources |> Rss.Serialize.save path
+    reader |> RssReader.sources |> RssSource.Serialize.save path

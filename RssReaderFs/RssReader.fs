@@ -70,7 +70,7 @@ module RssReader =
         rr
         |> sources
         |> Array.filter pred
-        |> Array.map (Rss.updateRssAsync)
+        |> Array.map (RssSource.updateAsync)
         |> Async.Parallel
       let items =
         items
