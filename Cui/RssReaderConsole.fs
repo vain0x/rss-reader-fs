@@ -6,7 +6,7 @@ open System.Collections.Generic
 open RssReaderFs
 
 type RssReaderConsole (rc: RssClient) =
-  let unreadItems () =
+  let feeds () =
     rc.Feeds
 
   let reader () =
@@ -15,7 +15,7 @@ type RssReaderConsole (rc: RssClient) =
   member this.CheckUpdate() =
     async {
       do! rc.UpdateAllAsync
-      let feeds = unreadItems ()
+      let feeds = feeds ()
       let len = feeds |> Seq.length
       if len > 0 then
         do!
@@ -46,7 +46,7 @@ type RssReaderConsole (rc: RssClient) =
 
   member this.PrintTimeLine(newReader) =
     let body () =
-      let feeds = unreadItems ()
+      let feeds = feeds ()
       let len = feeds |> Seq.length
       feeds
       |> Seq.iteri (fun i item ->
