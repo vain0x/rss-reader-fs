@@ -110,17 +110,17 @@ module Serialize =
   let private toBytes (x : string) = Encoding.UTF8.GetBytes x
 
   let serializeJson<'a> (x : 'a) = 
-      let jsonSerializer = new DataContractJsonSerializer(typedefof<'a>)
+    let jsonSerializer = new DataContractJsonSerializer(typedefof<'a>)
 
-      use stream = new IO.MemoryStream()
-      jsonSerializer.WriteObject(stream, x)
-      toString <| stream.ToArray()
+    use stream = new IO.MemoryStream()
+    jsonSerializer.WriteObject(stream, x)
+    toString <| stream.ToArray()
 
   let deserializeJson<'a> (json : string) =
-      let jsonSerializer = new DataContractJsonSerializer(typedefof<'a>)
+    let jsonSerializer = new DataContractJsonSerializer(typedefof<'a>)
 
-      use stream = new IO.MemoryStream(toBytes json)
-      jsonSerializer.ReadObject(stream) :?> 'a
+    use stream = new IO.MemoryStream(toBytes json)
+    jsonSerializer.ReadObject(stream) :?> 'a
 
 [<RequireQualifiedAccess>]
 module Observable =

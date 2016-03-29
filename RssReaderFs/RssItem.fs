@@ -6,27 +6,27 @@ open System.Xml
 module RssItem =
   let parseXml url (xml: XmlDocument) =
     let getTextElem xpath =
-        Xml.selectSingleNode xpath
-        >> Option.map (Xml.innerText)
+      Xml.selectSingleNode xpath
+      >> Option.map (Xml.innerText)
 
     let tryBuildItem (xnode: XmlNode) =
-        let at = flip getTextElem xnode
-        let title = at "title"
-        let date  =
-            at "pubDate"
-            |> Option.bind (DateTime.tryParse)
-            |> Option.map (fun time -> time.ToLocalTime())
-        in
-          match (title, date) with
-          | (Some title, Some date) ->
-              {
-                Title = title
-                Desc  = at "description"
-                Link  = at "link"
-                Date  = date
-                Url   = url
-              } |> Some
-          | _ -> None
+      let at = flip getTextElem xnode
+      let title = at "title"
+      let date  =
+        at "pubDate"
+        |> Option.bind (DateTime.tryParse)
+        |> Option.map (fun time -> time.ToLocalTime())
+      in
+        match (title, date) with
+        | (Some title, Some date) ->
+            {
+              Title   = title
+              Desc    = at "description"
+              Link    = at "link"
+              Date    = date
+              Url     = url
+            } |> Some
+        | _ -> None
     in
       xml
       |> Xml.selectNodes "rss/channel/item"
