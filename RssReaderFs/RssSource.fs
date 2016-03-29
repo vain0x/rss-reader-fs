@@ -15,7 +15,7 @@ module RssSource =
       return! src |> downloadAsync
     }
 
-  let sourceFromUrl name (url: string) =
+  let create name (url: string) =
     {
       Name        = name
       Url         = Url.ofString (url)
