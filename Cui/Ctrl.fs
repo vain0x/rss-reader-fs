@@ -87,6 +87,16 @@ type Ctrl (rc: RssClient) =
                     )
               in lockConsole body
 
+          | "sources" :: _ ->
+              let body () =
+                rc.Reader.SourceMap
+                |> Map.toList
+                |> List.iteri (fun i (_, src) ->
+                    printfn "#%d %s %s"
+                      i (src |> RssSource.name) (src |> RssSource.toSExpr)
+                    )
+              in lockConsole body
+
           | _ -> ()
           return! loop ()
       }
