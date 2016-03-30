@@ -89,7 +89,8 @@ type Ctrl (rc: RssClient) =
 
           | "sources" :: _ ->
               let body () =
-                rc.Reader.SourceMap
+                rc.Reader
+                |> RssReader.sourceMap
                 |> Map.toList
                 |> List.iteri (fun i (_, src) ->
                     printfn "#%d %s %s"

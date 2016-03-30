@@ -14,6 +14,9 @@ module RssReader =
   let internal feedMap (rr: RssReader) =
     rr.FeedMap
 
+  let sourceMap (rr: RssReader) =
+    rr.SourceMap
+
   let unreadItems (rr: RssReader) =
     rr.UnreadItems
 
@@ -52,10 +55,10 @@ module RssReader =
       { rr with FeedMap = feedMap' }
 
   let addSource src rr =
-    { rr with SourceMap = rr.SourceMap |> Map.add (src |> RssSource.name) src }
+    { rr with SourceMap = rr |> sourceMap |> Map.add (src |> RssSource.name) src }
 
   let removeSource srcName rr =
-    { rr with SourceMap = rr.SourceMap |> Map.remove srcName }
+    { rr with SourceMap = rr |> sourceMap |> Map.remove srcName }
 
   let addUnreadItems items rr =
     { rr with UnreadItems = rr.UnreadItems + (items |> Set.ofSeq) }
@@ -111,7 +114,8 @@ module RssReader =
     let feeds =
       rr |> allFeeds
     let srcSpecs =
-      rr.SourceMap
+      rr
+      |> sourceMap
       |> Map.valueSet
       |> Set.map (RssSource.toSpec)
     in
