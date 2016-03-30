@@ -39,6 +39,17 @@ module RssReader =
     |> Array.map (fun src -> src.DoneSet)
     |> Array.fold (+) Set.empty
 
+  let tryFindFeed url rr =
+    rr |> feedMap |> Map.tryFind url
+
+  let feedName url rr =
+    let name =
+      match rr |> tryFindFeed url with
+      | Some { Name = name } -> name + " "
+      | None -> ""
+    in
+      sprintf "%s<%s>" name (url |> string)
+
   let addFeed feed rr =
     { rr with FeedMap = rr |> feedMap |> Map.add (feed.Url) feed }
 
@@ -98,17 +109,6 @@ module RssReader =
 
   let updateAllAsync rr =
     rr |> updateAsync (rr |> allFeedSource)
-
-  let tryFindFeed url rr =
-    rr |> feedMap |> Map.tryFind url
-
-  let feedName url rr =
-    let name =
-      match rr |> tryFindFeed url with
-      | Some { Name = name } -> name + " "
-      | None -> ""
-    in
-      sprintf "%s<%s>" name (url |> string)
 
   let toSpec rr =
     let feeds =
