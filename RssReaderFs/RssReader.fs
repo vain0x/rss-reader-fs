@@ -2,6 +2,7 @@
 
 open System
 open System.Collections.Generic
+open FsYaml
 
 module RssReader =
   let empty =
@@ -155,10 +156,10 @@ module RssReader =
     in rr
 
   let toJson rr =
-    rr |> toSpec |> Serialize.serializeJson<RssReaderSpec>
+    rr |> toSpec |> Yaml.customDump
 
   let ofJson json =
-    json |> Serialize.deserializeJson<RssReaderSpec> |> ofSpec
+    json |> Yaml.customTryLoad<RssReaderSpec> |> Option.get |> ofSpec
 
   module Serialize =
     open System.IO

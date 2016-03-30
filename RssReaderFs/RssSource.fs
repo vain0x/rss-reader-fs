@@ -1,6 +1,7 @@
 ﻿namespace RssReaderFs
 
 open System
+open FsYaml
 
 module RssSource =
   let ofFeed (feed: RssFeed) =
@@ -105,9 +106,10 @@ module RssSource =
   let toJson (src: RssSource) =
     src
     |> toSpec
-    |> Serialize.serializeJson<RssSourceSpec>
+    |> Yaml.customDump
 
   let ofJson feedMap json =
     json
-    |> Serialize.deserializeJson<RssSourceSpec>
+    |> Yaml.customTryLoad<RssSourceSpec>
+    |> Option.get
     |> ofSpec feedMap

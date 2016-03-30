@@ -4,6 +4,7 @@ open System
 open System.Drawing
 open System.IO
 open System.Windows.Forms
+open FsYaml
 open RssReaderFs
 
 type MainForm () as this =
@@ -186,7 +187,7 @@ type MainForm () as this =
       let json =
         File.ReadAllText(pathState)
       let state =
-        Serialize.deserializeJson<MainFormState> (json)
+        Yaml.load<MainFormState> (json)
       do
         this.Location <- state.Location
         this.Size     <- state.Size
@@ -211,7 +212,7 @@ type MainForm () as this =
           |]
       }
     let json =
-      Serialize.serializeJson<MainFormState> (state)
+      Yaml.dump state
     do
       File.WriteAllText(pathState, json)
 

@@ -28,7 +28,6 @@ module Domain =
   type SourceName = string
 
   type RssSourceT<'Feed when 'Feed: comparison> =
-    internal
     | Feed          of 'Feed
     | Unread        of RssSourceT<'Feed>
     | Union         of SourceName * Set<RssSourceT<'Feed>>
