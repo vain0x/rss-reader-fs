@@ -1,5 +1,7 @@
 ﻿namespace RssReaderFs
 
+open System
+
 module RssSource =
   let ofFeed (feed: RssFeed) =
     Feed feed
@@ -64,6 +66,21 @@ module RssSource =
 
       return (feeds', items)
     }
+
+  let rec toSExpr =
+    function
+    | Feed (feed: RssFeed) ->
+        sprintf """'(%s "%s")"""
+          (feed.Name) (feed.Url |> Url.toString)
+    | Unread src ->
+        sprintf "(unread %s)" (src |> toSExpr)
+    | Union (name, srcs) ->
+        if srcs |> Set.isEmpty
+        then "()"
+        else
+          sprintf "(union %s %s)"
+            name
+            (String.Join(" ", srcs |> Set.toArray))
 
   let rec toSpec =
     function
