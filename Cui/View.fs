@@ -38,6 +38,7 @@ type View (rc: RssClient) =
       let items = rc.Reader.UnreadItems
       let len = items |> Seq.length
       items
+      |> Seq.sortBy (fun item -> item.Date)
       |> Seq.iteri (fun i item ->
           if i > 0 then
             printfn "..."

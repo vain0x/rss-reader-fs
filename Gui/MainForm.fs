@@ -141,6 +141,8 @@ type MainForm () as this =
     |]
 
   let addNewItems items =
+    let items =
+      items |> Array.sortBy (fun item -> item.Date)
     let lvItems = listViewItemsFromNewItems items
     let body () = listView.Items.AddRange(lvItems)
     do
