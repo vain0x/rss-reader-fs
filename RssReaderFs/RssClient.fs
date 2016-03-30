@@ -16,6 +16,12 @@ type RssClient private (path: string) =
   member this.RemoveFeed(url) =
     reader <- reader |> RssReader.removeFeed url
 
+  member this.AddSource(src) =
+    reader <- reader |> RssReader.addSource src
+
+  member this.RemoveSource(srcName) =
+    reader <- reader |> RssReader.removeSource srcName
+
   member this.ReadItem(item) =
     reader <- reader |> RssReader.readItem item
 

@@ -51,6 +51,12 @@ module RssReader =
     in
       { rr with FeedMap = feedMap' }
 
+  let addSource src rr =
+    { rr with SourceMap = rr.SourceMap |> Map.add (src |> RssSource.name) src }
+
+  let removeSource srcName rr =
+    { rr with SourceMap = rr.SourceMap |> Map.remove srcName }
+
   let addUnreadItems items rr =
     { rr with UnreadItems = rr.UnreadItems + (items |> Set.ofSeq) }
 
