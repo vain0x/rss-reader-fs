@@ -68,7 +68,7 @@ type Ctrl (rc: RssClient) =
                   )
               in lockConsole body
 
-          | "add" :: name :: url :: _ ->
+          | "feed" :: name :: url :: _ ->
               let feed = RssFeed.create name url
               let body () =
                 rc.AddSource(feed |> RssSource.ofFeed)
