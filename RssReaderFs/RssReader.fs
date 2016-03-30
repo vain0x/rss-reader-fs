@@ -50,10 +50,10 @@ module RssReader =
     in
       sprintf "%s<%s>" name (url |> string)
 
-  let addFeed feed rr =
+  let internal addFeed feed rr =
     { rr with FeedMap = rr |> feedMap |> Map.add (feed.Url) feed }
 
-  let removeFeed url rr =
+  let internal removeFeed url rr =
     { rr with FeedMap = rr |> feedMap |> Map.remove url }
 
   let updateFeeds feeds rr =
@@ -65,11 +65,27 @@ module RssReader =
     in
       { rr with FeedMap = feedMap' }
 
+  let tryFindSource srcName rr =
+    rr |> sourceMap |> Map.tryFind srcName
+
   let addSource src rr =
-    { rr with SourceMap = rr |> sourceMap |> Map.add (src |> RssSource.name) src }
+    let rr =
+      match src with
+      | Feed feed -> rr |> addFeed feed
+      | _ -> rr
+    in
+      { rr with SourceMap = rr |> sourceMap |> Map.add (src |> RssSource.name) src }
 
   let removeSource srcName rr =
-    { rr with SourceMap = rr |> sourceMap |> Map.remove srcName }
+    match rr |> tryFindSource srcName with
+    | None -> rr
+    | Some src ->
+        let rr =
+          match src with
+          | Feed feed -> rr |> removeFeed (feed.Url)
+          | _ -> rr
+        in
+          { rr with SourceMap = rr |> sourceMap |> Map.remove srcName }
 
   let addUnreadItems items rr =
     { rr with UnreadItems = rr.UnreadItems + (items |> Set.ofSeq) }
@@ -128,7 +144,7 @@ module RssReader =
       |> Map.ofArray
     let rr =
       feedMap
-      |> Map.fold (fun rr _ feed -> rr |> addFeed feed) empty 
+      |> Map.fold (fun rr _ feed -> rr |> addSource (Feed feed)) empty
     let rr =
       srcSpecs
       |> Set.map (RssSource.ofSpec feedMap)

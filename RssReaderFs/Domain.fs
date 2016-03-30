@@ -41,7 +41,10 @@ module Domain =
 
   type RssReader =
     {
+      /// 購読しているフィード全体。
       FeedMap       : Map<Url, RssFeed>
+      /// 使用できるソース全体。
+      /// 常に、FeedMap に含まれるすべてのフィードを RssSource.Feed として含む。
       SourceMap     : Map<SourceName, RssSource>
       UnreadItems   : Set<RssItem>
     }

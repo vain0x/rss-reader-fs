@@ -10,10 +10,10 @@ type RssClient private (path: string) =
 
   member this.Reader = reader
 
-  member this.AddFeed(feed) =
+  member internal this.AddFeed(feed) =
     reader <- reader |> RssReader.addFeed feed
 
-  member this.RemoveFeed(url) =
+  member internal this.RemoveFeed(url) =
     reader <- reader |> RssReader.removeFeed url
 
   member this.AddSource(src) =

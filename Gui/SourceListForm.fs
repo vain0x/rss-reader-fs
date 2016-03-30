@@ -79,7 +79,7 @@ type SourceListForm (rc: RssClient) as this =
         new SourceAddForm
           (fun feed ->
             if feed.Name <> "" then
-              rc.AddFeed(feed)
+              rc.AddSource(feed |> RssSource.ofFeed)
 
             listView.Items.Add(lvItemFromRssFeed feed) |> ignore
             )
@@ -95,8 +95,7 @@ type SourceListForm (rc: RssClient) as this =
       for i in 0..(selectedItems.Count - 1) do
         let lvItem = selectedItems.Item(i)
         let columns = lvItem |> subitems
-        let url = Url.ofString (columns.Url.Text)
-        do rc.RemoveFeed(url)
+        do rc.RemoveSource(columns.Name.Text)
       )
 
     base.Controls.AddRange(controls)
