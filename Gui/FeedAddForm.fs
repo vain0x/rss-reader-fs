@@ -5,9 +5,9 @@ open System.Drawing
 open System.Windows.Forms
 open RssReaderFs
 
-type SourceAddForm (onRegister: RssFeed -> unit) as this =
+type FeedAddForm (onRegister: RssFeed -> unit) as this =
   inherit Form
-    ( Text    = "Add Source - RssReaderFs.Gui"
+    ( Text    = "Add Feed - RssReaderFs.Gui"
     , Size    = Size(360, 240)
     )
 

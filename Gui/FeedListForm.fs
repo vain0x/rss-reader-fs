@@ -5,9 +5,9 @@ open System.Drawing
 open System.Windows.Forms
 open RssReaderFs
 
-type SourceListForm (rc: RssClient) as this =
+type FeedListForm (rc: RssClient) as this =
   inherit Form
-    ( Text    = "Sources - RssReaderFs.Gui"
+    ( Text    = "Feeds - RssReaderFs.Gui"
     , Size    = Size(480, 360)
     )
 
@@ -76,7 +76,7 @@ type SourceListForm (rc: RssClient) as this =
   let showAddForm =
     Form.singletonSubform
       (fun () ->
-        new SourceAddForm
+        new FeedAddForm
           (fun feed ->
             if feed.Name <> "" then
               rc.AddSource(feed |> RssSource.ofFeed)

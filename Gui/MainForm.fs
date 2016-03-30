@@ -73,11 +73,11 @@ type MainForm () as this =
       , Font        = yuGothic10
       )
 
-  let sourceListButton =
+  let feedListButton =
     new Button
       ( Size        = Size(80, 25)
       , Font        = yuGothic10
-      , Text        = "Sources"
+      , Text        = "Feeds"
       )
 
   let controls =
@@ -87,7 +87,7 @@ type MainForm () as this =
       linkLabel     :> Control
       sourceLabel   :> Control
       textBox       :> Control
-      sourceListButton      :> Control
+      feedListButton      :> Control
     |]
 
   let resize () =
@@ -116,12 +116,12 @@ type MainForm () as this =
           , linkLabel.Location.Y
           )
 
-      sourceListButton.Location <-  
+      feedListButton.Location <-  
         Point(5, this.ClientSize.Height - 30)
 
-  let showSourceListForm =
+  let showFeedListForm =
     Form.singletonSubform
-      (fun () -> new SourceListForm(rc))
+      (fun () -> new FeedListForm(rc))
 
   let listViewItemsFromNewItems (items: RssItem []) =
     [|
@@ -230,8 +230,8 @@ type MainForm () as this =
             )
       )
 
-    sourceListButton.Click.Add (fun e ->
-      showSourceListForm ()
+    feedListButton.Click.Add (fun e ->
+      showFeedListForm ()
       )
 
     this.SizeChanged.Add (fun e -> resize ())
