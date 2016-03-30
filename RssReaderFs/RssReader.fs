@@ -81,21 +81,12 @@ module RssReader =
           UnreadItems     = unreadItems'
       }
 
-  let updateAsync pred rr =
+  let updateAsync src rr =
     async {
-      let! feedItemsArray =
-        rr
-        |> allFeeds
-        |> Array.filter pred
-        |> Array.map (RssFeed.updateAsync)
-        |> Async.Parallel
-
-      let (feeds', unreadItemsArray) =
-        feedItemsArray |> Array.unzip
-
-      let unreadItems =
-        unreadItemsArray
-        |> Array.collect id
+      let! (feeds', unreadItems) =
+        src
+        |> RssSource.ofUnread
+        |> RssSource.fetchItemsAsync
 
       let rr =
         rr
@@ -106,7 +97,14 @@ module RssReader =
     }
 
   let updateAllAsync rr =
-    rr |> updateAsync (fun _ -> true)
+    let src =
+      rr
+      |> allFeeds
+      |> Array.map (RssSource.ofFeed)
+      |> Set.ofArray
+      |> RssSource.union
+    in
+      rr |> updateAsync src
 
   let tryFindSource url rr =
     rr |> feedMap |> Map.tryFind url

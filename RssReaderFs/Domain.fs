@@ -5,6 +5,8 @@ open System.Runtime.Serialization
 
 [<AutoOpen>]
 module Domain =
+  type RegexPattern = string
+
   type RssItem =
     {
       Title         : string
@@ -22,6 +24,18 @@ module Domain =
 
       // Category, UpdateSpan, etc.
     }
+
+  type RssSourceT<'Feed when 'Feed: comparison> =
+    internal
+    | Feed          of 'Feed
+    | Unread        of RssSourceT<'Feed>
+    | Union         of Set<RssSourceT<'Feed>>
+
+  type RssSourceSpec =
+    RssSourceT<Url>
+  
+  type RssSource =
+    RssSourceT<RssFeed>
 
   type RssReader =
     {

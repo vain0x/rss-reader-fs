@@ -3,6 +3,9 @@
 open System
 
 module RssFeed =
+  let doneSet (feed: RssFeed) =
+    feed.DoneSet
+
   let create name (url: string) =
     {
       Name        = name
