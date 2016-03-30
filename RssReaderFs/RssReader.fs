@@ -37,20 +37,10 @@ module RssReader =
     |> Array.fold (+) Set.empty
 
   let addFeed feed rr =
-    { rr with
-        FeedMap =
-          rr
-          |> feedMap
-          |> Map.add feed.Url feed
-    }
+    { rr with FeedMap = rr |> feedMap |> Map.add (feed.Url) feed }
 
   let removeFeed url rr =
-    { rr with
-        FeedMap =
-          rr
-          |> feedMap
-          |> Map.remove url
-    }
+    { rr with FeedMap = rr |> feedMap |> Map.remove url }
 
   let updateFeeds feeds rr =
     let feedMap' =
@@ -59,14 +49,10 @@ module RssReader =
           (fun feedMap feed -> feedMap |> Map.add (feed.Url) feed)
           (rr |> feedMap)
     in
-      { rr with
-          FeedMap = feedMap'
-      }
+      { rr with FeedMap = feedMap' }
 
   let addUnreadItems items rr =
-    { rr with
-        UnreadItems = rr.UnreadItems + (items |> Set.ofSeq)
-    }
+    { rr with UnreadItems = rr.UnreadItems + (items |> Set.ofSeq) }
 
   let readItem (item: RssItem) rr =
     let feedMap' =
@@ -146,6 +132,7 @@ module RssReader =
 
   module Serialize =
     open System.IO
+
     let load path =
       try
         let json =
