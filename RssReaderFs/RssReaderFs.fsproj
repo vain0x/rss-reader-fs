@@ -55,6 +55,7 @@
     <Compile Include="Util.fs" />
     <Compile Include="Domain.fs" />
     <Compile Include="RssItem.fs" />
+    <Compile Include="RssFeed.fs" />
     <Compile Include="RssSource.fs" />
     <Compile Include="RssReader.fs" />
     <Compile Include="RssClient.fs" />

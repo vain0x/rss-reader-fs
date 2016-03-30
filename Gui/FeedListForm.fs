@@ -5,14 +5,14 @@ open System.Drawing
 open System.Windows.Forms
 open RssReaderFs
 
-type SourceListForm (rc: RssClient) as this =
+type FeedListForm (rc: RssClient) as this =
   inherit Form
-    ( Text    = "Sources - RssReaderFs.Gui"
+    ( Text    = "Feeds - RssReaderFs.Gui"
     , Size    = Size(480, 360)
     )
 
-  let lvItemFromRssSource (src: RssSource) =
-    ListViewItem([| src.Name; src.Url |> Url.toString |])
+  let lvItemFromRssFeed (feed: RssFeed) =
+    ListViewItem([| feed.Name; feed.Url |> Url.toString |])
 
   let listView =
     new ListView
@@ -35,8 +35,8 @@ type SourceListForm (rc: RssClient) as this =
 
         // Add initial rows
 
-        rc.Reader |> RssReader.sources
-        |> Array.map lvItemFromRssSource
+        rc.Reader |> RssReader.allFeeds
+        |> Array.map lvItemFromRssFeed
         |> (fun lvItems ->
             listView.Items.AddRange(lvItems)
             )
@@ -76,12 +76,12 @@ type SourceListForm (rc: RssClient) as this =
   let showAddForm =
     Form.singletonSubform
       (fun () ->
-        new SourceAddForm
-          (fun src ->
-            if src.Name <> "" then
-              rc.AddSource(src)
+        new FeedAddForm
+          (fun feed ->
+            if feed.Name <> "" then
+              rc.AddSource(feed |> RssSource.ofFeed)
 
-            listView.Items.Add(lvItemFromRssSource src) |> ignore
+            listView.Items.Add(lvItemFromRssFeed feed) |> ignore
             )
         )
 
@@ -95,8 +95,7 @@ type SourceListForm (rc: RssClient) as this =
       for i in 0..(selectedItems.Count - 1) do
         let lvItem = selectedItems.Item(i)
         let columns = lvItem |> subitems
-        let url = Url.ofString (columns.Url.Text)
-        do rc.RemoveSource(url)
+        do rc.RemoveSource(columns.Name.Text)
       )
 
     base.Controls.AddRange(controls)

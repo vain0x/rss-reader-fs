@@ -52,6 +52,14 @@ module Dictionary =
         yield (k, v)
       |]
 
+module Set =
+  let collect f self =
+    self |> Seq.map f |> Set.unionMany
+
+module Map =
+  let valueSet self =
+    self |> Map.toList |> List.map snd |> Set.ofList
+
 module DateTime =
   let tryParse s =
     DateTime.TryParse(s)
