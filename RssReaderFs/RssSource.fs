@@ -58,3 +58,33 @@ module RssSource =
 
       return (feeds', items)
     }
+
+  let rec toSpec =
+    function
+    | Feed (feed: RssFeed) ->
+        Feed (feed.Url)
+    | Unread src ->
+        Unread (src |> toSpec)
+    | Union srcs ->
+        Union (srcs |> Set.map toSpec)
+
+  let rec ofSpec feedMap =
+    function
+    | Feed url ->
+        match feedMap |> Map.tryFind url with
+        | Some feed -> Feed feed
+        | None -> failwithf "Unregistered URL: %s" (url |> Url.toString)
+    | Unread src ->
+        Unread (src |> ofSpec feedMap)
+    | Union srcs ->
+        Union (srcs |> Set.map (ofSpec feedMap))
+
+  let toJson (src: RssSource) =
+    src
+    |> toSpec
+    |> Serialize.serializeJson<RssSourceSpec>
+
+  let ofJson feedMap json =
+    json
+    |> Serialize.deserializeJson<RssSourceSpec>
+    |> ofSpec feedMap
