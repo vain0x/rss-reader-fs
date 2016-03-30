@@ -25,6 +25,6 @@ module Domain =
 
   type RssReader =
     {
-      SourceMap     : Map<Url, RssFeed>
+      FeedMap       : Map<Url, RssFeed>
       UnreadItems   : Set<RssItem>
     }
