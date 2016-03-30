@@ -25,11 +25,13 @@ module Domain =
       // Category, UpdateSpan, etc.
     }
 
+  type SourceName = string
+
   type RssSourceT<'Feed when 'Feed: comparison> =
     internal
     | Feed          of 'Feed
     | Unread        of RssSourceT<'Feed>
-    | Union         of Set<RssSourceT<'Feed>>
+    | Union         of SourceName * Set<RssSourceT<'Feed>>
 
   type RssSourceSpec =
     RssSourceT<Url>
@@ -40,8 +42,8 @@ module Domain =
   type RssReader =
     {
       FeedMap       : Map<Url, RssFeed>
+      SourceMap     : Map<SourceName, RssSource>
       UnreadItems   : Set<RssItem>
-      Sources       : Set<RssSource>
     }
 
   /// Serializable version

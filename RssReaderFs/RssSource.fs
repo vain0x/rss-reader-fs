@@ -10,13 +10,19 @@ module RssSource =
   let union sources =
     Union sources
 
+  let rec name =
+    function
+    | Feed (feed: RssFeed) -> feed.Name
+    | Unread src -> src |> name
+    | Union (name, _) -> name
+
   let rec toFeeds =
     function
     | Feed feed ->
         Set.singleton feed
     | Unread src ->
         src |> toFeeds
-    | Union srcs ->
+    | Union (_, srcs) ->
         srcs |> Set.collect toFeeds
 
   /// items: このソースが受信対象とするフィードが発信したアイテムの列
@@ -35,7 +41,7 @@ module RssSource =
           |> filterItems items
           |> Array.filter (fun item -> doneSet |> Set.contains item |> not)
 
-    | Union srcSet ->
+    | Union (_, srcSet) ->
         srcSet |> Set.fold filterItems items
 
   let fetchItemsAsync src =
@@ -65,8 +71,8 @@ module RssSource =
         Feed (feed.Url)
     | Unread src ->
         Unread (src |> toSpec)
-    | Union srcs ->
-        Union (srcs |> Set.map toSpec)
+    | Union (name, srcs) ->
+        Union (name, srcs |> Set.map toSpec)
 
   let rec ofSpec feedMap =
     function
@@ -76,8 +82,8 @@ module RssSource =
         | None -> failwithf "Unregistered URL: %s" (url |> Url.toString)
     | Unread src ->
         Unread (src |> ofSpec feedMap)
-    | Union srcs ->
-        Union (srcs |> Set.map (ofSpec feedMap))
+    | Union (name, srcs) ->
+        Union (name, srcs |> Set.map (ofSpec feedMap))
 
   let toJson (src: RssSource) =
     src

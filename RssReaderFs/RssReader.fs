@@ -7,8 +7,8 @@ module RssReader =
   let empty =
     {
       FeedMap         = Map.empty
+      SourceMap       = Map.empty
       UnreadItems     = Set.empty
-      Sources         = Set.empty
     }
 
   let internal feedMap (rr: RssReader) =
@@ -28,7 +28,7 @@ module RssReader =
     |> allFeeds
     |> Array.map RssSource.ofFeed
     |> Set.ofArray
-    |> RssSource.union
+    |> (fun srcs -> RssSource.union ("ALL", srcs))
 
   let alreadyReadItems rr =
     rr
@@ -105,7 +105,9 @@ module RssReader =
     let feeds =
       rr |> allFeeds
     let srcSpecs =
-      rr.Sources |> Set.map (RssSource.toSpec)
+      rr.SourceMap
+      |> Map.valueSet
+      |> Set.map (RssSource.toSpec)
     in
       (feeds, srcSpecs)
 
@@ -114,14 +116,16 @@ module RssReader =
       feeds
       |> Array.map (fun feed -> (feed.Url, feed))
       |> Map.ofArray
-    let sources =
+    let sourceMap =
       srcSpecs
       |> Set.map (RssSource.ofSpec feedMap)
+      |> Set.map (fun src -> (src |> RssSource.name, src))
+      |> Map.ofSeq
     in
       {
         FeedMap       = feedMap
+        SourceMap     = sourceMap
         UnreadItems   = Set.empty
-        Sources       = sources
       } 
 
   let toJson rr =
