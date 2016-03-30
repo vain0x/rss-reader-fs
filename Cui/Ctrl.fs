@@ -62,9 +62,9 @@ type Ctrl (rc: RssClient) =
               let body () =
                 rc.Reader
                 |> RssReader.allFeeds
-                |> Array.iteri (fun i src ->
-                    printfn "#%d: %s <%s>"
-                      i (src.Name) (src.Url |> string)
+                |> Array.iter (fun src ->
+                    printfn "%s <%s>"
+                      (src.Name) (src.Url |> Url.toString)
                   )
               in lockConsole body
 
@@ -90,9 +90,8 @@ type Ctrl (rc: RssClient) =
                 rc.Reader
                 |> RssReader.sourceMap
                 |> Map.toList
-                |> List.iteri (fun i (_, src) ->
-                    printfn "#%d %s %s"
-                      i (src |> RssSource.name) (src |> RssSource.toSExpr)
+                |> List.iter (fun (_, src) ->
+                    printfn "%s" (src |> RssSource.toSExpr)
                     )
               in lockConsole body
 
