@@ -120,23 +120,20 @@ module RssReader =
       |> Set.map (RssSource.toSpec)
     in
       (feeds, srcSpecs)
-
+      
   let ofSpec (feeds, srcSpecs) =
     let feedMap =
       feeds
       |> Array.map (fun feed -> (feed.Url, feed))
       |> Map.ofArray
-    let sourceMap =
+    let rr =
+      feedMap
+      |> Map.fold (fun rr _ feed -> rr |> addFeed feed) empty 
+    let rr =
       srcSpecs
       |> Set.map (RssSource.ofSpec feedMap)
-      |> Set.map (fun src -> (src |> RssSource.name, src))
-      |> Map.ofSeq
-    in
-      {
-        FeedMap       = feedMap
-        SourceMap     = sourceMap
-        UnreadItems   = Set.empty
-      } 
+      |> Set.fold (fun rr src -> rr |> addSource src) rr
+    in rr
 
   let toJson rr =
     rr |> toSpec |> Serialize.serializeJson<RssReaderSpec>
