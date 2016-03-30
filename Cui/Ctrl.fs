@@ -9,9 +9,12 @@ type Ctrl (rc: RssClient) =
   let view =
     new View(rc)
 
-  member this.TryUpdate() =
+  member this.TryUpdate(srcOpt) =
     async {
-      let! newItems = rc.UpdateAllAsync
+      let src =
+        defaultArg srcOpt (rc.Reader |> RssReader.allFeedSource)
+
+      let! newItems = rc.UpdateAsync src
       do
         if newItems |> Array.isEmpty |> not then
           view.OnNewFeeds(newItems)
@@ -44,18 +47,18 @@ type Ctrl (rc: RssClient) =
             |> Array.toList
           match command with
           | "up" :: _ | "update" :: _ ->
-              let! success = this.TryUpdate()
+              let! success = this.TryUpdate(None)
               if success |> not then
                 printfn "No new items available."
 
           | "show" :: _ ->
-              let! success = this.TryUpdate()
+              let! success = this.TryUpdate(None)
               if success then
                 view.PrintTimeLine()
               else
                 printfn "No new items available."
 
-          | "feed" :: _ ->
+          | "feeds" :: _ ->
               let body () =
                 rc.Reader
                 |> RssReader.allFeeds
