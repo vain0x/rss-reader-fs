@@ -2,7 +2,7 @@
 
 open System
 
-module RssSource =
+module RssFeed =
   let create name (url: string) =
     {
       Name        = name
@@ -10,29 +10,29 @@ module RssSource =
       DoneSet     = Set.empty
     }
     
-  let downloadAsync (source: RssSource) =
+  let downloadAsync (feed: RssFeed) =
     async {
-      let url = source.Url
+      let url = feed.Url
       let! xml = Net.downloadXmlAsync(url)
       return (xml |> RssItem.parseXml url)
     }
 
-  let updateAsync src =
+  let updateAsync feed =
     async {
-      let! items = src |> downloadAsync
+      let! items = feed |> downloadAsync
 
       // 読了済みのものと分離する
       let (dones, undones) =
         items
         |> Seq.toArray
-        |> Array.partition (fun item -> src.DoneSet |> Set.contains item)
+        |> Array.partition (fun item -> feed.DoneSet |> Set.contains item)
 
-      let src =
-        { src with
+      let feed =
+        { feed with
             DoneSet = dones |> Set.ofArray
         }
 
-      return (src, undones)
+      return (feed, undones)
     }
 
   module Serialize =
@@ -42,15 +42,15 @@ module RssSource =
       try
         let json =
           File.ReadAllText(path)
-        let sources =
-          Serialize.deserializeJson<RssSource []>(json)
+        let feeds =
+          Serialize.deserializeJson<RssFeed []>(json)
         in
-          sources |> Some
+          feeds |> Some
       with
       | _ -> None
 
-    let save path (sources) =
+    let save path feeds =
       let json =
-        Serialize.serializeJson(sources)
+        Serialize.serializeJson(feeds)
       in
         File.WriteAllText(path, json)

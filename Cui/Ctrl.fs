@@ -66,9 +66,9 @@ type Ctrl (rc: RssClient) =
               in lockConsole body
 
           | "add" :: name :: url :: _ ->
-              let source = RssSource.create name url
+              let feed = RssFeed.create name url
               let body () =
-                rc.AddSource(source)
+                rc.AddFeed(feed)
               in lockConsole body
 
           | "remove" :: url :: _ ->
@@ -77,7 +77,7 @@ type Ctrl (rc: RssClient) =
                 rc.Reader
                 |> RssReader.tryFindSource(url)
                 |> Option.iter (fun src ->
-                    rc.RemoveSource(url)
+                    rc.RemoveFeed(url)
                     printfn "'%s <%s>' has been removed."
                       (src.Name)
                       (src.Url |> Url.toString)

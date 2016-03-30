@@ -4,11 +4,11 @@ open System
 open System.Collections.Generic
 
 module RssReader =
-  let create(sources: RssSource []) =
+  let create(feeds: RssFeed []) =
     {
       SourceMap =
-        sources
-        |> Array.map (fun src -> (src.Url, src))
+        feeds
+        |> Array.map (fun feed -> (feed.Url, feed))
         |> Map.ofSeq
       UnreadItems =
         Set.empty
@@ -31,15 +31,15 @@ module RssReader =
     |> Array.map (fun src -> src.DoneSet)
     |> Array.fold (+) Set.empty
 
-  let addSource (source: RssSource) rr =
+  let addFeed feed rr =
     { rr with
         SourceMap =
           rr
           |> sourceMap
-          |> Map.add source.Url source
+          |> Map.add feed.Url feed
     }
 
-  let removeSource url rr =
+  let removeFeed url rr =
     { rr with
         SourceMap =
           rr
@@ -87,7 +87,7 @@ module RssReader =
         rr
         |> sources
         |> Array.filter pred
-        |> Array.map (RssSource.updateAsync)
+        |> Array.map (RssFeed.updateAsync)
         |> Async.Parallel
 
       let (sources', unreadItemsArray) =
@@ -122,7 +122,7 @@ module RssReader =
   module Serialize =
     let load path =
       path
-      |> RssSource.Serialize.load
+      |> RssFeed.Serialize.load
       |> Option.map create
 
     let loadOrEmpty path =
@@ -133,4 +133,4 @@ module RssReader =
     let save path rr =
       rr
       |> sources
-      |> RssSource.Serialize.save path
+      |> RssFeed.Serialize.save path

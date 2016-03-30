@@ -5,7 +5,7 @@ open System.Drawing
 open System.Windows.Forms
 open RssReaderFs
 
-type SourceAddForm (onRegister: RssSource -> unit) as this =
+type SourceAddForm (onRegister: RssFeed -> unit) as this =
   inherit Form
     ( Text    = "Add Source - RssReaderFs.Gui"
     , Size    = Size(360, 240)
@@ -64,10 +64,10 @@ type SourceAddForm (onRegister: RssSource -> unit) as this =
 
   do
     okButton.Click.Add (fun e ->
-      let src =
-        RssSource.create (nameBox.Text) (urlBox.Text)
+      let feed =
+        RssFeed.create (nameBox.Text) (urlBox.Text)
       do
-        onRegister src
+        onRegister feed
         this.Close()
       )
 
