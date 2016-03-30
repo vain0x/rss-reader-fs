@@ -51,4 +51,7 @@ module Domain =
 
   /// Serializable version
   type RssReaderSpec =
-    RssFeed [] * Set<RssSourceSpec>
+    {
+      Feeds         : RssFeed []
+      SourceSpecSet : Set<RssSourceSpec>
+    }
