@@ -131,7 +131,7 @@ type MainForm () as this =
             Title     = item.Title
             Read      = ""
             Date      = item.Date.ToString("G")
-            Source    = reader () |> RssReader.sourceName (item.Url)
+            Source    = reader () |> RssReader.feedName (item.Url)
           }
           |> MainListviewColumns.toArray
           |> Array.map (fun text ->
@@ -160,7 +160,7 @@ type MainForm () as this =
     titleLabel.Text     <- item.Title
     textBox.Text        <- item.Desc |> Option.getOr "(no_description)"
     linkLabel.Text      <- item.Link |> Option.getOr "(no_link)"
-    sourceLabel.Text    <- reader () |> RssReader.sourceName (item.Url)
+    sourceLabel.Text    <- reader () |> RssReader.feedName (item.Url)
 
   let readItem item =
     do rc.ReadItem(item)

@@ -90,12 +90,12 @@ module RssReader =
   let updateAllAsync rr =
     rr |> updateAsync (rr |> allFeedSource)
 
-  let tryFindSource url rr =
+  let tryFindFeed url rr =
     rr |> feedMap |> Map.tryFind url
 
-  let sourceName url rr =
+  let feedName url rr =
     let name =
-      match rr |> tryFindSource url with
+      match rr |> tryFindFeed url with
       | Some { Name = name } -> name + " "
       | None -> ""
     in

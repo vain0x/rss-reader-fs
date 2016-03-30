@@ -75,7 +75,7 @@ type Ctrl (rc: RssClient) =
               let url = Url.ofString url
               let body () =
                 rc.Reader
-                |> RssReader.tryFindSource(url)
+                |> RssReader.tryFindFeed url
                 |> Option.iter (fun src ->
                     rc.RemoveFeed(url)
                     printfn "'%s <%s>' has been removed."
