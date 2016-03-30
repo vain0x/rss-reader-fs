@@ -9,9 +9,12 @@ type Ctrl (rc: RssClient) =
   let view =
     new View(rc)
 
-  member this.TryUpdate() =
+  member this.TryUpdate(srcOpt) =
     async {
-      let! newItems = rc.UpdateAllAsync
+      let src =
+        defaultArg srcOpt (rc.Reader |> RssReader.allFeedSource)
+
+      let! newItems = rc.UpdateAsync src
       do
         if newItems |> Array.isEmpty |> not then
           view.OnNewFeeds(newItems)
@@ -24,7 +27,7 @@ type Ctrl (rc: RssClient) =
 
     let rec loop () =
       async {
-        let! _ = rc.UpdateAllAsync
+        let! _ = this.TryUpdate(None)
         do! Async.Sleep(timeout)
         return! loop ()
       }
@@ -44,43 +47,51 @@ type Ctrl (rc: RssClient) =
             |> Array.toList
           match command with
           | "up" :: _ | "update" :: _ ->
-              let! success = this.TryUpdate()
+              let! success = this.TryUpdate(None)
               if success |> not then
                 printfn "No new items available."
 
           | "show" :: _ ->
-              let! success = this.TryUpdate()
+              let! success = this.TryUpdate(None)
               if success then
                 view.PrintTimeLine()
               else
                 printfn "No new items available."
 
-          | "src" :: _ ->
+          | "feeds" :: _ ->
               let body () =
                 rc.Reader
-                |> RssReader.sources
-                |> Array.iteri (fun i src ->
-                    printfn "#%d: %s <%s>"
-                      i (src.Name) (src.Url |> string)
+                |> RssReader.allFeeds
+                |> Array.iter (fun src ->
+                    printfn "%s <%s>"
+                      (src.Name) (src.Url |> Url.toString)
                   )
               in lockConsole body
 
-          | "add" :: name :: url :: _ ->
-              let source = RssSource.create name url
+          | "feed" :: name :: url :: _ ->
+              let feed = RssFeed.create name url
               let body () =
-                rc.AddSource(source)
+                rc.AddSource(feed |> RssSource.ofFeed)
               in lockConsole body
 
-          | "remove" :: url :: _ ->
-              let url = Url.ofString url
+          | "remove" :: name :: _ ->
               let body () =
                 rc.Reader
-                |> RssReader.tryFindSource(url)
+                |> RssReader.tryFindSource name
                 |> Option.iter (fun src ->
-                    rc.RemoveSource(url)
-                    printfn "'%s <%s>' has been removed."
-                      (src.Name)
-                      (src.Url |> Url.toString)
+                    rc.RemoveSource(name)
+                    printfn "'%s' has been removed."
+                      (src |> RssSource.name)
+                    )
+              in lockConsole body
+
+          | "sources" :: _ ->
+              let body () =
+                rc.Reader
+                |> RssReader.sourceMap
+                |> Map.toList
+                |> List.iter (fun (_, src) ->
+                    printfn "%s" (src |> RssSource.toSExpr)
                     )
               in lockConsole body
 
