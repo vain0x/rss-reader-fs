@@ -35,7 +35,7 @@ type SourceListForm (rc: RssClient) as this =
 
         // Add initial rows
 
-        rc.Reader |> RssReader.sources
+        rc.Reader |> RssReader.allFeeds
         |> Array.map lvItemFromRssFeed
         |> (fun lvItems ->
             listView.Items.AddRange(lvItems)

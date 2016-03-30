@@ -58,7 +58,7 @@ type Ctrl (rc: RssClient) =
           | "src" :: _ ->
               let body () =
                 rc.Reader
-                |> RssReader.sources
+                |> RssReader.allFeeds
                 |> Array.iteri (fun i src ->
                     printfn "#%d: %s <%s>"
                       i (src.Name) (src.Url |> string)

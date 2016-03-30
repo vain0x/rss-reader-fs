@@ -20,14 +20,14 @@ module RssReader =
   let unreadItems (rr: RssReader) =
     rr.UnreadItems
 
-  let sources rr =
+  let allFeeds rr =
     rr.FeedMap
     |> Map.toArray
     |> Array.map snd
 
   let alreadyReadItems rr =
     rr
-    |> sources
+    |> allFeeds
     |> Array.map (fun src -> src.DoneSet)
     |> Array.fold (+) Set.empty
 
@@ -85,7 +85,7 @@ module RssReader =
     async {
       let! feedItemsArray =
         rr
-        |> sources
+        |> allFeeds
         |> Array.filter pred
         |> Array.map (RssFeed.updateAsync)
         |> Async.Parallel
@@ -132,5 +132,5 @@ module RssReader =
       
     let save path rr =
       rr
-      |> sources
+      |> allFeeds
       |> RssFeed.Serialize.save path
