@@ -1,7 +1,6 @@
 ﻿namespace RssReaderFs
 
 open System
-open System.Runtime.Serialization
 
 [<AutoOpen>]
 module Domain =
