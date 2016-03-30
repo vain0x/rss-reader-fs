@@ -37,23 +37,3 @@ module RssFeed =
 
       return (feed, undones)
     }
-
-  module Serialize =
-    open System.IO
-
-    let load path =
-      try
-        let json =
-          File.ReadAllText(path)
-        let feeds =
-          Serialize.deserializeJson<RssFeed []>(json)
-        in
-          feeds |> Some
-      with
-      | _ -> None
-
-    let save path feeds =
-      let json =
-        Serialize.serializeJson(feeds)
-      in
-        File.WriteAllText(path, json)

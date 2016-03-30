@@ -4,14 +4,11 @@ open System
 open System.Collections.Generic
 
 module RssReader =
-  let create(feeds: RssFeed []) =
+  let empty =
     {
-      FeedMap =
-        feeds
-        |> Array.map (fun feed -> (feed.Url, feed))
-        |> Map.ofSeq
-      UnreadItems =
-        Set.empty
+      FeedMap         = Map.empty
+      UnreadItems     = Set.empty
+      Sources         = Set.empty
     }
 
   let internal feedMap (rr: RssReader) =
@@ -117,18 +114,53 @@ module RssReader =
     in
       sprintf "%s<%s>" name (url |> string)
 
+  let toSpec rr =
+    let feeds =
+      rr |> allFeeds
+    let srcSpecs =
+      rr.Sources |> Set.map (RssSource.toSpec)
+    in
+      (feeds, srcSpecs)
+
+  let ofSpec (feeds, srcSpecs) =
+    let feedMap =
+      feeds
+      |> Array.map (fun feed -> (feed.Url, feed))
+      |> Map.ofArray
+    let sources =
+      srcSpecs
+      |> Set.map (RssSource.ofSpec feedMap)
+    in
+      {
+        FeedMap       = feedMap
+        UnreadItems   = Set.empty
+        Sources       = sources
+      } 
+
+  let toJson rr =
+    rr |> toSpec |> Serialize.serializeJson<RssReaderSpec>
+
+  let ofJson json =
+    json |> Serialize.deserializeJson<RssReaderSpec> |> ofSpec
+
   module Serialize =
+    open System.IO
     let load path =
-      path
-      |> RssFeed.Serialize.load
-      |> Option.map create
+      try
+        let json =
+          File.ReadAllText(path)
+        in
+          json |> ofJson |> Some
+      with
+      | _ -> None
 
     let loadOrEmpty path =
       match load path with
       | Some rr -> rr
-      | None -> create [||]
-      
+      | None -> empty
+
     let save path rr =
-      rr
-      |> allFeeds
-      |> RssFeed.Serialize.save path
+      let json =
+        rr |> toJson
+      in
+        File.WriteAllText(path, json)

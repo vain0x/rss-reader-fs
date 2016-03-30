@@ -41,4 +41,9 @@ module Domain =
     {
       FeedMap       : Map<Url, RssFeed>
       UnreadItems   : Set<RssItem>
+      Sources       : Set<RssSource>
     }
+
+  /// Serializable version
+  type RssReaderSpec =
+    RssFeed [] * Set<RssSourceSpec>
