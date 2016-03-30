@@ -22,6 +22,14 @@ module RssReader =
     |> Map.toArray
     |> Array.map snd
 
+  /// The maximum source
+  let allFeedSource rr: RssSource =
+    rr
+    |> allFeeds
+    |> Array.map RssSource.ofFeed
+    |> Set.ofArray
+    |> RssSource.union
+
   let alreadyReadItems rr =
     rr
     |> allFeeds
@@ -94,14 +102,7 @@ module RssReader =
     }
 
   let updateAllAsync rr =
-    let src =
-      rr
-      |> allFeeds
-      |> Array.map (RssSource.ofFeed)
-      |> Set.ofArray
-      |> RssSource.union
-    in
-      rr |> updateAsync src
+    rr |> updateAsync (rr |> allFeedSource)
 
   let tryFindSource url rr =
     rr |> feedMap |> Map.tryFind url
