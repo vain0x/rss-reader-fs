@@ -55,7 +55,7 @@ type Ctrl (rc: RssClient) =
               else
                 printfn "No new items available."
 
-          | "src" :: _ ->
+          | "feed" :: _ ->
               let body () =
                 rc.Reader
                 |> RssReader.allFeeds
