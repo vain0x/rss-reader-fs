@@ -27,7 +27,7 @@ type Ctrl (rc: RssClient) =
 
     let rec loop () =
       async {
-        let! _ = rc.UpdateAllAsync
+        let! _ = this.TryUpdate(None)
         do! Async.Sleep(timeout)
         return! loop ()
       }
