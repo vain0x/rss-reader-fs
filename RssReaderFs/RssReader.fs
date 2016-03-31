@@ -186,15 +186,14 @@ module RssReader =
     |> Map.keySet
 
   let readItem (item: RssItem) rr =
-    let feedMap' =
-      match rr |> feedMap |> Map.tryFind (item.Url) with
-      | None -> rr |> feedMap
-      | Some feed ->
-          let feed' =
-            { feed with DoneSet = feed.DoneSet |> Set.add item }
-          in
-            rr |> feedMap |> Map.add (feed.Url) feed'
-    in { rr with FeedMap = feedMap' }
+    match rr |> feedMap |> Map.tryFind (item.Url) with
+    | None -> rr
+    | Some feed ->
+        let feed' =
+          { feed with DoneSet = feed.DoneSet |> Set.add item }
+        let feedMap' =
+          rr |> feedMap |> Map.add (feed.Url) feed'
+        in { rr with FeedMap = feedMap' }
 
   let updateAsync src rr =
     async {
