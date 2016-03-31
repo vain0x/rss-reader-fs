@@ -47,9 +47,9 @@ type Ctrl (rc: RssClient) =
     rc.Reader
     |> RssReader.tryFindSource srcName
     |> tap (fun opt ->
-      if opt |> Option.isNone then
-        eprintfn "Unknown source: %s" srcName
-      )
+        if opt |> Option.isNone then
+          eprintfn "Unknown source: %s" srcName
+        )
 
   member this.Interactive() =
     let rec loop () = async {
@@ -74,13 +74,13 @@ type Ctrl (rc: RssClient) =
               do! this.UpdateAndShowCount(None)
 
           | "show" :: srcName :: _ ->
-            match this.TryFindSource(srcName) with
-            | None -> ()
-            | Some src ->
-                do! this.UpdateAndShowDetails(Some src)
+              match this.TryFindSource(srcName) with
+              | None -> ()
+              | Some src ->
+                  do! this.UpdateAndShowDetails(Some src)
 
           | "show" :: _ ->
-            do! this.UpdateAndShowDetails(None)
+              do! this.UpdateAndShowDetails(None)
 
           | "feeds" :: _ ->
               let body () =
