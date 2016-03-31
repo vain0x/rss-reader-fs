@@ -113,7 +113,7 @@ module RssReader =
           { rr with SourceMap = sourceMap' }
         in (rr, old)
 
-  let rec renameSource oldName newName rr =
+  let renameSource oldName newName rr =
     match
       ( rr |> tryFindSource oldName
       , rr |> tryFindSource newName
