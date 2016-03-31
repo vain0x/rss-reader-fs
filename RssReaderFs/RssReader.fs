@@ -190,7 +190,7 @@ module RssReader =
     | None -> rr
     | Some feed ->
         let feed' =
-          { feed with DoneSet = feed.DoneSet |> Set.add item }
+          { feed with DoneSet = feed |> RssFeed.doneSet |> Set.add item }
         let feedMap' =
           rr |> feedMap |> Map.add (feed.Url) feed'
         in { rr with FeedMap = feedMap' }

@@ -36,7 +36,7 @@ module RssFeed =
       let (dones, undones) =
         items
         |> Seq.toArray
-        |> Array.partition (fun item -> feed.DoneSet |> Set.contains item)
+        |> Array.partition (fun item -> feed |> doneSet |> Set.contains item)
 
       let feed =
         { feed with
