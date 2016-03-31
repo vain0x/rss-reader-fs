@@ -61,6 +61,13 @@ type Ctrl (rc: RssClient) =
               if items |> Seq.isEmpty then
                 printfn "No new items available."
 
+          | "show" :: srcName :: _ ->
+            match rc.Reader |> RssReader.tryFindSource srcName with
+            | Some src ->
+                do! this.TryUpdateAndShow(Some src)
+            | None ->
+                printfn "Unknown source: %s" srcName
+
           | "show" :: _ ->
             do! this.TryUpdateAndShow(None)
 
@@ -99,6 +106,13 @@ type Ctrl (rc: RssClient) =
                 |> List.iter (fun (_, src) ->
                     printfn "%s" (src |> RssSource.toSExpr)
                     )
+              in lockConsole body
+
+          | "tag" :: tagName :: srcName :: _ ->
+              let body () =
+                match rc.Reader |> RssReader.tryFindSource srcName with
+                | Some src -> rc.AddTag(tagName, src)
+                | None -> printfn "Unknown source name: %s" srcName
               in lockConsole body
 
           | _ -> ()
