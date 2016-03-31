@@ -77,19 +77,6 @@ module RssSource =
       return (feeds', items)
     }
 
-  let rec rename oldName newName self =
-    match self with
-    | Feed feed ->
-        if feed.Name = oldName
-        then { feed with Name = newName } |> Feed
-        else self
-    | Unread src ->
-        src |> rename oldName newName |> Unread
-    | Union (srcName, srcs) ->
-        let srcName'  = srcName |> replace oldName newName
-        let srcs'     = srcs |> Set.map (rename oldName newName)
-        in Union (srcName', srcs')
-
   let rec toSExpr =
     function
     | Feed (feed: RssFeed) ->
@@ -135,3 +122,15 @@ module RssSource =
     |> Yaml.customTryLoad<RssSourceSpec>
     |> Option.get
     |> ofSpec feedMap
+
+module RssSourceSpec =
+  let rec rename oldName newName self =
+    match self with
+    | Feed (_: Url) ->
+        self
+    | Unread src ->
+        src |> rename oldName newName |> Unread
+    | Union (srcName, srcs) ->
+        let srcName'  = srcName |> replace oldName newName
+        let srcs'     = srcs |> Set.map (rename oldName newName)
+        in Union (srcName', srcs')

@@ -121,30 +121,6 @@ module RssReader =
           { rr with SourceMap = sourceMap' }
         in (rr, old)
 
-  let rec renameSource oldName newName rr =
-    match
-      ( rr |> tryFindSource oldName
-      , rr |> tryFindSource newName
-      ) with
-    | (Some src, None) ->
-        { rr with
-            FeedMap =
-              rr
-              |> feedMap
-              |> Map.map (fun _ -> RssFeed.rename oldName newName)
-            TagMap = 
-              rr
-              |> tagMap
-              |> Map.replaceKey oldName newName
-              |> Map.map (fun _ -> Set.map (RssSource.rename oldName newName))
-            SourceMap =
-              rr
-              |> sourceMap
-              |> Map.replaceKey oldName newName
-              |> Map.map (fun _ -> RssSource.rename oldName newName)
-            }
-    | _ -> rr
-
   /// src にタグを付ける
   let addTag tagName src rr =
     let rr = rr |> addTagImpl tagName src
@@ -266,6 +242,32 @@ module RssReader =
               ) rr
           ) rr
     in rr
+
+  let renameSource oldName newName rr =
+    match
+      ( rr |> tryFindSource oldName
+      , rr |> tryFindSource newName
+      ) with
+    | (Some src, None) ->
+        let spec = rr |> toSpec
+        let spec' =
+          match src with
+          | Feed feed ->
+              let feed'     = feed |> RssFeed.rename oldName newName
+              let feeds'    = spec.Feeds |> Array.replace feed feed'
+              in { spec with Feeds = feeds' }
+          | Unread subsrc ->
+              spec
+          | Union (srcName, srcs) ->
+              let tags' =
+                spec.Tags |> Map.replaceKey oldName newName
+              let srcSet' =
+                spec.SourceSpecSet
+                |> Set.map (RssSourceSpec.rename oldName newName)
+              in
+                { spec with Tags = tags'; SourceSpecSet = srcSet' }
+        in spec' |> ofSpec
+    | _ -> rr
 
   let toJson rr =
     rr |> toSpec |> Yaml.customDump
