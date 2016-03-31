@@ -20,6 +20,11 @@ type RssClient private (path: string) =
     let () = reader <- rr'
     in old
 
+  member this.RenameSource(oldName, newName) =
+    let rr  = reader
+    let () = reader <- reader |> RssReader.renameSource oldName newName
+    in rr <> reader
+     
   member this.AddTag(tagName, src) =
     let (rr', old) = reader |> RssReader.addTag tagName src
     let () = reader <- rr'
