@@ -81,7 +81,7 @@ module RssSource =
         else
           sprintf "(union %s %s)"
             name
-            (String.Join(" ", srcs |> Set.toArray))
+            (String.Join(" ", srcs |> Set.map toSExpr))
 
   let rec toSpec =
     function
