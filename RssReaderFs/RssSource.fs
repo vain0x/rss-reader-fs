@@ -80,9 +80,7 @@ module RssSource =
   let rec rename oldName newName self =
     match self with
     | Feed feed ->
-        if feed.Name = oldName
-        then { feed with Name = newName } |> Feed
-        else self
+        feed |> RssFeed.rename oldName newName |> Feed
     | Unread src ->
         src |> rename oldName newName |> Unread
     | Union (srcName, srcs) ->
