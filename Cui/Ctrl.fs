@@ -43,6 +43,12 @@ type Ctrl (rc: RssClient) =
       do view.PrintItems(items)
     }
 
+  member this.UpdateAndShowTitles(srcOpt) =
+    async {
+      let! items = this.Update(srcOpt)
+      do view.PrintItemTitles(items)
+    }
+
   member this.TryFindSource(srcName) =
     rc.Reader
     |> RssReader.tryFindSource srcName
@@ -71,6 +77,15 @@ type Ctrl (rc: RssClient) =
 
       | "show" :: _ ->
           do! this.UpdateAndShowDetails(None)
+          
+      | "list" :: srcName :: _ ->
+          match this.TryFindSource(srcName) with
+          | None -> ()
+          | Some src ->
+              do! this.UpdateAndShowTitles(Some src)
+
+      | "list" :: _ ->
+          do! this.UpdateAndShowTitles(None)
 
       | "feeds" :: _ ->
           rc.Reader

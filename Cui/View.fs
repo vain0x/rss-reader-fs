@@ -57,6 +57,19 @@ type View (rc: RssClient) =
             )
     in ()
 
+  member this.PrintItemTitles(items: RssItem []) =
+    let len = items |> Array.length
+    in
+      if len = 0
+      then printfn "No new items."
+      else
+        items
+        |> Array.sortBy (fun item -> item.Date)
+        |> Array.iter (fun item ->
+            printfn "%s %s"
+              (item.Date.ToString("G")) item.Title
+            )
+
   member this.PrintTag(tagName) =
     match rc.Reader |> RssReader.tagMap |> Map.tryFind tagName with
     | None -> eprintfn "Unknown tag name: %s" tagName
