@@ -25,6 +25,8 @@ module Domain =
     }
 
   type SourceName = string
+  
+  type TagName = SourceName
 
   type RssSourceT<'Feed when 'Feed: comparison> =
     | Feed          of 'Feed
@@ -40,9 +42,14 @@ module Domain =
   type RssReader =
     {
       /// 購読しているフィード全体。
+      /// 各フィードについて、対応するソースが SourceMap に加えられる。
       FeedMap       : Map<Url, RssFeed>
+      /// タグ全体。
+      /// 各タグについて、それがついたソース全体からなる Union が SourceMap に加えられる。
+      TagMap        : Map<TagName, Set<RssSource>>
       /// 使用できるソース全体。
       /// 常に、FeedMap に含まれるすべてのフィードを RssSource.Feed として含む。
+      /// 常に、TagMap に含まれるタグ付き集合を RssSource.Union として含む。
       SourceMap     : Map<SourceName, RssSource>
       UnreadItems   : Set<RssItem>
     }

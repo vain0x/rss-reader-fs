@@ -8,12 +8,16 @@ module RssReader =
   let empty =
     {
       FeedMap         = Map.empty
+      TagMap          = Map.empty
       SourceMap       = Map.empty
       UnreadItems     = Set.empty
     }
 
   let internal feedMap (rr: RssReader) =
     rr.FeedMap
+
+  let internal tagMap (rr: RssReader) =
+    rr.TagMap
 
   let sourceMap (rr: RssReader) =
     rr.SourceMap
@@ -66,6 +70,26 @@ module RssReader =
     in
       { rr with FeedMap = feedMap' }
 
+  /// src にタグを付ける処理のうち、TagMap を更新する部分
+  let internal addTagImpl tagName src rr =
+    let srcs' =
+      match rr |> tagMap |> Map.tryFind tagName with
+      | None -> Set.singleton src
+      | Some srcs -> srcs |> Set.add src
+    in { rr with TagMap = rr |> tagMap |> Map.add tagName srcs' }
+
+  /// src からタグを外す処理のうち、TagMap を更新する部分
+  let internal removeTagImpl tagName src rr =
+    let srcs' =
+      match rr |> tagMap |> Map.tryFind tagName with
+      | None -> Set.empty
+      | Some srcs -> srcs |> Set.remove src
+    let tagMap' =
+      if srcs' |> Set.isEmpty
+      then rr |> tagMap |> Map.remove tagName
+      else rr |> tagMap |> Map.add tagName srcs'
+    in { rr with TagMap = tagMap' }
+
   let tryFindSource srcName rr =
     rr |> sourceMap |> Map.tryFind srcName
 
@@ -87,6 +111,37 @@ module RssReader =
           | _ -> rr
         in
           { rr with SourceMap = rr |> sourceMap |> Map.remove srcName }
+
+  /// src にタグを付ける
+  let addTag tagName src rr =
+    let rr = rr |> addTagImpl tagName src
+    let rr =
+      match rr |> tryFindSource tagName with
+      | Some (Union (tagName, srcs)) ->
+        let sourceMap' =
+          rr
+          |> sourceMap
+          |> Map.add tagName (srcs |> Set.add src |> RssSource.union tagName)
+        in { rr with SourceMap = sourceMap' }
+      | _ ->
+        rr
+        |> addSource (RssSource.union tagName (Set.singleton src))
+    in rr
+
+  /// src からタグを外す
+  let removeTag tagName src rr =
+    let rr = rr |> removeTagImpl tagName src
+    let rr =
+      match rr |> tryFindSource tagName with
+      | Some (Union (tagName, srcs)) ->
+          let srcs' = srcs |> Set.remove src
+          let sourceMap' =
+            if srcs' |> Set.isEmpty
+            then rr |> sourceMap |> Map.remove tagName
+            else rr |> sourceMap |> Map.add tagName (srcs' |> RssSource.union tagName)
+          in { rr with SourceMap = sourceMap' }
+      | _ -> rr
+    in rr
 
   let addUnreadItems items rr =
     { rr with UnreadItems = rr.UnreadItems + (items |> Set.ofSeq) }
