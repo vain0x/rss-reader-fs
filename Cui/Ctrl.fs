@@ -50,7 +50,7 @@ type Ctrl (rc: RssClient) =
             line.Split([|' '|], StringSplitOptions.RemoveEmptyEntries)
             |> Array.toList
           match command with
-          | "up" :: _ | "update" :: _ ->
+          | "update" :: _ ->
               let! items = this.Update(None)
               do view.PrintCount(items)
 
