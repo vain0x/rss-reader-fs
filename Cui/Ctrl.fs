@@ -133,6 +133,18 @@ type Ctrl (rc: RssClient) =
                 | None -> printfn "Unknown source name: %s" srcName
               in lockConsole body
 
+          | "tags" :: srcName :: _ ->
+              let body () =
+                match this.TryFindSource(srcName) with
+                | None -> ()
+                | Some src ->
+                    rc.Reader
+                    |> RssReader.tagSetOf src
+                    |> Set.iter (fun tagName ->
+                        view.PrintTag(tagName)
+                        )
+              in lockConsole body
+
           | "tags" :: _ ->
               let body () =
                 rc.Reader
