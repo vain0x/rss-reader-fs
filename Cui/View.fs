@@ -56,3 +56,11 @@ type View (rc: RssClient) =
               )
             )
     in lockConsole body
+
+  member this.PrintTag(tagName) =
+    match rc.Reader |> RssReader.tagMap |> Map.tryFind tagName with
+    | None -> eprintfn "Unknown tag name: %s" tagName
+    | Some srcs ->
+        printfn "%s %s"
+          tagName
+          (String.Join(" ", srcs |> Set.map (RssSource.toSExpr)))

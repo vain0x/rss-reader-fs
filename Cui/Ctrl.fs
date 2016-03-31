@@ -137,10 +137,8 @@ type Ctrl (rc: RssClient) =
               let body () =
                 rc.Reader
                 |> RssReader.tagMap 
-                |> Map.iter (fun tagName srcs ->
-                    printfn "%s %s"
-                      tagName
-                      (String.Join(" ", srcs |> Set.map (RssSource.toSExpr)))
+                |> Map.iter (fun tagName _ ->
+                    view.PrintTag(tagName)
                     )
               in lockConsole body
 
