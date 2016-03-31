@@ -55,10 +55,12 @@ module RssReader =
     in
       sprintf "%s<%s>" name (url |> string)
 
-  let internal addFeed feed rr =
+  /// フィードを追加する処理のうち、FeedMap を更新する部分
+  let internal addFeedImpl feed rr =
     { rr with FeedMap = rr |> feedMap |> Map.add (feed.Url) feed }
 
-  let internal removeFeed url rr =
+  /// フィードを除去する処理のうち、FeedMap を更新する部分
+  let internal removeFeedImpl url rr =
     { rr with FeedMap = rr |> feedMap |> Map.remove url }
 
   let updateFeeds feeds rr =
@@ -96,7 +98,7 @@ module RssReader =
   let addSource src rr =
     let rr =
       match src with
-      | Feed feed -> rr |> addFeed feed
+      | Feed feed -> rr |> addFeedImpl feed
       | _ -> rr
     let (rr, old) =
       match rr |> sourceMap |> Map.update (src |> RssSource.name) (Some src) with
@@ -112,7 +114,7 @@ module RssReader =
         let rr =
           match src with
           | Feed feed ->
-              rr |> removeFeed (feed.Url)
+              rr |> removeFeedImpl (feed.Url)
           | Union (tagName, srcs)
             when rr |> tagMap |> Map.containsKey tagName ->
               { rr with TagMap = rr |> tagMap |> Map.remove tagName }
