@@ -11,11 +11,11 @@ type View (rc: RssClient) =
 
   member this.PrintCount(items) =
     let len = items |> Array.length
-    let body () =
+    let () =
       if len = 0
       then printfn "No new items."
       else printfn "New %d items!" len
-    in lockConsole body
+    in ()
 
   member this.PrintItem(item: RssItem, ?header) =
     let header =
@@ -24,7 +24,7 @@ type View (rc: RssClient) =
       | None -> ""
     let src =
       reader () |> RssReader.tryFindFeed (item.Url)
-    let body () =
+    let () =
       printfn "%s%s" header (item.Title)
       printfn "* Date: %s" (item.Date.ToString("G"))
       printfn "* Link: %s" (item.Link |> Option.getOr "(no link)")
@@ -34,11 +34,11 @@ type View (rc: RssClient) =
       item.Desc |> Option.iter (printfn "* Desc:\r\n%s")
 
       rc.ReadItem(item)
-    in lockConsole body
+    in ()
 
   member this.PrintItems(items) =
     let len = items |> Seq.length
-    let body () =
+    let () =
       if len = 0
       then printfn "No new items."
       else
@@ -55,7 +55,7 @@ type View (rc: RssClient) =
               , (sprintf "[%3d/%3d]" i len)
               )
             )
-    in lockConsole body
+    in ()
 
   member this.PrintTag(tagName) =
     match rc.Reader |> RssReader.tagMap |> Map.tryFind tagName with

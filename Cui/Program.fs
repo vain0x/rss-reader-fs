@@ -10,11 +10,18 @@ module Program =
     let rrc = Ctrl(rc)
 
     try
-      rrc.CheckNewItemsAsync()
-      |> Async.Start
+      match argv with
+      | [||]
+      | [| "-i" |]
+      | [| "--interactive " |] ->
+          rrc.CheckNewItemsAsync()
+          |> Async.Start
 
-      rrc.Interactive()
-      |> Async.RunSynchronously
+          rrc.Interactive()
+          |> Async.RunSynchronously
+      | _ ->
+          rrc.ProcCommand(argv |> Array.toList)
+          |> Async.RunSynchronously
     finally
       rc.Save()
 
