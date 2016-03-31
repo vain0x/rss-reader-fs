@@ -122,6 +122,17 @@ type Ctrl (rc: RssClient) =
                 | None -> printfn "Unknown source name: %s" srcName
               in lockConsole body
 
+          | "tags" :: _ ->
+              let body () =
+                rc.Reader
+                |> RssReader.tagMap 
+                |> Map.iter (fun tagName srcs ->
+                    printfn "%s %s"
+                      tagName
+                      (String.Join(" ", srcs |> Set.map (RssSource.toSExpr)))
+                    )
+              in lockConsole body
+
           | _ -> ()
           return! loop ()
       }

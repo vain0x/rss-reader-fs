@@ -16,7 +16,7 @@ module RssReader =
   let internal feedMap (rr: RssReader) =
     rr.FeedMap
 
-  let internal tagMap (rr: RssReader) =
+  let tagMap (rr: RssReader) =
     rr.TagMap
 
   let sourceMap (rr: RssReader) =
