@@ -31,6 +31,12 @@ type Ctrl (rc: RssClient) =
       }
     in loop ()
 
+  member this.UpdateAndShowCount(srcOpt) =
+    async {
+      let! items = this.Update(srcOpt)
+      do view.PrintCount(items)
+    }
+
   member this.UpdateAndShowDetails(srcOpt) =
     async {
       let! items = this.Update(srcOpt)
@@ -59,8 +65,7 @@ type Ctrl (rc: RssClient) =
             |> Array.toList
           match command with
           | "update" :: _ ->
-              let! items = this.Update(None)
-              do view.PrintCount(items)
+              do! this.UpdateAndShowCount(None)
 
           | "show" :: srcName :: _ ->
             match this.TryFindSource(srcName) with
