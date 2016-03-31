@@ -91,7 +91,7 @@ module RssSource =
   let rec toSExpr =
     function
     | Feed (feed: RssFeed) ->
-        sprintf """'(%s "%s")"""
+        sprintf """(feed %s "%s")"""
           (feed.Name) (feed.Url |> Url.toString)
     | Unread src ->
         sprintf "(unread %s)" (src |> toSExpr)
