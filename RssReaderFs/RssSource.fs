@@ -28,6 +28,15 @@ module RssSource =
     | Union (_, srcs) ->
         srcs |> Set.collect toFeeds
 
+  /// このソースに全体が含まれているソースの集合
+  let rec subSources self =
+    match self with
+    | Feed _
+    | Unread _ ->  // Unread は未読分を含まないので、元のソースを「含む」とはみなさない
+        Set.singleton self
+    | Union (_, srcs) ->
+        srcs |> Set.collect subSources |> Set.add self
+
   /// items: このソースが受信対象とするフィードが発信したアイテムの列
   let rec filterItems items =
     function
