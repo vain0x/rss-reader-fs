@@ -32,7 +32,9 @@ type RssClient private (path: string) =
     in old
 
   member this.RemoveTag(tagName, src) =
-    reader <- reader |> RssReader.removeTag tagName src
+    let (rr', old) = reader |> RssReader.removeTag tagName src
+    let () = reader <- rr'
+    in old
 
   member this.ReadItem(item) =
     reader <- reader |> RssReader.readItem item

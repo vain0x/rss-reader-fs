@@ -56,6 +56,11 @@ module Set =
   let collect f self =
     self |> Seq.map f |> Set.unionMany
 
+  let tryFind value self =
+    if self |> Set.contains value
+    then Some value
+    else None
+
 module Map =
   let keySet self =
     self |> Map.toList |> List.map fst |> Set.ofList

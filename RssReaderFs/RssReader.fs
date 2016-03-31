@@ -144,17 +144,20 @@ module RssReader =
   /// src からタグを外す
   let removeTag tagName src rr =
     let rr = rr |> removeTagImpl tagName src
-    let rr =
+    let (rr, old) =
       match rr |> tryFindSource tagName with
       | Some (Union (tagName, srcs)) ->
-          let srcs' = srcs |> Set.remove src
+          let old     = srcs |> Set.tryFind src
+          let srcs'   = srcs |> Set.remove src
           let sourceMap' =
             if srcs' |> Set.isEmpty
             then rr |> sourceMap |> Map.remove tagName
             else rr |> sourceMap |> Map.add tagName (srcs' |> RssSource.union tagName)
-          in { rr with SourceMap = sourceMap' }
-      | _ -> rr
-    in rr
+          let rr =
+            { rr with SourceMap = sourceMap' }
+          in (rr, old)
+      | _ -> (rr, None)
+    in (rr, old)
 
   /// src についているタグの集合
   let tagSetOf src rr =

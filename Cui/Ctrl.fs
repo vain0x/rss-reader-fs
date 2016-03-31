@@ -125,7 +125,14 @@ type Ctrl (rc: RssClient) =
       | "detag" :: tagName :: srcName :: _ ->
           match this.TryFindSource(srcName) with
           | None -> ()
-          | Some src -> rc.RemoveTag(tagName, src)
+          | Some src ->
+              match rc.RemoveTag(tagName, src) with
+              | None ->
+                  eprintfn "Source '%s' doesn't have tag '%s'."
+                    srcName tagName
+              | Some _ ->
+                  printfn "Tag '%s' is removed from '%s'."
+                    tagName srcName
 
       | "tags" :: srcName :: _ ->
           match this.TryFindSource(srcName) with
