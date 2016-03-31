@@ -98,23 +98,26 @@ module RssReader =
       match src with
       | Feed feed -> rr |> addFeed feed
       | _ -> rr
-    let rr =
+    let (rr, old) =
       match rr |> sourceMap |> Map.update (src |> RssSource.name) (Some src) with
       | (sourceMap', None) ->
-          { rr with SourceMap = sourceMap' }
-      | _ -> rr
-    in rr
+          ({ rr with SourceMap = sourceMap' }, None)
+      | (_, old) -> (rr, old)
+    in (rr, old)
 
   let removeSource srcName rr =
     match rr |> tryFindSource srcName with
-    | None -> rr
+    | None -> (rr, None)
     | Some src ->
         let rr =
           match src with
           | Feed feed -> rr |> removeFeed (feed.Url)
           | _ -> rr
-        in
-          { rr with SourceMap = rr |> sourceMap |> Map.remove srcName }
+        let (sourceMap', old) =
+          rr |> sourceMap |> Map.update srcName None
+        let rr =
+          { rr with SourceMap = sourceMap' }
+        in (rr, old)
 
   /// src にタグを付ける
   let addTag tagName src rr =
@@ -130,6 +133,7 @@ module RssReader =
       | _ ->
         rr
         |> addSource (RssSource.union tagName (Set.singleton src))
+        |> fst
     in rr
 
   /// src からタグを外す
@@ -224,11 +228,11 @@ module RssReader =
       |> Map.ofArray
     let rr =
       feedMap
-      |> Map.fold (fun rr _ feed -> rr |> addSource (Feed feed)) empty
+      |> Map.fold (fun rr _ feed -> rr |> addSource (Feed feed) |> fst) empty
     let rr =
       spec.SourceSpecSet
       |> Set.map (RssSource.ofSpec feedMap)
-      |> Set.fold (fun rr src -> rr |> addSource src) rr
+      |> Set.fold (fun rr src -> rr |> addSource src |> fst) rr
     let rr =
       spec.Tags
       |> Map.fold (fun rr tagName srcNameSet ->

@@ -82,17 +82,25 @@ type Ctrl (rc: RssClient) =
 
       | "feed" :: name :: url :: _ ->
           let feed = RssFeed.create name url
-          in
-            rc.AddSource(feed |> RssSource.ofFeed)
+          let old = rc.AddSource(feed |> RssSource.ofFeed)
+          let () =
+            match old with
+            | None ->
+                printfn "Feed '%s' has been added."
+                  name
+            | Some src ->
+                eprintfn "Source '%s' does already exist: %s"
+                  (src |> RssSource.name) (src |> RssSource.toSExpr)
+          in ()
 
       | "remove" :: name :: _ ->
-          rc.Reader
-          |> RssReader.tryFindSource name
-          |> Option.iter (fun src ->
-              rc.RemoveSource(name)
-              printfn "'%s' has been removed."
-                (src |> RssSource.name)
-              )
+          match rc.RemoveSource(name) with
+          | Some src ->
+              printfn "Source '%s' has been removed: %s"
+                name (src |> RssSource.toSExpr)
+          | None ->
+              eprintfn "Unknown source name: %s"
+                name
 
       | "sources" :: _ ->
           rc.Reader
