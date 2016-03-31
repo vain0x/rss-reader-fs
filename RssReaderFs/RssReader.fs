@@ -148,7 +148,10 @@ module RssReader =
     rr
     |> tagMap
     |> Map.filter (fun tagName srcs ->
-        srcs |> Set.contains src
+        // srcs のいずれかが、src 全体を部分として含んでいること
+        srcs
+        |> Set.collect (RssSource.subSources)
+        |> Set.contains src
         )
     |> Map.keySet
 
