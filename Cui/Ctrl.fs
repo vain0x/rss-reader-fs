@@ -13,11 +13,10 @@ type Ctrl (rc: RssClient) =
     async {
       let src =
         defaultArg srcOpt (rc.Reader |> RssReader.allFeedSource)
-
       let! newItems = rc.UpdateAsync src
       do
         if newItems |> Array.isEmpty |> not then
-          view.OnNewFeeds(newItems)
+          view.PrintCount(newItems)
       return newItems
     }
 

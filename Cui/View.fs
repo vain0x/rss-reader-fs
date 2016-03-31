@@ -9,9 +9,12 @@ type View (rc: RssClient) =
   let reader () =
     rc.Reader
 
-  member this.OnNewFeeds(items) =
+  member this.PrintCount(items) =
+    let len = items |> Array.length
     let body () =
-      printfn "New %d items!" (items |> Array.length)
+      if len = 0
+      then printfn "No new items."
+      else printfn "New %d items!" len
     in lockConsole body
 
   member this.PrintItem(item: RssItem, ?header) =
