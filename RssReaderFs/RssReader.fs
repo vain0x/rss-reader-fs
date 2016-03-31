@@ -205,9 +205,6 @@ module RssReader =
       return (rr, unreadItems)
     }
 
-  let updateAllAsync rr =
-    rr |> updateAsync (rr |> allFeedSource)
-
   let toSpec rr =
     let feeds =
       rr |> allFeeds
