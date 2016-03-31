@@ -111,7 +111,11 @@ module RssReader =
     | Some src ->
         let rr =
           match src with
-          | Feed feed -> rr |> removeFeed (feed.Url)
+          | Feed feed ->
+              rr |> removeFeed (feed.Url)
+          | Union (tagName, srcs)
+            when rr |> tagMap |> Map.containsKey tagName ->
+              { rr with TagMap = rr |> tagMap |> Map.remove tagName }
           | _ -> rr
         let (sourceMap', old) =
           rr |> sourceMap |> Map.update srcName None
