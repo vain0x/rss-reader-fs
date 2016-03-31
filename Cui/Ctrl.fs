@@ -48,7 +48,7 @@ type Ctrl (rc: RssClient) =
     |> RssReader.tryFindSource srcName
     |> tap (fun opt ->
         if opt |> Option.isNone then
-          eprintfn "Unknown source: %s" srcName
+          eprintfn "Unknown source name: %s" srcName
         )
 
   member private this.ProcCommandImpl(command) =
@@ -103,14 +103,14 @@ type Ctrl (rc: RssClient) =
               )
 
       | "tag" :: tagName :: srcName :: _ ->
-          match rc.Reader |> RssReader.tryFindSource srcName with
+          match this.TryFindSource(srcName) with
+          | None -> ()
           | Some src -> rc.AddTag(tagName, src)
-          | None -> printfn "Unknown source name: %s" srcName
 
       | "detag" :: tagName :: srcName :: _ ->
-          match rc.Reader |> RssReader.tryFindSource srcName with
+          match this.TryFindSource(srcName) with
+          | None -> ()
           | Some src -> rc.RemoveTag(tagName, src)
-          | None -> printfn "Unknown source name: %s" srcName
 
       | "tags" :: srcName :: _ ->
           match this.TryFindSource(srcName) with
