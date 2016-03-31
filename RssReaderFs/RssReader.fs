@@ -185,6 +185,10 @@ module RssReader =
   let toSpec rr =
     let feeds =
       rr |> allFeeds
+    let tags =
+      rr
+      |> tagMap
+      |> Map.map (fun _ src -> src |> Set.map RssSource.name)
     let srcSpecs =
       rr
       |> sourceMap
@@ -193,6 +197,7 @@ module RssReader =
     in
       {
         Feeds           = feeds
+        Tags            = tags
         SourceSpecSet   = srcSpecs
       }
 
@@ -208,6 +213,16 @@ module RssReader =
       spec.SourceSpecSet
       |> Set.map (RssSource.ofSpec feedMap)
       |> Set.fold (fun rr src -> rr |> addSource src) rr
+    let rr =
+      spec.Tags
+      |> Map.fold (fun rr tagName srcNameSet ->
+          srcNameSet
+          |> Set.fold (fun rr srcName ->
+              match rr |> tryFindSource srcName with
+              | Some src -> rr |> addTag tagName src
+              | None -> rr
+              ) rr
+          ) rr
     in rr
 
   let toJson rr =

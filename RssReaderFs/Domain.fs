@@ -58,5 +58,6 @@ module Domain =
   type RssReaderSpec =
     {
       Feeds         : RssFeed []
+      Tags          : Map<TagName, Set<SourceName>>
       SourceSpecSet : Set<RssSourceSpec>
     }
