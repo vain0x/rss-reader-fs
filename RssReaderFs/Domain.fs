@@ -4,8 +4,6 @@ open System
 
 [<AutoOpen>]
 module Domain =
-  type RegexPattern = string
-
   type RssItem =
     {
       Title         : string
@@ -61,9 +59,6 @@ module Domain =
       Tags          : Map<TagName, Set<SourceName>>
       SourceSpecSet : Set<RssSourceSpec>
     }
-
-  type Error =
-    | NameConflict
 
   /// 全フィードからなる RssSource の名前
   [<Literal>]

@@ -34,12 +34,6 @@ module RssReader =
     |> Set.ofArray
     |> (fun srcs -> RssSource.union AllSourceName srcs)
 
-  let alreadyReadItems rr =
-    rr
-    |> allFeeds
-    |> Array.map (fun src -> src.DoneSet)
-    |> Array.fold (+) Set.empty
-
   let tryFindFeed url rr =
     rr |> feedMap |> Map.tryFind url
 
