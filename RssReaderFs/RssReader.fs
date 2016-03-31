@@ -89,7 +89,9 @@ module RssReader =
     in { rr with TagMap = tagMap' }
 
   let tryFindSource srcName rr =
-    rr |> sourceMap |> Map.tryFind srcName
+    match srcName with
+    | AllSourceName -> rr |> allFeedSource |> Some
+    | _ -> rr |> sourceMap |> Map.tryFind srcName
 
   let addSource src rr =
     let rr =
