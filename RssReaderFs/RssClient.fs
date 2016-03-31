@@ -11,23 +11,41 @@ type RssClient private (path: string) =
   member this.Reader = reader
 
   member this.AddSource(src) =
-    reader <- reader |> RssReader.addSource src
+    let (rr', old) = reader |> RssReader.addSource src
+    let () = reader <- rr'
+    in old
 
-  member this.RemoveSource(url) =
-    reader <- reader |> RssReader.removeSource url
+  member this.RemoveSource(srcName) =
+    let (rr', old) = reader |> RssReader.removeSource srcName
+    let () = reader <- rr'
+    in old
+
+  member this.AddTag(tagName, src) =
+    let (rr', old) = reader |> RssReader.addTag tagName src
+    let () = reader <- rr'
+    in old
+
+  member this.RemoveTag(tagName, src) =
+    let (rr', old) = reader |> RssReader.removeTag tagName src
+    let () = reader <- rr'
+    in old
 
   member this.ReadItem(item) =
     reader <- reader |> RssReader.readItem item
 
-  member this.UpdateAsync(pred) =
+  member this.UpdateAsync(src) =
     async {
-      let! (reader', items) = reader |> RssReader.updateAsync pred
+      let! (reader', items) = reader |> RssReader.updateAsync src
       do reader <- reader'
       return items
     }
 
   member this.UpdateAllAsync =
-    this.UpdateAsync (fun _ -> true)
+    async {
+      let! (reader', items) = reader |> RssReader.updateAllAsync
+      do reader <- reader'
+      return items
+    }
 
   static member Create(path) =
     new RssClient(path)

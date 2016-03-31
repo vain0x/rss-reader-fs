@@ -4,6 +4,7 @@ open System
 open System.Drawing
 open System.IO
 open System.Windows.Forms
+open FsYaml
 open RssReaderFs
 
 type MainForm () as this =
@@ -73,11 +74,11 @@ type MainForm () as this =
       , Font        = yuGothic10
       )
 
-  let sourceListButton =
+  let feedListButton =
     new Button
       ( Size        = Size(80, 25)
       , Font        = yuGothic10
-      , Text        = "Sources"
+      , Text        = "Feeds"
       )
 
   let controls =
@@ -87,7 +88,7 @@ type MainForm () as this =
       linkLabel     :> Control
       sourceLabel   :> Control
       textBox       :> Control
-      sourceListButton      :> Control
+      feedListButton      :> Control
     |]
 
   let resize () =
@@ -116,12 +117,12 @@ type MainForm () as this =
           , linkLabel.Location.Y
           )
 
-      sourceListButton.Location <-  
+      feedListButton.Location <-  
         Point(5, this.ClientSize.Height - 30)
 
-  let showSourceListForm =
+  let showFeedListForm =
     Form.singletonSubform
-      (fun () -> new SourceListForm(rc))
+      (fun () -> new FeedListForm(rc))
 
   let listViewItemsFromNewItems (items: RssItem []) =
     [|
@@ -131,7 +132,7 @@ type MainForm () as this =
             Title     = item.Title
             Read      = ""
             Date      = item.Date.ToString("G")
-            Source    = reader () |> RssReader.sourceName (item.Url)
+            Source    = reader () |> RssReader.feedName (item.Url)
           }
           |> MainListviewColumns.toArray
           |> Array.map (fun text ->
@@ -141,6 +142,8 @@ type MainForm () as this =
     |]
 
   let addNewItems items =
+    let items =
+      items |> Array.sortBy (fun item -> item.Date)
     let lvItems = listViewItemsFromNewItems items
     let body () = listView.Items.AddRange(lvItems)
     do
@@ -158,7 +161,7 @@ type MainForm () as this =
     titleLabel.Text     <- item.Title
     textBox.Text        <- item.Desc |> Option.getOr "(no_description)"
     linkLabel.Text      <- item.Link |> Option.getOr "(no_link)"
-    sourceLabel.Text    <- reader () |> RssReader.sourceName (item.Url)
+    sourceLabel.Text    <- reader () |> RssReader.feedName (item.Url)
 
   let readItem item =
     do rc.ReadItem(item)
@@ -184,7 +187,7 @@ type MainForm () as this =
       let json =
         File.ReadAllText(pathState)
       let state =
-        Serialize.deserializeJson<MainFormState> (json)
+        Yaml.load<MainFormState> (json)
       do
         this.Location <- state.Location
         this.Size     <- state.Size
@@ -209,7 +212,7 @@ type MainForm () as this =
           |]
       }
     let json =
-      Serialize.serializeJson<MainFormState> (state)
+      Yaml.dump state
     do
       File.WriteAllText(pathState, json)
 
@@ -228,8 +231,8 @@ type MainForm () as this =
             )
       )
 
-    sourceListButton.Click.Add (fun e ->
-      showSourceListForm ()
+    feedListButton.Click.Add (fun e ->
+      showFeedListForm ()
       )
 
     this.SizeChanged.Add (fun e -> resize ())

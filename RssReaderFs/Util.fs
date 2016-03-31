@@ -52,6 +52,30 @@ module Dictionary =
         yield (k, v)
       |]
 
+module Set =
+  let collect f self =
+    self |> Seq.map f |> Set.unionMany
+
+  let tryFind value self =
+    if self |> Set.contains value
+    then Some value
+    else None
+
+module Map =
+  let keySet self =
+    self |> Map.toList |> List.map fst |> Set.ofList
+
+  let valueSet self =
+    self |> Map.toList |> List.map snd |> Set.ofList
+
+  let update key valueOpt self =
+    let old     = self |> Map.tryFind key
+    let self'   =
+      match valueOpt with
+      | Some value  -> self |> Map.add key value
+      | None        -> self |> Map.remove key
+    in (self', old)
+
 module DateTime =
   let tryParse s =
     DateTime.TryParse(s)
@@ -101,23 +125,52 @@ module Async =
   let AwaitTaskVoid : (Task -> Async<unit>) =
     Async.AwaitIAsyncResult >> Async.Ignore
 
-module Serialize =
-  open System.Text
-  open System.Runtime.Serialization
-  open System.Runtime.Serialization.Json
+module ObjectElementSeq =
+  open System
+  open System.Linq
+  open Microsoft.FSharp.Reflection
 
-  let private toString = Encoding.UTF8.GetString
-  let private toBytes (x : string) = Encoding.UTF8.GetBytes x
+  let cast (t: Type) (xs: obj seq) =
+    let enumerable = typeof<Enumerable>
+    let cast =
+      let nonGeneric = enumerable.GetMethod("Cast")
+      nonGeneric.MakeGenericMethod([| t |])
+    cast.Invoke(null, [| xs |])
 
-  let serializeJson<'a> (x : 'a) = 
-    let jsonSerializer = new DataContractJsonSerializer(typedefof<'a>)
+  let toSet (t: Type) (xs: obj seq) =
+    let setType         = typedefof<Set<_>>.MakeGenericType(t)
+    let parameter       = xs |> cast t
+    let parameterType   = typedefof<seq<_>>.MakeGenericType([| t |])
+    let constructor'    = setType.GetConstructor([| parameterType |])
+    in constructor'.Invoke([| parameter |])
 
-    use stream = new IO.MemoryStream()
-    jsonSerializer.WriteObject(stream, x)
-    toString <| stream.ToArray()
+module Yaml =
+  open FsYaml
+  open FsYaml.NativeTypes
+  open FsYaml.RepresentationTypes
+  open FsYaml.CustomTypeDefinition
 
-  let deserializeJson<'a> (json : string) =
-    let jsonSerializer = new DataContractJsonSerializer(typedefof<'a>)
+  let setDef =
+    {
+      Accept = isGenericTypeDef (typedefof<Set<_>>)
+      Construct = fun construct' t ->
+        function
+        | Sequence (s, _) ->
+            let elemType = t.GetGenericArguments().[0]
+            let elems = s |> List.map (construct' elemType)
+            in ObjectElementSeq.toSet elemType elems
+        | otherwise -> raise (mustBeSequence t otherwise)
+      Represent =
+        representSeqAsSequence
+    }
 
-    use stream = new IO.MemoryStream(toBytes json)
-    jsonSerializer.ReadObject(stream) :?> 'a
+  let customDefs =
+    [
+      setDef
+    ]
+
+  let customDump x =
+    Yaml.dumpWith customDefs x
+
+  let customTryLoad<'t> =
+    Yaml.tryLoadWith<'t> customDefs

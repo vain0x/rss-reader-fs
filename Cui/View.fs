@@ -9,10 +9,13 @@ type View (rc: RssClient) =
   let reader () =
     rc.Reader
 
-  member this.OnNewFeeds(items) =
-    let body () =
-      printfn "New %d items!" (items |> Array.length)
-    in lockConsole body
+  member this.PrintCount(items) =
+    let len = items |> Array.length
+    let () =
+      if len = 0
+      then printfn "No new items."
+      else printfn "New %d items!" len
+    in ()
 
   member this.PrintItem(item: RssItem, ?header) =
     let header =
@@ -20,8 +23,8 @@ type View (rc: RssClient) =
       | Some h -> h + " "
       | None -> ""
     let src =
-      reader () |> RssReader.tryFindSource(item.Url)
-    let body () =
+      reader () |> RssReader.tryFindFeed (item.Url)
+    let () =
       printfn "%s%s" header (item.Title)
       printfn "* Date: %s" (item.Date.ToString("G"))
       printfn "* Link: %s" (item.Link |> Option.getOr "(no link)")
@@ -31,22 +34,33 @@ type View (rc: RssClient) =
       item.Desc |> Option.iter (printfn "* Desc:\r\n%s")
 
       rc.ReadItem(item)
-    in lockConsole body
+    in ()
 
-  member this.PrintTimeLine() =
-    let body () =
-      let items = rc.Reader.UnreadItems
-      let len = items |> Seq.length
-      items
-      |> Seq.iteri (fun i item ->
-          if i > 0 then
-            printfn "..."
-            Console.ReadKey() |> ignore
+  member this.PrintItems(items) =
+    let len = items |> Seq.length
+    let () =
+      if len = 0
+      then printfn "No new items."
+      else
+        items
+        |> Seq.sortBy (fun item -> item.Date)
+        |> Seq.iteri (fun i item ->
+            if i > 0 then
+              printfn "..."
+              Console.ReadKey() |> ignore
 
-          printfn "----------------"
-          this.PrintItem
-            ( item
-            , (sprintf "[%3d/%3d]" i len)
+            printfn "----------------"
+            this.PrintItem
+              ( item
+              , (sprintf "[%3d/%3d]" i len)
+              )
             )
-          )
-    in lockConsole body
+    in ()
+
+  member this.PrintTag(tagName) =
+    match rc.Reader |> RssReader.tagMap |> Map.tryFind tagName with
+    | None -> eprintfn "Unknown tag name: %s" tagName
+    | Some srcs ->
+        printfn "%s %s"
+          tagName
+          (String.Join(" ", srcs |> Set.map (RssSource.toSExpr)))

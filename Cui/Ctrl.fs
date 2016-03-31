@@ -9,13 +9,11 @@ type Ctrl (rc: RssClient) =
   let view =
     new View(rc)
 
-  member this.TryUpdate() =
+  member this.Update(srcOpt) =
     async {
-      let! newItems = rc.UpdateAllAsync
-      do
-        if newItems |> Array.isEmpty |> not then
-          view.OnNewFeeds(newItems)
-      return newItems |> Array.isEmpty |> not
+      let src =
+        defaultArg srcOpt (rc.Reader |> RssReader.allFeedSource)
+      return! rc.UpdateAsync src
     }
 
   member this.CheckNewItemsAsync(?timeout, ?thresh) =
@@ -24,67 +22,161 @@ type Ctrl (rc: RssClient) =
 
     let rec loop () =
       async {
-        let! _ = rc.UpdateAllAsync
+        let! newItems = this.Update(None)
+        do
+          if newItems |> Array.isEmpty |> not then
+            view.PrintCount(newItems)
         do! Async.Sleep(timeout)
         return! loop ()
       }
     in loop ()
 
-  member this.Interactive() =
-    let rec loop () = async {
-      let! line = Console.In.ReadLineAsync() |> Async.AwaitTask
-      match line with
+  member this.UpdateAndShowCount(srcOpt) =
+    async {
+      let! items = this.Update(srcOpt)
+      do view.PrintCount(items)
+    }
+
+  member this.UpdateAndShowDetails(srcOpt) =
+    async {
+      let! items = this.Update(srcOpt)
+      do view.PrintItems(items)
+    }
+
+  member this.TryFindSource(srcName) =
+    rc.Reader
+    |> RssReader.tryFindSource srcName
+    |> tap (fun opt ->
+        if opt |> Option.isNone then
+          eprintfn "Unknown source name: %s" srcName
+        )
+
+  member private this.ProcCommandImpl(command) =
+    async {
+      match command with
+      | "update" :: srcName :: _ ->
+          match this.TryFindSource(srcName) with
+          | None -> ()
+          | Some src ->
+              do! this.UpdateAndShowCount(Some src)
+
+      | "update" :: _ ->
+          do! this.UpdateAndShowCount(None)
+
+      | "show" :: srcName :: _ ->
+          match this.TryFindSource(srcName) with
+          | None -> ()
+          | Some src ->
+              do! this.UpdateAndShowDetails(Some src)
+
+      | "show" :: _ ->
+          do! this.UpdateAndShowDetails(None)
+
+      | "feeds" :: _ ->
+          rc.Reader
+          |> RssReader.allFeeds
+          |> Array.iter (fun src ->
+              printfn "%s <%s>"
+                (src.Name) (src.Url |> Url.toString)
+            )
+
+      | "feed" :: name :: url :: _ ->
+          let feed = RssFeed.create name url
+          let old = rc.AddSource(feed |> RssSource.ofFeed)
+          let () =
+            match old with
+            | None ->
+                printfn "Feed '%s' has been added."
+                  name
+            | Some src ->
+                eprintfn "Source '%s' does already exist: %s"
+                  (src |> RssSource.name) (src |> RssSource.toSExpr)
+          in ()
+
+      | "remove" :: name :: _ ->
+          match rc.RemoveSource(name) with
+          | Some src ->
+              printfn "Source '%s' has been removed: %s"
+                name (src |> RssSource.toSExpr)
+          | None ->
+              eprintfn "Unknown source name: %s"
+                name
+
+      | "sources" :: _ ->
+          rc.Reader
+          |> RssReader.sourceMap
+          |> Map.toList
+          |> List.iter (fun (_, src) ->
+              printfn "%s" (src |> RssSource.toSExpr)
+              )
+
+      | "tag" :: tagName :: srcName :: _ ->
+          match this.TryFindSource(srcName) with
+          | None -> ()
+          | Some src ->
+              match rc.AddTag(tagName, src) with
+              | Some _ ->
+                  eprintfn "Source '%s' does already exist."
+                    tagName
+              | None ->
+                  printfn "Tag '%s' is added to '%s'."
+                    tagName srcName
+
+      | "detag" :: tagName :: srcName :: _ ->
+          match this.TryFindSource(srcName) with
+          | None -> ()
+          | Some src ->
+              match rc.RemoveTag(tagName, src) with
+              | None ->
+                  eprintfn "Source '%s' doesn't have tag '%s'."
+                    srcName tagName
+              | Some _ ->
+                  printfn "Tag '%s' is removed from '%s'."
+                    tagName srcName
+
+      | "tags" :: srcName :: _ ->
+          match this.TryFindSource(srcName) with
+          | None -> ()
+          | Some src ->
+              rc.Reader
+              |> RssReader.tagSetOf src
+              |> Set.iter (fun tagName ->
+                  view.PrintTag(tagName)
+                  )
+
+      | "tags" :: _ ->
+          rc.Reader
+          |> RssReader.tagMap 
+          |> Map.iter (fun tagName _ ->
+              view.PrintTag(tagName)
+              )
+
+      | _ ->
+          eprintfn "Unknown command: %s"
+            (String.Join(" ", command))
+    }
+
+  member this.ProcCommand(command) =
+    lockConsole (fun () -> this.ProcCommandImpl(command))
+
+  member this.ProcCommandLine(kont, lineOrNull) =
+    async {
+      match lineOrNull with
       | null | "" ->
-          return! loop ()
+          return! kont
       | "quit" | "halt" | "exit" ->
           ()
       | line ->
           let command =
             line.Split([|' '|], StringSplitOptions.RemoveEmptyEntries)
             |> Array.toList
-          match command with
-          | "up" :: _ | "update" :: _ ->
-              let! success = this.TryUpdate()
-              if success |> not then
-                printfn "No new items available."
+          do! this.ProcCommand(command)
+          return! kont
+    }
 
-          | "show" :: _ ->
-              let! success = this.TryUpdate()
-              if success then
-                view.PrintTimeLine()
-              else
-                printfn "No new items available."
-
-          | "src" :: _ ->
-              let body () =
-                rc.Reader
-                |> RssReader.sources
-                |> Array.iteri (fun i src ->
-                    printfn "#%d: %s <%s>"
-                      i (src.Name) (src.Url |> string)
-                  )
-              in lockConsole body
-
-          | "add" :: name :: url :: _ ->
-              let source = RssSource.create name url
-              let body () =
-                rc.AddSource(source)
-              in lockConsole body
-
-          | "remove" :: url :: _ ->
-              let url = Url.ofString url
-              let body () =
-                rc.Reader
-                |> RssReader.tryFindSource(url)
-                |> Option.iter (fun src ->
-                    rc.RemoveSource(url)
-                    printfn "'%s <%s>' has been removed."
-                      (src.Name)
-                      (src.Url |> Url.toString)
-                    )
-              in lockConsole body
-
-          | _ -> ()
-          return! loop ()
+  member this.Interactive() =
+    let rec loop () = async {
+        let! line = Console.In.ReadLineAsync() |> Async.AwaitTask
+        return! this.ProcCommandLine(loop (), line)
       }
     in loop ()
