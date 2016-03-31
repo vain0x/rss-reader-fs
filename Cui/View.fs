@@ -9,6 +9,13 @@ type View (rc: RssClient) =
   let reader () =
     rc.Reader
 
+  member this.PrintUnknownSourceNameError(srcName) =
+    eprintfn "Unknown source name: %s" srcName
+
+  member this.PrintUnknownCommand(command: list<string>) =
+    eprintfn "Unknown command: %s"
+      (String.Join(" ", command))
+
   member this.PrintCount(items) =
     let len = items |> Array.length
     in
@@ -67,6 +74,66 @@ type View (rc: RssClient) =
             printfn "%s %s"
               (item.Date.ToString("G")) item.Title
             )
+
+  member this.PrintFeed(feed) =
+    printfn "%s" (feed |> RssFeed.nameUrl)
+
+  member this.PrintFeeds(feeds) =
+    feeds |> Array.iter (this.PrintFeed)
+
+  member this.PrintAddFeedResult(name, result) =
+    match result with
+    | None ->
+        printfn "Feed '%s' has been added."
+          name
+    | Some src ->
+        eprintfn "Source '%s' does already exist: %s"
+          (src |> RssSource.name) (src |> RssSource.toSExpr)
+
+  member this.PrintRemoveSourceResult(name, result) =
+    match result with
+    | Some src ->
+        printfn "Source '%s' has been removed: %s"
+          name (src |> RssSource.toSExpr)
+    | None ->
+        eprintfn "Unknown source name: %s"
+          name
+
+  member this.PrintRenameSourceResult(result) =
+    if result
+    then printfn "Some sources are renamed."
+    else printfn "No sources are renamed."
+
+  member this.PrintSources(srcs) =
+    srcs
+    |> List.iter (fun (_, src) ->
+        printfn "%s" (src |> RssSource.toSExpr)
+        )
+
+  member this.PrintAddTagResult(tagName, srcName, result) =
+    match result with
+    | None -> ()
+    | Some src ->
+        match rc.AddTag(tagName, src) with
+        | Some _ ->
+            eprintfn "Source '%s' does already exist."
+              tagName
+        | None ->
+            printfn "Tag '%s' is added to '%s'."
+              tagName srcName
+
+  member this.PrintRemoveTagResult(tagName, srcName, result) =
+    match result with
+    | None -> ()
+    | Some src ->
+        match rc.RemoveTag(tagName, src) with
+        | None ->
+            eprintfn "Source '%s' doesn't have tag '%s'."
+              srcName tagName
+        | Some _ ->
+            printfn "Tag '%s' is removed from '%s'."
+              tagName srcName
+
 
   member this.PrintTag(tagName) =
     match rc.Reader |> RssReader.tagMap |> Map.tryFind tagName with
