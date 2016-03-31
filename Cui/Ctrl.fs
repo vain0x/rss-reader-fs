@@ -33,7 +33,7 @@ type Ctrl (rc: RssClient) =
       }
     in loop ()
 
-  member this.TryUpdateAndShow(srcOpt) =
+  member this.UpdateAndShowDetails(srcOpt) =
     async {
       let! items = this.TryUpdate(srcOpt)
       match items with
@@ -64,12 +64,12 @@ type Ctrl (rc: RssClient) =
           | "show" :: srcName :: _ ->
             match rc.Reader |> RssReader.tryFindSource srcName with
             | Some src ->
-                do! this.TryUpdateAndShow(Some src)
+                do! this.UpdateAndShowDetails(Some src)
             | None ->
                 printfn "Unknown source: %s" srcName
 
           | "show" :: _ ->
-            do! this.TryUpdateAndShow(None)
+            do! this.UpdateAndShowDetails(None)
 
           | "feeds" :: _ ->
               let body () =
