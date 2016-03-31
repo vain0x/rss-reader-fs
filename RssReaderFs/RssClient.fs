@@ -46,11 +46,7 @@ type RssClient private (path: string) =
     }
 
   member this.UpdateAllAsync =
-    async {
-      let! (reader', items) = reader |> RssReader.updateAllAsync
-      do reader <- reader'
-      return items
-    }
+    this.UpdateAsync(reader |> RssReader.allFeedSource)
 
   static member Create(path) =
     new RssClient(path)

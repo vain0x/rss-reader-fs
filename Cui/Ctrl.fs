@@ -5,16 +5,13 @@ open System.IO
 open System.Collections.Generic
 open RssReaderFs
 
-type Ctrl (rc: RssClient) =
-  let view =
-    new View(rc)
-
+type Ctrl (rc: RssClient, view: View) =
   member this.TryFindSource(srcName) =
     rc.Reader
     |> RssReader.tryFindSource srcName
     |> tap (fun opt ->
         if opt |> Option.isNone then
-          eprintfn "Unknown source name: %s" srcName
+          view.PrintUnknownSourceNameError(srcName)
         )
 
   member this.CheckNewItemsAsync(?timeout, ?thresh) =
@@ -81,71 +78,31 @@ type Ctrl (rc: RssClient) =
           do! this.UpdateAndShowTitles(AllSourceName)
 
       | "feeds" :: _ ->
-          rc.Reader
-          |> RssReader.allFeeds
-          |> Array.iter (fun src ->
-              printfn "%s <%s>"
-                (src.Name) (src.Url |> Url.toString)
-            )
+          do view.PrintFeeds(rc.Reader |> RssReader.allFeeds)
 
       | "feed" :: name :: url :: _ ->
-          let feed = RssFeed.create name url
-          let old = rc.AddSource(feed |> RssSource.ofFeed)
-          let () =
-            match old with
-            | None ->
-                printfn "Feed '%s' has been added."
-                  name
-            | Some src ->
-                eprintfn "Source '%s' does already exist: %s"
-                  (src |> RssSource.name) (src |> RssSource.toSExpr)
-          in ()
+          let feed      = RssFeed.create name url
+          let result    = rc.AddSource(feed |> RssSource.ofFeed)
+          do view.PrintAddFeedResult(name, result)
 
       | "remove" :: name :: _ ->
-          match rc.RemoveSource(name) with
-          | Some src ->
-              printfn "Source '%s' has been removed: %s"
-                name (src |> RssSource.toSExpr)
-          | None ->
-              eprintfn "Unknown source name: %s"
-                name
+          let result    = rc.RemoveSource(name)
+          do view.PrintRemoveSourceResult(name, result)
 
       | "rename" :: oldName :: newName :: _ ->
-          if rc.RenameSource(oldName, newName)
-          then printfn "Some sources are renamed."
-          else printfn "No sources are renamed."
+          let result    = rc.RenameSource(oldName, newName)
+          do view.PrintRenameSourceResult(result)
 
       | "sources" :: _ ->
-          rc.Reader
-          |> RssReader.sourceMap
-          |> Map.toList
-          |> List.iter (fun (_, src) ->
-              printfn "%s" (src |> RssSource.toSExpr)
-              )
+          do view.PrintSources(rc.Reader |> RssReader.sourceMap |> Map.toList)
 
       | "tag" :: tagName :: srcName :: _ ->
-          match this.TryFindSource(srcName) with
-          | None -> ()
-          | Some src ->
-              match rc.AddTag(tagName, src) with
-              | Some _ ->
-                  eprintfn "Source '%s' does already exist."
-                    tagName
-              | None ->
-                  printfn "Tag '%s' is added to '%s'."
-                    tagName srcName
+          let result    = this.TryFindSource(srcName)
+          do view.PrintAddTagResult(tagName, srcName, result)
 
       | "detag" :: tagName :: srcName :: _ ->
-          match this.TryFindSource(srcName) with
-          | None -> ()
-          | Some src ->
-              match rc.RemoveTag(tagName, src) with
-              | None ->
-                  eprintfn "Source '%s' doesn't have tag '%s'."
-                    srcName tagName
-              | Some _ ->
-                  printfn "Tag '%s' is removed from '%s'."
-                    tagName srcName
+          let result    = this.TryFindSource(srcName)
+          do view.PrintRemoveTagResult(tagName, srcName, result)
 
       | "tags" :: srcName :: _ ->
           match this.TryFindSource(srcName) with
@@ -165,8 +122,7 @@ type Ctrl (rc: RssClient) =
               )
 
       | _ ->
-          eprintfn "Unknown command: %s"
-            (String.Join(" ", command))
+          view.PrintUnknownCommand(command)
     }
 
   member this.ProcCommand(command) =
@@ -188,7 +144,8 @@ type Ctrl (rc: RssClient) =
     }
 
   member this.Interactive() =
-    let rec loop () = async {
+    let rec loop () =
+      async {
         let! line = Console.In.ReadLineAsync() |> Async.AwaitTask
         return! this.ProcCommandLine(loop (), line)
       }
