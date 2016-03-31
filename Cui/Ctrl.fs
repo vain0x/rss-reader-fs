@@ -64,6 +64,12 @@ type Ctrl (rc: RssClient) =
             line.Split([|' '|], StringSplitOptions.RemoveEmptyEntries)
             |> Array.toList
           match command with
+          | "update" :: srcName :: _ ->
+              match this.TryFindSource(srcName) with
+              | None -> ()
+              | Some src ->
+                  do! this.UpdateAndShowCount(Some src)
+
           | "update" :: _ ->
               do! this.UpdateAndShowCount(None)
 
