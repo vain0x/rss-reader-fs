@@ -32,7 +32,7 @@ module RssReader =
     |> allFeeds
     |> Array.map RssSource.ofFeed
     |> Set.ofArray
-    |> (fun srcs -> RssSource.union "ALL" srcs)
+    |> (fun srcs -> RssSource.union AllSourceName srcs)
 
   let alreadyReadItems rr =
     rr
