@@ -5,10 +5,7 @@ open System.IO
 open System.Collections.Generic
 open RssReaderFs
 
-type Ctrl (rc: RssClient) =
-  let view =
-    new View(rc)
-
+type Ctrl (rc: RssClient, view: View) =
   member this.TryFindSource(srcName) =
     rc.Reader
     |> RssReader.tryFindSource srcName

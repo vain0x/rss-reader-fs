@@ -7,7 +7,8 @@ module Program =
   [<EntryPoint>]
   let main argv =
     let rc = RssClient.Create(@"feeds.json")
-    let rrc = Ctrl(rc)
+    let view = View(rc)
+    let rrc = Ctrl(rc, view)
 
     try
       match argv with
