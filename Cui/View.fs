@@ -33,9 +33,8 @@ type View (rc: RssClient) =
       rc.ReadItem(item)
     in lockConsole body
 
-  member this.PrintTimeLine() =
+  member this.PrintItems(items) =
     let body () =
-      let items = rc.Reader.UnreadItems
       let len = items |> Seq.length
       items
       |> Seq.sortBy (fun item -> item.Date)

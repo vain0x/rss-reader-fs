@@ -18,7 +18,7 @@ type Ctrl (rc: RssClient) =
       do
         if newItems |> Array.isEmpty |> not then
           view.OnNewFeeds(newItems)
-      return newItems |> Array.isEmpty |> not
+      return newItems
     }
 
   member this.CheckNewItemsAsync(?timeout, ?thresh) =
@@ -47,16 +47,17 @@ type Ctrl (rc: RssClient) =
             |> Array.toList
           match command with
           | "up" :: _ | "update" :: _ ->
-              let! success = this.TryUpdate(None)
-              if success |> not then
+              let! items = this.TryUpdate(None)
+              if items |> Seq.isEmpty then
                 printfn "No new items available."
 
           | "show" :: _ ->
-              let! success = this.TryUpdate(None)
-              if success then
-                view.PrintTimeLine()
-              else
-                printfn "No new items available."
+              let! items = this.TryUpdate(None)
+              match items with
+              | [||] ->
+                  printfn "No new items available."
+              | items ->
+                  view.PrintItems(items)
 
           | "feeds" :: _ ->
               let body () =
