@@ -64,3 +64,7 @@ module Domain =
 
   type Error =
     | NameConflict
+
+  /// 全フィードからなる RssSource の名前
+  [<Literal>]
+  let AllSourceName = "ALL"

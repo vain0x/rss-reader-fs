@@ -32,7 +32,7 @@ module RssReader =
     |> allFeeds
     |> Array.map RssSource.ofFeed
     |> Set.ofArray
-    |> (fun srcs -> RssSource.union "ALL" srcs)
+    |> (fun srcs -> RssSource.union AllSourceName srcs)
 
   let alreadyReadItems rr =
     rr
@@ -89,7 +89,9 @@ module RssReader =
     in { rr with TagMap = tagMap' }
 
   let tryFindSource srcName rr =
-    rr |> sourceMap |> Map.tryFind srcName
+    match srcName with
+    | AllSourceName -> rr |> allFeedSource |> Some
+    | _ -> rr |> sourceMap |> Map.tryFind srcName
 
   let addSource src rr =
     let rr =
