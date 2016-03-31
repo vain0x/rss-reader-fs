@@ -33,6 +33,16 @@ type Ctrl (rc: RssClient) =
       }
     in loop ()
 
+  member this.TryUpdateAndShow(srcOpt) =
+    async {
+      let! items = this.TryUpdate(srcOpt)
+      match items with
+      | [||] ->
+          printfn "No new items available."
+      | items ->
+          view.PrintItems(items)
+    }
+
   member this.Interactive() =
     let rec loop () = async {
       let! line = Console.In.ReadLineAsync() |> Async.AwaitTask
@@ -52,12 +62,7 @@ type Ctrl (rc: RssClient) =
                 printfn "No new items available."
 
           | "show" :: _ ->
-              let! items = this.TryUpdate(None)
-              match items with
-              | [||] ->
-                  printfn "No new items available."
-              | items ->
-                  view.PrintItems(items)
+            do! this.TryUpdateAndShow(None)
 
           | "feeds" :: _ ->
               let body () =
