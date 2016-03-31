@@ -38,12 +38,9 @@ module RssReader =
     rr |> feedMap |> Map.tryFind url
 
   let feedName url rr =
-    let name =
-      match rr |> tryFindFeed url with
-      | Some { Name = name } -> name + " "
-      | None -> ""
-    in
-      sprintf "%s<%s>" name (url |> string)
+    match rr |> tryFindFeed url with
+    | Some feed -> feed |> RssFeed.nameUrl
+    | None -> sprintf "<%s>" (url |> Url.toString)
 
   /// フィードを追加する処理のうち、FeedMap を更新する部分
   let internal addFeedImpl feed rr =

@@ -83,10 +83,7 @@ type Ctrl (rc: RssClient) =
       | "feeds" :: _ ->
           rc.Reader
           |> RssReader.allFeeds
-          |> Array.iter (fun src ->
-              printfn "%s <%s>"
-                (src.Name) (src.Url |> Url.toString)
-            )
+          |> Array.iter (RssFeed.nameUrl >> printfn "%s")
 
       | "feed" :: name :: url :: _ ->
           let feed = RssFeed.create name url
