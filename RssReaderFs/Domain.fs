@@ -53,7 +53,8 @@ module Domain =
       SourceMap     : Map<SourceName, RssSource>
     }
 
-  /// Serializable version
+  /// 情報の重複が少ない形式。
+  /// シリアライズするときなどに使う。
   type RssReaderSpec =
     {
       Feeds         : RssFeed []
