@@ -11,11 +11,10 @@ type View (rc: RssClient) =
 
   member this.PrintCount(items) =
     let len = items |> Array.length
-    let () =
+    in
       if len = 0
       then printfn "No new items."
       else printfn "New %d items!" len
-    in ()
 
   member this.PrintItem(item: RssItem, ?header) =
     let header =
@@ -32,13 +31,13 @@ type View (rc: RssClient) =
           printfn "* From: %s" name
           )
       item.Desc |> Option.iter (printfn "* Desc:\r\n%s")
-
+    let () =
       rc.ReadItem(item)
     in ()
 
   member this.PrintItems(items) =
     let len = items |> Seq.length
-    let () =
+    in
       if len = 0
       then printfn "No new items."
       else
@@ -55,7 +54,6 @@ type View (rc: RssClient) =
               , (sprintf "[%3d/%3d]" i len)
               )
             )
-    in ()
 
   member this.PrintItemTitles(items: RssItem []) =
     let len = items |> Array.length

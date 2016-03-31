@@ -90,16 +90,14 @@ type Ctrl (rc: RssClient) =
 
       | "feed" :: name :: url :: _ ->
           let feed = RssFeed.create name url
-          let old = rc.AddSource(feed |> RssSource.ofFeed)
-          let () =
-            match old with
+          in
+            match rc.AddSource(feed |> RssSource.ofFeed) with
             | None ->
                 printfn "Feed '%s' has been added."
                   name
             | Some src ->
                 eprintfn "Source '%s' does already exist: %s"
                   (src |> RssSource.name) (src |> RssSource.toSExpr)
-          in ()
 
       | "remove" :: name :: _ ->
           match rc.RemoveSource(name) with
@@ -188,7 +186,8 @@ type Ctrl (rc: RssClient) =
     }
 
   member this.Interactive() =
-    let rec loop () = async {
+    let rec loop () =
+      async {
         let! line = Console.In.ReadLineAsync() |> Async.AwaitTask
         return! this.ProcCommandLine(loop (), line)
       }

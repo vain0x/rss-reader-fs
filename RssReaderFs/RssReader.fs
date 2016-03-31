@@ -65,8 +65,7 @@ module RssReader =
       |> Seq.fold
           (fun feedMap feed -> feedMap |> Map.add (feed.Url) feed)
           (rr |> feedMap)
-    in
-      { rr with FeedMap = feedMap' }
+    in { rr with FeedMap = feedMap' }
 
   /// src にタグを付ける処理のうち、TagMap を更新する部分
   let internal addTagImpl tagName src rr =
@@ -204,10 +203,7 @@ module RssReader =
             { feed with DoneSet = feed.DoneSet |> Set.add item }
           in
             rr |> feedMap |> Map.add (feed.Url) feed'
-    in
-      { rr with
-          FeedMap         = feedMap'
-      }
+    in { rr with FeedMap = feedMap' }
 
   let updateAsync src rr =
     async {
@@ -215,11 +211,7 @@ module RssReader =
         src
         |> RssSource.ofUnread
         |> RssSource.fetchItemsAsync
-
-      let rr =
-        rr
-        |> updateFeeds feeds'
-
+      let rr = rr |> updateFeeds feeds'
       return (rr, unreadItems)
     }
 
