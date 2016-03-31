@@ -98,8 +98,12 @@ module RssReader =
       match src with
       | Feed feed -> rr |> addFeed feed
       | _ -> rr
-    in
-      { rr with SourceMap = rr |> sourceMap |> Map.add (src |> RssSource.name) src }
+    let rr =
+      match rr |> sourceMap |> Map.update (src |> RssSource.name) (Some src) with
+      | (sourceMap', None) ->
+          { rr with SourceMap = sourceMap' }
+      | _ -> rr
+    in rr
 
   let removeSource srcName rr =
     match rr |> tryFindSource srcName with

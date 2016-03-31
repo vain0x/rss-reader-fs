@@ -63,6 +63,14 @@ module Map =
   let valueSet self =
     self |> Map.toList |> List.map snd |> Set.ofList
 
+  let update key valueOpt self =
+    let old     = self |> Map.tryFind key
+    let self'   =
+      match valueOpt with
+      | Some value  -> self |> Map.add key value
+      | None        -> self |> Map.remove key
+    in (self', old)
+
 module DateTime =
   let tryParse s =
     DateTime.TryParse(s)
