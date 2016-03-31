@@ -13,11 +13,7 @@ type Ctrl (rc: RssClient) =
     async {
       let src =
         defaultArg srcOpt (rc.Reader |> RssReader.allFeedSource)
-      let! newItems = rc.UpdateAsync src
-      do
-        if newItems |> Array.isEmpty |> not then
-          view.PrintCount(newItems)
-      return newItems
+      return! rc.UpdateAsync src
     }
 
   member this.CheckNewItemsAsync(?timeout, ?thresh) =
@@ -26,7 +22,10 @@ type Ctrl (rc: RssClient) =
 
     let rec loop () =
       async {
-        let! _ = this.TryUpdate(None)
+        let! newItems = this.TryUpdate(None)
+        do
+          if newItems |> Array.isEmpty |> not then
+            view.PrintCount(newItems)
         do! Async.Sleep(timeout)
         return! loop ()
       }
@@ -57,8 +56,7 @@ type Ctrl (rc: RssClient) =
           match command with
           | "up" :: _ | "update" :: _ ->
               let! items = this.TryUpdate(None)
-              if items |> Seq.isEmpty then
-                printfn "No new items available."
+              do view.PrintCount(items)
 
           | "show" :: srcName :: _ ->
             match rc.Reader |> RssReader.tryFindSource srcName with
