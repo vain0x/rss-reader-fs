@@ -129,7 +129,9 @@ type Ctrl (rc: RssClient) =
               view.PrintTag(tagName)
               )
 
-      | _ -> ()
+      | _ ->
+          eprintfn "Unknown command: %s"
+            (String.Join(" ", command))
     }
 
   member this.ProcCommand(command) =
