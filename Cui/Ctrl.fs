@@ -9,16 +9,11 @@ type Ctrl (rc: RssClient) =
   let view =
     new View(rc)
 
-  member this.TryUpdate(srcOpt) =
+  member this.Update(srcOpt) =
     async {
       let src =
         defaultArg srcOpt (rc.Reader |> RssReader.allFeedSource)
-
-      let! newItems = rc.UpdateAsync src
-      do
-        if newItems |> Array.isEmpty |> not then
-          view.OnNewFeeds(newItems)
-      return newItems |> Array.isEmpty |> not
+      return! rc.UpdateAsync src
     }
 
   member this.CheckNewItemsAsync(?timeout, ?thresh) =
@@ -27,11 +22,34 @@ type Ctrl (rc: RssClient) =
 
     let rec loop () =
       async {
-        let! _ = this.TryUpdate(None)
+        let! newItems = this.Update(None)
+        do
+          if newItems |> Array.isEmpty |> not then
+            view.PrintCount(newItems)
         do! Async.Sleep(timeout)
         return! loop ()
       }
     in loop ()
+
+  member this.UpdateAndShowCount(srcOpt) =
+    async {
+      let! items = this.Update(srcOpt)
+      do view.PrintCount(items)
+    }
+
+  member this.UpdateAndShowDetails(srcOpt) =
+    async {
+      let! items = this.Update(srcOpt)
+      do view.PrintItems(items)
+    }
+
+  member this.TryFindSource(srcName) =
+    rc.Reader
+    |> RssReader.tryFindSource srcName
+    |> tap (fun opt ->
+        if opt |> Option.isNone then
+          eprintfn "Unknown source: %s" srcName
+        )
 
   member this.Interactive() =
     let rec loop () = async {
@@ -46,17 +64,23 @@ type Ctrl (rc: RssClient) =
             line.Split([|' '|], StringSplitOptions.RemoveEmptyEntries)
             |> Array.toList
           match command with
-          | "up" :: _ | "update" :: _ ->
-              let! success = this.TryUpdate(None)
-              if success |> not then
-                printfn "No new items available."
+          | "update" :: srcName :: _ ->
+              match this.TryFindSource(srcName) with
+              | None -> ()
+              | Some src ->
+                  do! this.UpdateAndShowCount(Some src)
+
+          | "update" :: _ ->
+              do! this.UpdateAndShowCount(None)
+
+          | "show" :: srcName :: _ ->
+              match this.TryFindSource(srcName) with
+              | None -> ()
+              | Some src ->
+                  do! this.UpdateAndShowDetails(Some src)
 
           | "show" :: _ ->
-              let! success = this.TryUpdate(None)
-              if success then
-                view.PrintTimeLine()
-              else
-                printfn "No new items available."
+              do! this.UpdateAndShowDetails(None)
 
           | "feeds" :: _ ->
               let body () =
@@ -92,6 +116,41 @@ type Ctrl (rc: RssClient) =
                 |> Map.toList
                 |> List.iter (fun (_, src) ->
                     printfn "%s" (src |> RssSource.toSExpr)
+                    )
+              in lockConsole body
+
+          | "tag" :: tagName :: srcName :: _ ->
+              let body () =
+                match rc.Reader |> RssReader.tryFindSource srcName with
+                | Some src -> rc.AddTag(tagName, src)
+                | None -> printfn "Unknown source name: %s" srcName
+              in lockConsole body
+
+          | "detag" :: tagName :: srcName :: _ ->
+              let body () =
+                match rc.Reader |> RssReader.tryFindSource srcName with
+                | Some src -> rc.RemoveTag(tagName, src)
+                | None -> printfn "Unknown source name: %s" srcName
+              in lockConsole body
+
+          | "tags" :: srcName :: _ ->
+              let body () =
+                match this.TryFindSource(srcName) with
+                | None -> ()
+                | Some src ->
+                    rc.Reader
+                    |> RssReader.tagSetOf src
+                    |> Set.iter (fun tagName ->
+                        view.PrintTag(tagName)
+                        )
+              in lockConsole body
+
+          | "tags" :: _ ->
+              let body () =
+                rc.Reader
+                |> RssReader.tagMap 
+                |> Map.iter (fun tagName _ ->
+                    view.PrintTag(tagName)
                     )
               in lockConsole body
 

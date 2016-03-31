@@ -10,8 +10,8 @@ module RssSource =
   let ofUnread source =
     Unread source
 
-  let union sources =
-    Union sources
+  let union name sources =
+    Union (name, sources)
 
   let rec name =
     function
@@ -27,6 +27,15 @@ module RssSource =
         src |> toFeeds
     | Union (_, srcs) ->
         srcs |> Set.collect toFeeds
+
+  /// このソースに全体が含まれているソースの集合
+  let rec subSources self =
+    match self with
+    | Feed _
+    | Unread _ ->  // Unread は未読分を含まないので、元のソースを「含む」とはみなさない
+        Set.singleton self
+    | Union (_, srcs) ->
+        srcs |> Set.collect subSources |> Set.add self
 
   /// items: このソースが受信対象とするフィードが発信したアイテムの列
   let rec filterItems items =
@@ -81,7 +90,7 @@ module RssSource =
         else
           sprintf "(union %s %s)"
             name
-            (String.Join(" ", srcs |> Set.toArray))
+            (String.Join(" ", srcs |> Set.map toSExpr))
 
   let rec toSpec =
     function

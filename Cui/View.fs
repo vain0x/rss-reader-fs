@@ -9,9 +9,12 @@ type View (rc: RssClient) =
   let reader () =
     rc.Reader
 
-  member this.OnNewFeeds(items) =
+  member this.PrintCount(items) =
+    let len = items |> Array.length
     let body () =
-      printfn "New %d items!" (items |> Array.length)
+      if len = 0
+      then printfn "No new items."
+      else printfn "New %d items!" len
     in lockConsole body
 
   member this.PrintItem(item: RssItem, ?header) =
@@ -33,21 +36,31 @@ type View (rc: RssClient) =
       rc.ReadItem(item)
     in lockConsole body
 
-  member this.PrintTimeLine() =
+  member this.PrintItems(items) =
+    let len = items |> Seq.length
     let body () =
-      let items = rc.Reader.UnreadItems
-      let len = items |> Seq.length
-      items
-      |> Seq.sortBy (fun item -> item.Date)
-      |> Seq.iteri (fun i item ->
-          if i > 0 then
-            printfn "..."
-            Console.ReadKey() |> ignore
+      if len = 0
+      then printfn "No new items."
+      else
+        items
+        |> Seq.sortBy (fun item -> item.Date)
+        |> Seq.iteri (fun i item ->
+            if i > 0 then
+              printfn "..."
+              Console.ReadKey() |> ignore
 
-          printfn "----------------"
-          this.PrintItem
-            ( item
-            , (sprintf "[%3d/%3d]" i len)
+            printfn "----------------"
+            this.PrintItem
+              ( item
+              , (sprintf "[%3d/%3d]" i len)
+              )
             )
-          )
     in lockConsole body
+
+  member this.PrintTag(tagName) =
+    match rc.Reader |> RssReader.tagMap |> Map.tryFind tagName with
+    | None -> eprintfn "Unknown tag name: %s" tagName
+    | Some srcs ->
+        printfn "%s %s"
+          tagName
+          (String.Join(" ", srcs |> Set.map (RssSource.toSExpr)))

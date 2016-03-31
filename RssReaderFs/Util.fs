@@ -57,6 +57,9 @@ module Set =
     self |> Seq.map f |> Set.unionMany
 
 module Map =
+  let keySet self =
+    self |> Map.toList |> List.map fst |> Set.ofList
+
   let valueSet self =
     self |> Map.toList |> List.map snd |> Set.ofList
 
