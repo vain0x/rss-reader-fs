@@ -10,23 +10,25 @@ type RssClient private (path: string) =
 
   member this.Reader = reader
 
-  member internal this.AddFeed(feed) =
-    reader <- reader |> RssReader.addFeed feed
-
-  member internal this.RemoveFeed(url) =
-    reader <- reader |> RssReader.removeFeed url
-
   member this.AddSource(src) =
-    reader <- reader |> RssReader.addSource src
+    let (rr', old) = reader |> RssReader.addSource src
+    let () = reader <- rr'
+    in old
 
   member this.RemoveSource(srcName) =
-    reader <- reader |> RssReader.removeSource srcName
+    let (rr', old) = reader |> RssReader.removeSource srcName
+    let () = reader <- rr'
+    in old
 
   member this.AddTag(tagName, src) =
-    reader <- reader |> RssReader.addTag tagName src
+    let (rr', old) = reader |> RssReader.addTag tagName src
+    let () = reader <- rr'
+    in old
 
   member this.RemoveTag(tagName, src) =
-    reader <- reader |> RssReader.removeTag tagName src
+    let (rr', old) = reader |> RssReader.removeTag tagName src
+    let () = reader <- rr'
+    in old
 
   member this.ReadItem(item) =
     reader <- reader |> RssReader.readItem item

@@ -55,10 +55,12 @@ module RssReader =
     in
       sprintf "%s<%s>" name (url |> string)
 
-  let internal addFeed feed rr =
+  /// フィードを追加する処理のうち、FeedMap を更新する部分
+  let internal addFeedImpl feed rr =
     { rr with FeedMap = rr |> feedMap |> Map.add (feed.Url) feed }
 
-  let internal removeFeed url rr =
+  /// フィードを除去する処理のうち、FeedMap を更新する部分
+  let internal removeFeedImpl url rr =
     { rr with FeedMap = rr |> feedMap |> Map.remove url }
 
   let updateFeeds feeds rr =
@@ -96,52 +98,68 @@ module RssReader =
   let addSource src rr =
     let rr =
       match src with
-      | Feed feed -> rr |> addFeed feed
+      | Feed feed -> rr |> addFeedImpl feed
       | _ -> rr
-    in
-      { rr with SourceMap = rr |> sourceMap |> Map.add (src |> RssSource.name) src }
+    let (rr, old) =
+      match rr |> sourceMap |> Map.update (src |> RssSource.name) (Some src) with
+      | (sourceMap', None) ->
+          ({ rr with SourceMap = sourceMap' }, None)
+      | (_, old) -> (rr, old)
+    in (rr, old)
 
   let removeSource srcName rr =
     match rr |> tryFindSource srcName with
-    | None -> rr
+    | None -> (rr, None)
     | Some src ->
         let rr =
           match src with
-          | Feed feed -> rr |> removeFeed (feed.Url)
+          | Feed feed ->
+              rr |> removeFeedImpl (feed.Url)
+          | Union (tagName, srcs)
+            when rr |> tagMap |> Map.containsKey tagName ->
+              { rr with TagMap = rr |> tagMap |> Map.remove tagName }
           | _ -> rr
-        in
-          { rr with SourceMap = rr |> sourceMap |> Map.remove srcName }
+        let (sourceMap', old) =
+          rr |> sourceMap |> Map.update srcName None
+        let rr =
+          { rr with SourceMap = sourceMap' }
+        in (rr, old)
 
   /// src にタグを付ける
   let addTag tagName src rr =
     let rr = rr |> addTagImpl tagName src
-    let rr =
+    let (rr, old) =
       match rr |> tryFindSource tagName with
-      | Some (Union (tagName, srcs)) ->
+      | Some (Union (tagName, srcs)) as old ->
         let sourceMap' =
           rr
           |> sourceMap
           |> Map.add tagName (srcs |> Set.add src |> RssSource.union tagName)
-        in { rr with SourceMap = sourceMap' }
+        let rr =
+          { rr with SourceMap = sourceMap' }
+        in (rr, None)  // タグ付けの障害になるものはなかった、という意味で None を返す
       | _ ->
         rr
         |> addSource (RssSource.union tagName (Set.singleton src))
-    in rr
+    in (rr, old)
 
   /// src からタグを外す
   let removeTag tagName src rr =
     let rr = rr |> removeTagImpl tagName src
-    let rr =
+    let (rr, old) =
       match rr |> tryFindSource tagName with
       | Some (Union (tagName, srcs)) ->
-          let srcs' = srcs |> Set.remove src
+          let old     = srcs |> Set.tryFind src
+          let srcs'   = srcs |> Set.remove src
           let sourceMap' =
             if srcs' |> Set.isEmpty
             then rr |> sourceMap |> Map.remove tagName
             else rr |> sourceMap |> Map.add tagName (srcs' |> RssSource.union tagName)
-          in { rr with SourceMap = sourceMap' }
-      | _ -> rr
-    in rr
+          let rr =
+            { rr with SourceMap = sourceMap' }
+          in (rr, old)
+      | _ -> (rr, None)
+    in (rr, old)
 
   /// src についているタグの集合
   let tagSetOf src rr =
@@ -220,18 +238,18 @@ module RssReader =
       |> Map.ofArray
     let rr =
       feedMap
-      |> Map.fold (fun rr _ feed -> rr |> addSource (Feed feed)) empty
+      |> Map.fold (fun rr _ feed -> rr |> addSource (Feed feed) |> fst) empty
     let rr =
       spec.SourceSpecSet
       |> Set.map (RssSource.ofSpec feedMap)
-      |> Set.fold (fun rr src -> rr |> addSource src) rr
+      |> Set.fold (fun rr src -> rr |> addSource src |> fst) rr
     let rr =
       spec.Tags
       |> Map.fold (fun rr tagName srcNameSet ->
           srcNameSet
           |> Set.fold (fun rr srcName ->
               match rr |> tryFindSource srcName with
-              | Some src -> rr |> addTag tagName src
+              | Some src -> rr |> addTag tagName src |> fst
               | None -> rr
               ) rr
           ) rr

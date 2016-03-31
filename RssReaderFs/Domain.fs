@@ -61,3 +61,6 @@ module Domain =
       Tags          : Map<TagName, Set<SourceName>>
       SourceSpecSet : Set<RssSourceSpec>
     }
+
+  type Error =
+    | NameConflict
