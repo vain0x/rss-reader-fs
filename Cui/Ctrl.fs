@@ -113,7 +113,14 @@ type Ctrl (rc: RssClient) =
       | "tag" :: tagName :: srcName :: _ ->
           match this.TryFindSource(srcName) with
           | None -> ()
-          | Some src -> rc.AddTag(tagName, src)
+          | Some src ->
+              match rc.AddTag(tagName, src) with
+              | Some _ ->
+                  eprintfn "Source '%s' does already exist."
+                    tagName
+              | None ->
+                  printfn "Tag '%s' is added to '%s'."
+                    tagName srcName
 
       | "detag" :: tagName :: srcName :: _ ->
           match this.TryFindSource(srcName) with

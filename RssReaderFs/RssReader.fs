@@ -126,19 +126,20 @@ module RssReader =
   /// src にタグを付ける
   let addTag tagName src rr =
     let rr = rr |> addTagImpl tagName src
-    let rr =
+    let (rr, old) =
       match rr |> tryFindSource tagName with
-      | Some (Union (tagName, srcs)) ->
+      | Some (Union (tagName, srcs)) as old ->
         let sourceMap' =
           rr
           |> sourceMap
           |> Map.add tagName (srcs |> Set.add src |> RssSource.union tagName)
-        in { rr with SourceMap = sourceMap' }
+        let rr =
+          { rr with SourceMap = sourceMap' }
+        in (rr, None)  // タグ付けの障害になるものはなかった、という意味で None を返す
       | _ ->
         rr
         |> addSource (RssSource.union tagName (Set.singleton src))
-        |> fst
-    in rr
+    in (rr, old)
 
   /// src からタグを外す
   let removeTag tagName src rr =
@@ -243,7 +244,7 @@ module RssReader =
           srcNameSet
           |> Set.fold (fun rr srcName ->
               match rr |> tryFindSource srcName with
-              | Some src -> rr |> addTag tagName src
+              | Some src -> rr |> addTag tagName src |> fst
               | None -> rr
               ) rr
           ) rr
