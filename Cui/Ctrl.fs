@@ -115,6 +115,13 @@ type Ctrl (rc: RssClient) =
                 | None -> printfn "Unknown source name: %s" srcName
               in lockConsole body
 
+          | "detag" :: tagName :: srcName :: _ ->
+              let body () =
+                match rc.Reader |> RssReader.tryFindSource srcName with
+                | Some src -> rc.RemoveTag(tagName, src)
+                | None -> printfn "Unknown source name: %s" srcName
+              in lockConsole body
+
           | _ -> ()
           return! loop ()
       }
