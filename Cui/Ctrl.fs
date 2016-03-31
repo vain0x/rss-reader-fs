@@ -9,6 +9,14 @@ type Ctrl (rc: RssClient) =
   let view =
     new View(rc)
 
+  member this.TryFindSource(srcName) =
+    rc.Reader
+    |> RssReader.tryFindSource srcName
+    |> tap (fun opt ->
+        if opt |> Option.isNone then
+          eprintfn "Unknown source name: %s" srcName
+        )
+
   member this.Update(srcOpt) =
     async {
       let src =
@@ -48,14 +56,6 @@ type Ctrl (rc: RssClient) =
       let! items = this.Update(srcOpt)
       do view.PrintItemTitles(items)
     }
-
-  member this.TryFindSource(srcName) =
-    rc.Reader
-    |> RssReader.tryFindSource srcName
-    |> tap (fun opt ->
-        if opt |> Option.isNone then
-          eprintfn "Unknown source name: %s" srcName
-        )
 
   member private this.ProcCommandImpl(command) =
     async {
