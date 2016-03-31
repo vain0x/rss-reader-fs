@@ -17,20 +17,13 @@ type Ctrl (rc: RssClient) =
           eprintfn "Unknown source name: %s" srcName
         )
 
-  member this.Update(srcOpt) =
-    async {
-      let src =
-        defaultArg srcOpt (rc.Reader |> RssReader.allFeedSource)
-      return! rc.UpdateAsync src
-    }
-
   member this.CheckNewItemsAsync(?timeout, ?thresh) =
     let timeout = defaultArg timeout  (5 * 60 * 1000)  // 5 min
     let thresh  = defaultArg thresh   1
 
     let rec loop () =
       async {
-        let! newItems = this.Update(None)
+        let! newItems = rc.UpdateAllAsync
         do
           if newItems |> Array.isEmpty |> not then
             view.PrintCount(newItems)
@@ -39,53 +32,53 @@ type Ctrl (rc: RssClient) =
       }
     in loop ()
 
-  member this.UpdateAndShowCount(srcOpt) =
+  member this.UpdateAndShowCount(srcName) =
     async {
-      let! items = this.Update(srcOpt)
-      do view.PrintCount(items)
+      match this.TryFindSource(srcName) with
+      | None -> ()
+      | Some src ->
+          let! items = rc.UpdateAsync(src)
+          do view.PrintCount(items)
     }
 
-  member this.UpdateAndShowDetails(srcOpt) =
+  member this.UpdateAndShowDetails(srcName) =
     async {
-      let! items = this.Update(srcOpt)
-      do view.PrintItems(items)
+      match this.TryFindSource(srcName) with
+      | None -> ()
+      | Some src ->
+          let! items = rc.UpdateAsync(src)
+          do view.PrintItems(items)
     }
 
-  member this.UpdateAndShowTitles(srcOpt) =
+  member this.UpdateAndShowTitles(srcName) =
     async {
-      let! items = this.Update(srcOpt)
-      do view.PrintItemTitles(items)
+      match this.TryFindSource(srcName) with
+      | None -> ()
+      | Some src ->
+          let! items = rc.UpdateAsync(src)
+          do view.PrintItemTitles(items)
     }
 
   member private this.ProcCommandImpl(command) =
     async {
       match command with
       | "update" :: srcName :: _ ->
-          match this.TryFindSource(srcName) with
-          | None -> ()
-          | Some src ->
-              do! this.UpdateAndShowCount(Some src)
+          do! this.UpdateAndShowCount(srcName)
 
       | "update" :: _ ->
-          do! this.UpdateAndShowCount(None)
+          do! this.UpdateAndShowCount(AllSourceName)
 
       | "show" :: srcName :: _ ->
-          match this.TryFindSource(srcName) with
-          | None -> ()
-          | Some src ->
-              do! this.UpdateAndShowDetails(Some src)
+          do! this.UpdateAndShowDetails(srcName)
 
       | "show" :: _ ->
-          do! this.UpdateAndShowDetails(None)
+          do! this.UpdateAndShowDetails(AllSourceName)
           
       | "list" :: srcName :: _ ->
-          match this.TryFindSource(srcName) with
-          | None -> ()
-          | Some src ->
-              do! this.UpdateAndShowTitles(Some src)
+          do! this.UpdateAndShowTitles(srcName)
 
       | "list" :: _ ->
-          do! this.UpdateAndShowTitles(None)
+          do! this.UpdateAndShowTitles(AllSourceName)
 
       | "feeds" :: _ ->
           rc.Reader
