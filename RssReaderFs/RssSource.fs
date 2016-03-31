@@ -13,11 +13,15 @@ module RssSource =
   let union name sources =
     Union (name, sources)
 
+  let ofItems name items =
+    Items (name, items)
+
   let rec name =
     function
     | Feed (feed: RssFeed) -> feed.Name
     | Unread src -> src |> name
     | Union (name, _) -> name
+    | Items (name, _) -> name
 
   let rec toFeeds =
     function
@@ -27,11 +31,14 @@ module RssSource =
         src |> toFeeds
     | Union (_, srcs) ->
         srcs |> Set.collect toFeeds
+    | Items _ ->
+        Set.empty
 
   /// このソースに全体が含まれているソースの集合
   let rec subSources self =
     match self with
     | Feed _
+    | Items _
     | Unread _ ->  // Unread は未読分を含まないので、元のソースを「含む」とはみなさない
         Set.singleton self
     | Union (_, srcs) ->
@@ -55,6 +62,10 @@ module RssSource =
 
     | Union (_, srcSet) ->
         srcSet |> Set.fold filterItems items
+
+    | Items (_, items') ->
+        let ran = items' |> Set.ofArray
+        in items |> Array.filter (fun item -> ran |> Set.contains item)
 
   let fetchItemsAsync src =
     async {
@@ -89,6 +100,9 @@ module RssSource =
         let srcName'  = srcName |> replace oldName newName
         let srcs'     = srcs |> Set.map (rename oldName newName)
         in Union (srcName', srcs')
+    | Items (name, items) ->
+        let name'     = name |> replace oldName newName
+        in Items (name', items)
 
   let rec toSExpr =
     function
@@ -104,6 +118,10 @@ module RssSource =
           sprintf "(union %s %s)"
             name
             (String.Join(" ", srcs |> Set.map toSExpr))
+    | Items (name, items) ->
+        sprintf "(items %s %s)"
+          name
+          (String.Join(" ", items |> Array.map RssItem.toSExpr))
 
   let rec toSpec =
     function
@@ -113,6 +131,8 @@ module RssSource =
         Unread (src |> toSpec)
     | Union (name, srcs) ->
         Union (name, srcs |> Set.map toSpec)
+    | Items (name, items) ->
+        Items (name, items)
 
   let rec ofSpec feedMap =
     function
@@ -124,6 +144,8 @@ module RssSource =
         Unread (src |> ofSpec feedMap)
     | Union (name, srcs) ->
         Union (name, srcs |> Set.map (ofSpec feedMap))
+    | Items (name, items) ->
+        Items (name, items)
 
   let toJson (src: RssSource) =
     src

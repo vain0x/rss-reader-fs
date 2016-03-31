@@ -31,3 +31,10 @@ module RssItem =
       xml
       |> Xml.selectNodes "rss/channel/item"
       |> Seq.choose tryBuildItem
+
+  let toSExpr (item: RssItem) =
+    sprintf "(item %s %s %s%s)"
+      item.Title
+      (item.Date.ToString("G"))
+      (item.Url |> Url.toString)
+      (match item.Desc with | Some _ -> " ..." | None -> "")

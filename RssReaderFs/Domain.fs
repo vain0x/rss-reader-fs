@@ -32,6 +32,7 @@ module Domain =
     | Feed          of 'Feed
     | Unread        of RssSourceT<'Feed>
     | Union         of SourceName * Set<RssSourceT<'Feed>>
+    | Items         of SourceName * RssItem []
 
   type RssSourceSpec =
     RssSourceT<Url>
