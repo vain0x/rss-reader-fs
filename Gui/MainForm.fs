@@ -20,6 +20,9 @@ type MainForm () as this =
   
   let reader () = rc.Reader
 
+  let mutable unreadItems =
+    (Map.empty: Map<string, RssItem>)
+
   let listView =
     new ListView
       ( Location    = Point(5, 5)
@@ -145,7 +148,10 @@ type MainForm () as this =
     let items =
       items |> Array.sortBy (fun item -> item.Date)
     let lvItems = listViewItemsFromNewItems items
-    let body () = listView.Items.AddRange(lvItems)
+    let body () =
+      listView.Items.AddRange(lvItems)
+      unreadItems <-
+        items |> Array.fold (fun ui item -> ui |> Map.add (item.Title) item) unreadItems
     do
       if listView.InvokeRequired
       then listView.BeginInvoke(UnitDelegate(body)) |> ignore
@@ -222,9 +228,8 @@ type MainForm () as this =
       let columns = e.Item |> subitems
       let title = columns.Title.Text
       do
-        reader ()
-        |> RssReader.unreadItems
-        |> Seq.tryFind (fun item -> item.Title = title)
+        unreadItems
+        |> Map.tryFind title
         |> Option.iter (fun item ->
             readItem item
             columns.Read.Text <- "✓"

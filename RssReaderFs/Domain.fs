@@ -51,7 +51,6 @@ module Domain =
       /// 常に、FeedMap に含まれるすべてのフィードを RssSource.Feed として含む。
       /// 常に、TagMap に含まれるタグ付き集合を RssSource.Union として含む。
       SourceMap     : Map<SourceName, RssSource>
-      UnreadItems   : Set<RssItem>
     }
 
   /// Serializable version

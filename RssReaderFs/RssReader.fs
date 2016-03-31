@@ -10,7 +10,6 @@ module RssReader =
       FeedMap         = Map.empty
       TagMap          = Map.empty
       SourceMap       = Map.empty
-      UnreadItems     = Set.empty
     }
 
   let internal feedMap (rr: RssReader) =
@@ -21,9 +20,6 @@ module RssReader =
 
   let sourceMap (rr: RssReader) =
     rr.SourceMap
-
-  let unreadItems (rr: RssReader) =
-    rr.UnreadItems
 
   let allFeeds rr =
     rr.FeedMap
@@ -173,9 +169,6 @@ module RssReader =
         )
     |> Map.keySet
 
-  let addUnreadItems items rr =
-    { rr with UnreadItems = rr.UnreadItems + (items |> Set.ofSeq) }
-
   let readItem (item: RssItem) rr =
     let feedMap' =
       match rr |> feedMap |> Map.tryFind (item.Url) with
@@ -185,13 +178,9 @@ module RssReader =
             { feed with DoneSet = feed.DoneSet |> Set.add item }
           in
             rr |> feedMap |> Map.add (feed.Url) feed'
-    let unreadItems' =
-      rr.UnreadItems
-      |> Set.remove item
     in
       { rr with
           FeedMap         = feedMap'
-          UnreadItems     = unreadItems'
       }
 
   let updateAsync src rr =
@@ -204,7 +193,6 @@ module RssReader =
       let rr =
         rr
         |> updateFeeds feeds'
-        |> addUnreadItems unreadItems
 
       return (rr, unreadItems)
     }
