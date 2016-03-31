@@ -50,7 +50,7 @@ module RssReader =
   let internal removeFeedImpl url rr =
     { rr with FeedMap = rr |> feedMap |> Map.remove url }
 
-  let updateFeeds feeds rr =
+  let internal updateFeeds feeds rr =
     let feedMap' =
       feeds
       |> Seq.fold
