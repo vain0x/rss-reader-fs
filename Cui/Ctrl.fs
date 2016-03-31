@@ -51,7 +51,7 @@ type Ctrl (rc: RssClient) =
           eprintfn "Unknown source: %s" srcName
         )
 
-  member this.ProcCommand(command) =
+  member private this.ProcCommandImpl(command) =
     async {
       match command with
       | "update" :: srcName :: _ ->
@@ -73,79 +73,67 @@ type Ctrl (rc: RssClient) =
           do! this.UpdateAndShowDetails(None)
 
       | "feeds" :: _ ->
-          let body () =
-            rc.Reader
-            |> RssReader.allFeeds
-            |> Array.iter (fun src ->
-                printfn "%s <%s>"
-                  (src.Name) (src.Url |> Url.toString)
-              )
-          in lockConsole body
+          rc.Reader
+          |> RssReader.allFeeds
+          |> Array.iter (fun src ->
+              printfn "%s <%s>"
+                (src.Name) (src.Url |> Url.toString)
+            )
 
       | "feed" :: name :: url :: _ ->
           let feed = RssFeed.create name url
-          let body () =
+          in
             rc.AddSource(feed |> RssSource.ofFeed)
-          in lockConsole body
 
       | "remove" :: name :: _ ->
-          let body () =
-            rc.Reader
-            |> RssReader.tryFindSource name
-            |> Option.iter (fun src ->
-                rc.RemoveSource(name)
-                printfn "'%s' has been removed."
-                  (src |> RssSource.name)
-                )
-          in lockConsole body
+          rc.Reader
+          |> RssReader.tryFindSource name
+          |> Option.iter (fun src ->
+              rc.RemoveSource(name)
+              printfn "'%s' has been removed."
+                (src |> RssSource.name)
+              )
 
       | "sources" :: _ ->
-          let body () =
-            rc.Reader
-            |> RssReader.sourceMap
-            |> Map.toList
-            |> List.iter (fun (_, src) ->
-                printfn "%s" (src |> RssSource.toSExpr)
-                )
-          in lockConsole body
+          rc.Reader
+          |> RssReader.sourceMap
+          |> Map.toList
+          |> List.iter (fun (_, src) ->
+              printfn "%s" (src |> RssSource.toSExpr)
+              )
 
       | "tag" :: tagName :: srcName :: _ ->
-          let body () =
-            match rc.Reader |> RssReader.tryFindSource srcName with
-            | Some src -> rc.AddTag(tagName, src)
-            | None -> printfn "Unknown source name: %s" srcName
-          in lockConsole body
+          match rc.Reader |> RssReader.tryFindSource srcName with
+          | Some src -> rc.AddTag(tagName, src)
+          | None -> printfn "Unknown source name: %s" srcName
 
       | "detag" :: tagName :: srcName :: _ ->
-          let body () =
-            match rc.Reader |> RssReader.tryFindSource srcName with
-            | Some src -> rc.RemoveTag(tagName, src)
-            | None -> printfn "Unknown source name: %s" srcName
-          in lockConsole body
+          match rc.Reader |> RssReader.tryFindSource srcName with
+          | Some src -> rc.RemoveTag(tagName, src)
+          | None -> printfn "Unknown source name: %s" srcName
 
       | "tags" :: srcName :: _ ->
-          let body () =
-            match this.TryFindSource(srcName) with
-            | None -> ()
-            | Some src ->
-                rc.Reader
-                |> RssReader.tagSetOf src
-                |> Set.iter (fun tagName ->
-                    view.PrintTag(tagName)
-                    )
-          in lockConsole body
+          match this.TryFindSource(srcName) with
+          | None -> ()
+          | Some src ->
+              rc.Reader
+              |> RssReader.tagSetOf src
+              |> Set.iter (fun tagName ->
+                  view.PrintTag(tagName)
+                  )
 
       | "tags" :: _ ->
-          let body () =
-            rc.Reader
-            |> RssReader.tagMap 
-            |> Map.iter (fun tagName _ ->
-                view.PrintTag(tagName)
-                )
-          in lockConsole body
+          rc.Reader
+          |> RssReader.tagMap 
+          |> Map.iter (fun tagName _ ->
+              view.PrintTag(tagName)
+              )
 
       | _ -> ()
     }
+
+  member this.ProcCommand(command) =
+    lockConsole (fun () -> this.ProcCommandImpl(command))
 
   member this.ProcCommandLine(kont, lineOrNull) =
     async {
