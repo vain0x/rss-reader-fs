@@ -12,7 +12,11 @@ module RssFeed =
       Url         = Url.ofString (url)
       DoneSet     = Set.empty
     }
-    
+
+  let rename oldName newName (feed: RssFeed) =
+    let name' = feed.Name |> replace oldName newName
+    in { feed with Name = name' }
+
   let downloadAsync (feed: RssFeed) =
     async {
       let url = feed.Url

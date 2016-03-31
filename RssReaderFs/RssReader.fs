@@ -121,6 +121,30 @@ module RssReader =
           { rr with SourceMap = sourceMap' }
         in (rr, old)
 
+  let rec renameSource oldName newName rr =
+    match
+      ( rr |> tryFindSource oldName
+      , rr |> tryFindSource newName
+      ) with
+    | (Some src, None) ->
+        { rr with
+            FeedMap =
+              rr
+              |> feedMap
+              |> Map.map (fun _ -> RssFeed.rename oldName newName)
+            TagMap = 
+              rr
+              |> tagMap
+              |> Map.replaceKey oldName newName
+              |> Map.map (fun _ -> Set.map (RssSource.rename oldName newName))
+            SourceMap =
+              rr
+              |> sourceMap
+              |> Map.replaceKey oldName newName
+              |> Map.map (fun _ -> RssSource.rename oldName newName)
+            }
+    | _ -> rr
+
   /// src にタグを付ける
   let addTag tagName src rr =
     let rr = rr |> addTagImpl tagName src

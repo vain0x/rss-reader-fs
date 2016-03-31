@@ -9,6 +9,11 @@ module Misc =
 
   let flip f x y = f y x
 
+  let replace src dst self =
+    if self = src
+    then dst
+    else self
+
 module Nullable =
   let toOption =
     function
@@ -35,6 +40,10 @@ module Seq =
       for i in 0..(len - 1) ->
         (^T: (member Item: int -> _) (self, i))
       }
+
+module Array =
+  let replace src dst self =
+    self |> Array.map (replace src dst)
 
 module Dictionary =
   open System.Collections.Generic
@@ -75,6 +84,14 @@ module Map =
       | Some value  -> self |> Map.add key value
       | None        -> self |> Map.remove key
     in (self', old)
+
+  let replaceKey oldKey newKey self =
+    match self |> Map.tryFind oldKey with
+    | None -> self
+    | Some value ->
+        self
+        |> Map.remove oldKey
+        |> Map.add newKey value
 
 module DateTime =
   let tryParse s =

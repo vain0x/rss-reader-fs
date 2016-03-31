@@ -117,6 +117,11 @@ type Ctrl (rc: RssClient) =
               eprintfn "Unknown source name: %s"
                 name
 
+      | "rename" :: oldName :: newName :: _ ->
+          if rc.RenameSource(oldName, newName)
+          then printfn "Some sources are renamed."
+          else printfn "No sources are renamed."
+
       | "sources" :: _ ->
           rc.Reader
           |> RssReader.sourceMap
