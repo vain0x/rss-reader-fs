@@ -143,6 +143,15 @@ module RssReader =
       | _ -> rr
     in rr
 
+  /// src についているタグの集合
+  let tagSetOf src rr =
+    rr
+    |> tagMap
+    |> Map.filter (fun tagName srcs ->
+        srcs |> Set.contains src
+        )
+    |> Map.keySet
+
   let addUnreadItems items rr =
     { rr with UnreadItems = rr.UnreadItems + (items |> Set.ofSeq) }
 
