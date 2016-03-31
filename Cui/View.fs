@@ -37,19 +37,22 @@ type View (rc: RssClient) =
     in lockConsole body
 
   member this.PrintItems(items) =
+    let len = items |> Seq.length
     let body () =
-      let len = items |> Seq.length
-      items
-      |> Seq.sortBy (fun item -> item.Date)
-      |> Seq.iteri (fun i item ->
-          if i > 0 then
-            printfn "..."
-            Console.ReadKey() |> ignore
+      if len = 0
+      then printfn "No new items."
+      else
+        items
+        |> Seq.sortBy (fun item -> item.Date)
+        |> Seq.iteri (fun i item ->
+            if i > 0 then
+              printfn "..."
+              Console.ReadKey() |> ignore
 
-          printfn "----------------"
-          this.PrintItem
-            ( item
-            , (sprintf "[%3d/%3d]" i len)
+            printfn "----------------"
+            this.PrintItem
+              ( item
+              , (sprintf "[%3d/%3d]" i len)
+              )
             )
-          )
     in lockConsole body

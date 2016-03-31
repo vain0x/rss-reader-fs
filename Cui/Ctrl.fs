@@ -34,11 +34,7 @@ type Ctrl (rc: RssClient) =
   member this.UpdateAndShowDetails(srcOpt) =
     async {
       let! items = this.Update(srcOpt)
-      match items with
-      | [||] ->
-          printfn "No new items available."
-      | items ->
-          view.PrintItems(items)
+      do view.PrintItems(items)
     }
 
   member this.Interactive() =
