@@ -10,8 +10,8 @@ module RssSource =
   let ofUnread source =
     Unread source
 
-  let union sources =
-    Union sources
+  let union name sources =
+    Union (name, sources)
 
   let rec name =
     function
