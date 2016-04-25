@@ -12,6 +12,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using RssReaderFs;
+using RssReaderFs.Wpf;
 
 namespace RssReaderFs.Wpf.View
 {
@@ -22,6 +24,7 @@ namespace RssReaderFs.Wpf.View
     {
         public MainWindow()
         {
+            this.DataContext = new ViewModel.MainWindow();
             InitializeComponent();
         }
     }

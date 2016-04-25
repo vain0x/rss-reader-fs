@@ -5,8 +5,25 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RssReaderFs.Wpf.View"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
+        Title="RssReaderFs" Height="480" Width="640"
+        FontFamily="Yu Gothic">
     <Grid>
-        
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="83*"/>
+            <ColumnDefinition Width="75*"/>
+        </Grid.ColumnDefinitions>
+        <ListView x:Name="listView" ItemsSource="{Binding Items}" SelectedIndex="{Binding SelectedIndex}" HorizontalAlignment="Left" Height="235" VerticalAlignment="Top" Width="632" Grid.ColumnSpan="2">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Title"  DisplayMemberBinding="{Binding Title}" />
+                    <GridViewColumn Header="Date"   DisplayMemberBinding="{Binding Date}" />
+                    <GridViewColumn Header="Feed"   DisplayMemberBinding="{Binding FeedName}" />
+                </GridView>
+            </ListView.View>
+        </ListView>
+        <Label x:Name="titleLabel" Content="{Binding SelectedRow.Title}" HorizontalAlignment="Left" Margin="10,235,0,0" VerticalAlignment="Top" Height="40" Width="612" FontSize="20" Grid.ColumnSpan="2"/>
+        <Button x:Name="linkButton" Content="Link" Command="{Binding LinkJumpCommand}" HorizontalAlignment="Left" Margin="196,275,0,0" VerticalAlignment="Top" Width="94" Height="25" Grid.Column="1"/>
+        <TextBox x:Name="descTextBox" Text="{Binding SelectedDesc}" HorizontalAlignment="Left" Height="139" Margin="10,300,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="503" Grid.ColumnSpan="2" AcceptsReturn="True" />
+        <Label x:Name="sourceLabel" Content="{Binding SelectedRow.FeedName}" HorizontalAlignment="Left" Margin="10,275,0,0" VerticalAlignment="Top" Height="33" Width="503" Grid.ColumnSpan="2"/>
     </Grid>
 </Window>
