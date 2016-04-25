@@ -10,7 +10,6 @@ module RssReader =
       FeedMap         = Map.empty
       TagMap          = Map.empty
       SourceMap       = Map.empty
-      UnreadItems     = Set.empty
     }
 
   let internal feedMap (rr: RssReader) =
@@ -21,9 +20,6 @@ module RssReader =
 
   let sourceMap (rr: RssReader) =
     rr.SourceMap
-
-  let unreadItems (rr: RssReader) =
-    rr.UnreadItems
 
   let allFeeds rr =
     rr.FeedMap
@@ -36,24 +32,15 @@ module RssReader =
     |> allFeeds
     |> Array.map RssSource.ofFeed
     |> Set.ofArray
-    |> (fun srcs -> RssSource.union "ALL" srcs)
-
-  let alreadyReadItems rr =
-    rr
-    |> allFeeds
-    |> Array.map (fun src -> src.DoneSet)
-    |> Array.fold (+) Set.empty
+    |> (fun srcs -> RssSource.union AllSourceName srcs)
 
   let tryFindFeed url rr =
     rr |> feedMap |> Map.tryFind url
 
   let feedName url rr =
-    let name =
-      match rr |> tryFindFeed url with
-      | Some { Name = name } -> name + " "
-      | None -> ""
-    in
-      sprintf "%s<%s>" name (url |> string)
+    match rr |> tryFindFeed url with
+    | Some feed -> feed |> RssFeed.nameUrl
+    | None -> sprintf "<%s>" (url |> Url.toString)
 
   /// フィードを追加する処理のうち、FeedMap を更新する部分
   let internal addFeedImpl feed rr =
@@ -63,14 +50,13 @@ module RssReader =
   let internal removeFeedImpl url rr =
     { rr with FeedMap = rr |> feedMap |> Map.remove url }
 
-  let updateFeeds feeds rr =
+  let internal updateFeeds feeds rr =
     let feedMap' =
       feeds
       |> Seq.fold
           (fun feedMap feed -> feedMap |> Map.add (feed.Url) feed)
           (rr |> feedMap)
-    in
-      { rr with FeedMap = feedMap' }
+    in { rr with FeedMap = feedMap' }
 
   /// src にタグを付ける処理のうち、TagMap を更新する部分
   let internal addTagImpl tagName src rr =
@@ -93,7 +79,9 @@ module RssReader =
     in { rr with TagMap = tagMap' }
 
   let tryFindSource srcName rr =
-    rr |> sourceMap |> Map.tryFind srcName
+    match srcName with
+    | AllSourceName -> rr |> allFeedSource |> Some
+    | _ -> rr |> sourceMap |> Map.tryFind srcName
 
   let addSource src rr =
     let rr =
@@ -124,6 +112,30 @@ module RssReader =
         let rr =
           { rr with SourceMap = sourceMap' }
         in (rr, old)
+
+  let renameSource oldName newName rr =
+    match
+      ( rr |> tryFindSource oldName
+      , rr |> tryFindSource newName
+      ) with
+    | (Some src, None) ->
+        { rr with
+            FeedMap =
+              rr
+              |> feedMap
+              |> Map.map (fun _ -> RssFeed.rename oldName newName)
+            TagMap = 
+              rr
+              |> tagMap
+              |> Map.replaceKey oldName newName
+              |> Map.map (fun _ -> Set.map (RssSource.rename oldName newName))
+            SourceMap =
+              rr
+              |> sourceMap
+              |> Map.replaceKey oldName newName
+              |> Map.map (fun _ -> RssSource.rename oldName newName)
+            }
+    | _ -> rr
 
   /// src にタグを付ける
   let addTag tagName src rr =
@@ -173,26 +185,15 @@ module RssReader =
         )
     |> Map.keySet
 
-  let addUnreadItems items rr =
-    { rr with UnreadItems = rr.UnreadItems + (items |> Set.ofSeq) }
-
   let readItem (item: RssItem) rr =
-    let feedMap' =
-      match rr |> feedMap |> Map.tryFind (item.Url) with
-      | None -> rr |> feedMap
-      | Some feed ->
-          let feed' =
-            { feed with DoneSet = feed.DoneSet |> Set.add item }
-          in
-            rr |> feedMap |> Map.add (feed.Url) feed'
-    let unreadItems' =
-      rr.UnreadItems
-      |> Set.remove item
-    in
-      { rr with
-          FeedMap         = feedMap'
-          UnreadItems     = unreadItems'
-      }
+    match rr |> feedMap |> Map.tryFind (item.Url) with
+    | None -> rr
+    | Some feed ->
+        let feed' =
+          { feed with DoneSet = feed |> RssFeed.doneSet |> Set.add item }
+        let feedMap' =
+          rr |> feedMap |> Map.add (feed.Url) feed'
+        in { rr with FeedMap = feedMap' }
 
   let updateAsync src rr =
     async {
@@ -200,17 +201,9 @@ module RssReader =
         src
         |> RssSource.ofUnread
         |> RssSource.fetchItemsAsync
-
-      let rr =
-        rr
-        |> updateFeeds feeds'
-        |> addUnreadItems unreadItems
-
+      let rr = rr |> updateFeeds feeds'
       return (rr, unreadItems)
     }
-
-  let updateAllAsync rr =
-    rr |> updateAsync (rr |> allFeedSource)
 
   let toSpec rr =
     let feeds =

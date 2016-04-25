@@ -12,7 +12,15 @@ module RssFeed =
       Url         = Url.ofString (url)
       DoneSet     = Set.empty
     }
-    
+
+  let nameUrl (feed: RssFeed) =
+    sprintf "%s <%s>"
+      feed.Name (feed.Url |> Url.toString)
+
+  let rename oldName newName (feed: RssFeed) =
+    let name' = feed.Name |> replace oldName newName
+    in { feed with Name = name' }
+
   let downloadAsync (feed: RssFeed) =
     async {
       let url = feed.Url
@@ -28,7 +36,7 @@ module RssFeed =
       let (dones, undones) =
         items
         |> Seq.toArray
-        |> Array.partition (fun item -> feed.DoneSet |> Set.contains item)
+        |> Array.partition (fun item -> feed |> doneSet |> Set.contains item)
 
       let feed =
         { feed with

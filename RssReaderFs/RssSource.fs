@@ -77,10 +77,21 @@ module RssSource =
       return (feeds', items)
     }
 
+  let rec rename oldName newName self =
+    match self with
+    | Feed feed ->
+        feed |> RssFeed.rename oldName newName |> Feed
+    | Unread src ->
+        src |> rename oldName newName |> Unread
+    | Union (srcName, srcs) ->
+        let srcName'  = srcName |> replace oldName newName
+        let srcs'     = srcs |> Set.map (rename oldName newName)
+        in Union (srcName', srcs')
+
   let rec toSExpr =
     function
     | Feed (feed: RssFeed) ->
-        sprintf """'(%s "%s")"""
+        sprintf """(feed %s "%s")"""
           (feed.Name) (feed.Url |> Url.toString)
     | Unread src ->
         sprintf "(unread %s)" (src |> toSExpr)

@@ -34,6 +34,9 @@
     <DocumentationFile>bin\Release\Gui.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="app.config">
+      <Paket>True</Paket>
+    </Content>
     <Reference Include="FSharp.Configuration">
       <HintPath>..\packages\FSharp.Configuration\lib\net40\FSharp.Configuration.dll</HintPath>
     </Reference>

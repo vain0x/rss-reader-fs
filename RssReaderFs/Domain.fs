@@ -4,8 +4,6 @@ open System
 
 [<AutoOpen>]
 module Domain =
-  type RegexPattern = string
-
   type RssItem =
     {
       Title         : string
@@ -51,10 +49,10 @@ module Domain =
       /// 常に、FeedMap に含まれるすべてのフィードを RssSource.Feed として含む。
       /// 常に、TagMap に含まれるタグ付き集合を RssSource.Union として含む。
       SourceMap     : Map<SourceName, RssSource>
-      UnreadItems   : Set<RssItem>
     }
 
-  /// Serializable version
+  /// 情報の重複が少ない形式。
+  /// シリアライズするときなどに使う。
   type RssReaderSpec =
     {
       Feeds         : RssFeed []
@@ -62,5 +60,6 @@ module Domain =
       SourceSpecSet : Set<RssSourceSpec>
     }
 
-  type Error =
-    | NameConflict
+  /// 全フィードからなる RssSource の名前
+  [<Literal>]
+  let AllSourceName = "ALL"

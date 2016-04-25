@@ -20,6 +20,11 @@ type RssClient private (path: string) =
     let () = reader <- rr'
     in old
 
+  member this.RenameSource(oldName, newName) =
+    let rr  = reader
+    let () = reader <- reader |> RssReader.renameSource oldName newName
+    in rr <> reader
+     
   member this.AddTag(tagName, src) =
     let (rr', old) = reader |> RssReader.addTag tagName src
     let () = reader <- rr'
@@ -41,11 +46,7 @@ type RssClient private (path: string) =
     }
 
   member this.UpdateAllAsync =
-    async {
-      let! (reader', items) = reader |> RssReader.updateAllAsync
-      do reader <- reader'
-      return items
-    }
+    this.UpdateAsync(reader |> RssReader.allFeedSource)
 
   static member Create(path) =
     new RssClient(path)
