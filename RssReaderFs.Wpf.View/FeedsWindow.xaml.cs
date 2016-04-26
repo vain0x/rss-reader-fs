@@ -10,35 +10,28 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
-using RssReaderFs;
 using RssReaderFs.Wpf;
 
 namespace RssReaderFs.Wpf.View
 {
     /// <summary>
-    /// MainWindow.xaml の相互作用ロジック
+    /// FeedsWindow.xaml の相互作用ロジック
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class FeedsWindow : Window
     {
-        private ViewModel.MainWindow _vm;
-        private FeedsWindow _feedsWindow;
+        private ViewModel.FeedsWindow _vm;
 
-        public MainWindow()
+        public FeedsWindow(ViewModel.FeedsWindow vm)
         {
-            _vm = new ViewModel.MainWindow();
+            _vm = vm;
             this.DataContext = _vm;
-
-            _feedsWindow = new FeedsWindow(_vm.FeedsWindow);
-
             InitializeComponent();
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            _vm.FeedsWindow.Hide();
-            _feedsWindow.Close();
+            e.Cancel = _vm.Hide();
         }
     }
 }

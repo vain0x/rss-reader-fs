@@ -9,6 +9,9 @@ type MainWindow() as this =
   let path = @"feeds.json"
   let rc = RssClient.Create(path)
 
+  do rc.AddSource(RssSource.ofFeed {Name = "Yahoo!ニュース"; Url=Url.ofString "http://dailynews.yahoo.co.jp/fc/rss.xml"; DoneSet=set[]}) |> ignore
+  do rc.AddSource(RssSource.ofFeed {Name = "NHKニュース"; Url=Url.ofString "http://www3.nhk.or.jp/rss/news/cat0.xml"; DoneSet=Set.empty}) |> ignore
+
   let mutable items =
     ([||]: RssItem [])
 
@@ -29,6 +32,13 @@ type MainWindow() as this =
     Command.create
       (fun () -> selectedLink () |> String.IsNullOrEmpty |> not)
       (fun () -> selectedLink () |> Diagnostics.Process.Start |> ignore)
+
+  let feedsWindow = FeedsWindow()
+
+  let (feedsCommand, _) =
+    Command.create
+      (fun () -> true)
+      (fun () -> feedsWindow.RssClient <- Some rc)
 
   let addNewItems newItems =
     items <-
@@ -78,6 +88,10 @@ type MainWindow() as this =
     and  set (_: string) = ()
 
   member this.LinkJumpCommand = linkJumpCommand
+
+  member this.FeedsWindow = feedsWindow
+  
+  member this.FeedsCommand = feedsCommand
 
   interface INotifyPropertyChanged with
     [<CLIEvent>]
