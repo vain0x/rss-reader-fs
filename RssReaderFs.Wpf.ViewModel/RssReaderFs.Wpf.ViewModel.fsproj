@@ -49,6 +49,7 @@
     <Compile Include="Util.fs" />
     <Compile Include="Types.fs" />
     <Compile Include="Funcs.fs" />
+    <Compile Include="AddFeedWindow.fs" />
     <Compile Include="FeedsWindow.fs" />
     <Compile Include="MainWindow.fs" />
   </ItemGroup>

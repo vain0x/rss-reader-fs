@@ -14,7 +14,7 @@
                 </GridView>
             </ListView.View>
         </ListView>
-        <Button Content="Add Feed" HorizontalAlignment="Left" Margin="10,233,0,0" VerticalAlignment="Top" Width="75"/>
+        <Button Content="Add Feed" Command="{Binding AddFeedCommand}" HorizontalAlignment="Left" Margin="10,233,0,0" VerticalAlignment="Top" Width="75"/>
 
     </Grid>
 </Window>

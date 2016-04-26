@@ -7,8 +7,15 @@ open System.Windows.Input
 open System.Windows.Threading
 open RssReaderFs
 
-type FeedsWindow() =
+type FeedsWindow() as this =
   inherit WpfViewModel.DialogBase<RssClient>()
+
+  let addFeedWindow = AddFeedWindow()
+
+  let (addFeedCommand, _) =
+    Command.create
+      (fun () -> true)
+      (fun () -> addFeedWindow.RssClient <- this.Data)
 
   member this.RssClient
     with get ()       = this.Data
@@ -21,3 +28,7 @@ type FeedsWindow() =
     match this.RssClient with
     | Some rc -> rc.Reader |> RssReader.allFeeds
     | None -> [||]
+
+  member this.AddFeedCommand = addFeedCommand
+
+  member this.AddFeedWindow = addFeedWindow
