@@ -1,7 +1,9 @@
 ﻿[<AutoOpen>]
 module RssReaderFs.Wpf.ViewModel.Util
 
+open System
 open System.ComponentModel
+open System.Windows
 open System.Windows.Input
 
 module NotifyPropertyChanged =
@@ -23,3 +25,15 @@ module Command =
           member this.CanExecuteChanged = canExecuteChanged.Publish
       }
     in (command, triggerCanExecuteChanged)
+
+module WpfViewModel =
+  type Base() as this =
+    let (propertyChanged, raisePropertyChanged) =
+      NotifyPropertyChanged.create this
+
+    member internal this.RaisePropertyChanged(names) =
+      names |> Seq.iter raisePropertyChanged
+
+    interface INotifyPropertyChanged with
+      [<CLIEvent>]
+      member this.PropertyChanged = propertyChanged

@@ -6,6 +6,8 @@ open System.Windows.Threading
 open RssReaderFs
 
 type MainWindow() as this =
+  inherit WpfViewModel.Base()
+
   let path = @"feeds.json"
   let rc = RssClient.Create(path)
 
@@ -19,9 +21,6 @@ type MainWindow() as this =
 
   let selectedItem () =
     items |> Array.tryItem selectedIndex
-
-  let (propertyChanged, raisePropertyChanged) =
-    NotifyPropertyChanged.create this
 
   let selectedLink () =
     selectedItem ()
@@ -45,7 +44,7 @@ type MainWindow() as this =
       newItems
       |> Array.sortBy (fun item -> item.Date)
       |> flip Array.append items
-    raisePropertyChanged "Items"
+    this.RaisePropertyChanged ["Items"]
     
   let checkUpdate () =
     async {
@@ -67,8 +66,8 @@ type MainWindow() as this =
     and  set v  =
       selectedIndex <- v
 
-      ["SelectedRow"; "SelectedDesc"]
-      |> List.iter raisePropertyChanged
+      this.RaisePropertyChanged
+        ["SelectedRow"; "SelectedDesc"]
 
       linkJumpCommandExecutabilityChanged this
 
@@ -92,7 +91,3 @@ type MainWindow() as this =
   member this.FeedsWindow = feedsWindow
   
   member this.FeedsCommand = feedsCommand
-
-  interface INotifyPropertyChanged with
-    [<CLIEvent>]
-    member val PropertyChanged = propertyChanged

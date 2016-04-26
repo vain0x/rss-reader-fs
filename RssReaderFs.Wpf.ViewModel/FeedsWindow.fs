@@ -7,19 +7,17 @@ open System.Windows.Input
 open System.Windows.Threading
 open RssReaderFs
 
-type FeedsWindow() as thisWindow =
-  let mutable rcOpt = (None: option<RssClient>)
+type FeedsWindow() =
+  inherit WpfViewModel.Base()
 
-  let (propertyChanged, raisePropertyChanged) =
-    NotifyPropertyChanged.create thisWindow
+  let mutable rcOpt = (None: option<RssClient>)
 
   member this.RssClient
     with get ()       = rcOpt
     and  set value    =
       rcOpt <- value
-
-      ["RssClient"; "Feeds"; "Visibility"]
-      |> List.iter raisePropertyChanged
+      this.RaisePropertyChanged
+        ["RssClient"; "Feeds"; "Visibility"]
 
   member this.Visibility =
     match rcOpt with
@@ -36,7 +34,3 @@ type FeedsWindow() as thisWindow =
     rcOpt
     |> Option.isSome
     |> tap (fun _ -> this.RssClient <- None)
-
-  interface INotifyPropertyChanged with
-    [<CLIEvent>]
-    member this.PropertyChanged = propertyChanged
