@@ -82,8 +82,8 @@ type Ctrl (rc: RssClient, view: View) =
 
       | "feed" :: name :: url :: _ ->
           let feed      = RssFeed.create name url
-          let result    = rc.AddSource(feed |> RssSource.ofFeed)
-          do view.PrintAddFeedResult(name, result)
+          let result    = rc.TryAddSource(feed |> RssSource.ofFeed)
+          do view.PrintResult(result)
 
       | "remove" :: name :: _ ->
           let result    = rc.RemoveSource(name)

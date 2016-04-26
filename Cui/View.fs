@@ -3,6 +3,7 @@
 open System
 open System.IO
 open System.Collections.Generic
+open Chessie.ErrorHandling
 open RssReaderFs
 
 type View (rc: RssClient) =
@@ -81,15 +82,6 @@ type View (rc: RssClient) =
   member this.PrintFeeds(feeds) =
     feeds |> Array.iter (this.PrintFeed)
 
-  member this.PrintAddFeedResult(name, result) =
-    match result with
-    | None ->
-        printfn "Feed '%s' has been added."
-          name
-    | Some src ->
-        eprintfn "Source '%s' does already exist: %s"
-          (src |> RssSource.name) (src |> RssSource.toSExpr)
-
   member this.PrintRemoveSourceResult(name, result) =
     match result with
     | Some src ->
@@ -142,3 +134,10 @@ type View (rc: RssClient) =
         printfn "%s %s"
           tagName
           (String.Join(" ", srcs |> Set.map (RssSource.toSExpr)))
+
+  member this.PrintResult(result) =
+    match result with
+    | Pass _ -> printfn "Succeeded."
+    | Warn (_, msgs)
+    | Fail msgs ->
+        msgs |> List.iter (eprintfn "%s")
