@@ -6,3 +6,7 @@ NUGET
       FSharp.Configuration (>= 0.4.10)
       YamlDotNet (>= 3.8)
     YamlDotNet (3.8)
+GITHUB
+  remote: fsprojects/Chessie
+  specs:
+    src/Chessie/ErrorHandling.fs (683c29b387a972e26e6e40826f4eb43627e7775b)
