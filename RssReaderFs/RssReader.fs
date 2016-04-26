@@ -248,21 +248,21 @@ module RssReader =
           ) rr
     in rr
 
-  let toJson rr =
+  let toYaml rr =
     rr |> toSpec |> Yaml.dump
 
-  let ofJson json =
-    json |> Yaml.load<RssReaderSpec> |> ofSpec
+  let ofYaml yaml =
+    yaml |> Yaml.load<RssReaderSpec> |> ofSpec
 
   module Serialize =
     open System.IO
 
     let load path =
       try
-        let json =
+        let yaml =
           File.ReadAllText(path)
         in
-          json |> ofJson |> Some
+          yaml |> ofYaml |> Some
       with
       | _ -> None
 
@@ -272,7 +272,7 @@ module RssReader =
       | None -> empty
 
     let save path rr =
-      let json =
-        rr |> toJson
+      let yaml =
+        rr |> toYaml
       in
-        File.WriteAllText(path, json)
+        File.WriteAllText(path, yaml)
