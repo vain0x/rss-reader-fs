@@ -8,29 +8,16 @@ open System.Windows.Threading
 open RssReaderFs
 
 type FeedsWindow() =
-  inherit WpfViewModel.Base()
-
-  let mutable rcOpt = (None: option<RssClient>)
+  inherit WpfViewModel.DialogBase<RssClient>()
 
   member this.RssClient
-    with get ()       = rcOpt
+    with get ()       = this.Data
     and  set value    =
-      rcOpt <- value
+      this.Data <- value
       this.RaisePropertyChanged
-        ["RssClient"; "Feeds"; "Visibility"]
-
-  member this.Visibility =
-    match rcOpt with
-    | Some _ -> Visibility.Visible
-    | None   -> Visibility.Collapsed
+        ["RssClient"; "Feeds"]
 
   member this.Feeds =
-    match rcOpt with
+    match this.RssClient with
     | Some rc -> rc.Reader |> RssReader.allFeeds
     | None -> [||]
-
-  /// Returns if actually hidden or not
-  member this.Hide() =
-    rcOpt
-    |> Option.isSome
-    |> tap (fun _ -> this.RssClient <- None)

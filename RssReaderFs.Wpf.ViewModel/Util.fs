@@ -37,3 +37,27 @@ module WpfViewModel =
     interface INotifyPropertyChanged with
       [<CLIEvent>]
       member this.PropertyChanged = propertyChanged
+
+  type DialogBase<'t>() =
+    inherit Base()
+
+    let mutable dataOpt = (None: option<'t>)
+
+    member internal this.Data
+      with get ()       = dataOpt
+      and  set value    =
+        dataOpt <- value
+        this.RaisePropertyChanged ["Visibility"]  // No need to notify change of `Data`
+
+    member this.Visibility =
+      match dataOpt with
+      | Some _ -> Visibility.Visible
+      | None   -> Visibility.Collapsed
+
+    /// Returns if actually hidden or not.
+    member this.Hide() =
+      match dataOpt with
+      | Some _  ->
+          this.Data <- None
+          true
+      | None -> false
