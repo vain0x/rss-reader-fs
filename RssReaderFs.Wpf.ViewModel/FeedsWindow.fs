@@ -17,7 +17,9 @@ type FeedsWindow() as thisWindow =
     with get ()       = rcOpt
     and  set value    =
       rcOpt <- value
-      ["RssClient"; "Visibility"] |> List.iter raisePropertyChanged
+
+      ["RssClient"; "Feeds"; "Visibility"]
+      |> List.iter raisePropertyChanged
 
   member this.Visibility =
     match rcOpt with
