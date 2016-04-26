@@ -126,10 +126,9 @@ module RssSource =
   let toJson (src: RssSource) =
     src
     |> toSpec
-    |> Yaml.customDump
+    |> Yaml.dump
 
   let ofJson feedMap json =
     json
-    |> Yaml.customTryLoad<RssSourceSpec>
-    |> Option.get
+    |> Yaml.load<RssSourceSpec>
     |> ofSpec feedMap

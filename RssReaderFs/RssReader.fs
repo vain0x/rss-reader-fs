@@ -249,10 +249,10 @@ module RssReader =
     in rr
 
   let toJson rr =
-    rr |> toSpec |> Yaml.customDump
+    rr |> toSpec |> Yaml.dump
 
   let ofJson json =
-    json |> Yaml.customTryLoad<RssReaderSpec> |> Option.get |> ofSpec
+    json |> Yaml.load<RssReaderSpec> |> ofSpec
 
   module Serialize =
     open System.IO
