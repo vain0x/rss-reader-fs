@@ -3,6 +3,7 @@
 open System
 open System.Collections.Generic
 open FsYaml
+open Chessie.ErrorHandling
 
 module RssReader =
   let empty =
@@ -136,6 +137,27 @@ module RssReader =
               |> Map.map (fun _ -> RssSource.rename oldName newName)
             }
     | _ -> rr
+
+  let tryAddSource src rr =
+    trial {
+      match rr |> addSource src with
+      | (_, Some _) ->
+          return!
+            rr |> warn
+              ("The name has already been taken: " + (src |> RssSource.name) + ".")
+      | (rr, None) ->
+          do! src |> RssSource.validate |> Trial.mapExnToMessage
+          return rr
+    }
+
+  let tryRemoveSource srcName rr =
+    trial {
+      match rr |> removeSource srcName with
+      | (rr, Some _) ->
+          return rr
+      | (_, None) ->
+          return! Trial.failf "Source '%s' doesn't exist." srcName
+    }
 
   /// src にタグを付ける
   let addTag tagName src rr =
