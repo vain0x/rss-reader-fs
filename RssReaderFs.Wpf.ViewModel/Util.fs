@@ -1,7 +1,14 @@
 ﻿[<AutoOpen>]
 module RssReaderFs.Wpf.ViewModel.Util
 
+open System.ComponentModel
 open System.Windows.Input
+
+module NotifyPropertyChanged =
+  let create sender =
+    let ev              = Event<_, _>()
+    let trigger name    = ev.Trigger(sender, PropertyChangedEventArgs(name))
+    in (ev.Publish, trigger)
 
 module Command =
   let create canExecute execute =

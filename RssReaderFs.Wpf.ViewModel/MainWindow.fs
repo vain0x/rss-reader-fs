@@ -17,10 +17,8 @@ type MainWindow() as this =
   let selectedItem () =
     items |> Array.tryItem selectedIndex
 
-  let propertyChanged = Event<_, _>()
-
-  let raisePropertyChanged propertyName =
-    propertyChanged.Trigger(this, PropertyChangedEventArgs(propertyName))
+  let (propertyChanged, raisePropertyChanged) =
+    NotifyPropertyChanged.create this
 
   let selectedLink () =
     selectedItem ()
@@ -83,4 +81,4 @@ type MainWindow() as this =
 
   interface INotifyPropertyChanged with
     [<CLIEvent>]
-    member val PropertyChanged = propertyChanged.Publish
+    member val PropertyChanged = propertyChanged
