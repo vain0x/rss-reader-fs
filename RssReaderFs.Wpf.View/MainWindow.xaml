@@ -1,0 +1,55 @@
+﻿<Window x:Class="RssReaderFs.Wpf.View.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:RssReaderFs.Wpf.View"
+        mc:Ignorable="d"
+        Title="RssReaderFs" Height="400" Width="640"
+        Closing="Window_Closing"
+        FontFamily="Yu Gothic">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="2*" />
+            <RowDefinition Height="3*" />
+        </Grid.RowDefinitions>
+        <ListView x:Name="listView" ItemsSource="{Binding Items}" SelectedIndex="{Binding SelectedIndex}">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Title"  DisplayMemberBinding="{Binding Title}" />
+                    <GridViewColumn Header="Date"   DisplayMemberBinding="{Binding Date}" />
+                    <GridViewColumn Header="Feed"   DisplayMemberBinding="{Binding FeedName}" />
+                </GridView>
+            </ListView.View>
+        </ListView>
+        <Grid Grid.Row="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="1*" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="80" />
+            </Grid.ColumnDefinitions>
+            <Grid Grid.Column="0" Margin="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="40" />
+                    <RowDefinition Height="30" />
+                    <RowDefinition Height="1*" />
+                </Grid.RowDefinitions>
+                <Label x:Name="titleLabel" Content="{Binding SelectedRow.Title}" FontSize="20" Grid.Row="0" />
+                <Label x:Name="sourceLabel" Content="{Binding SelectedRow.FeedName}" Height="35" Grid.Row="1"/>
+                <TextBox x:Name="descTextBox" Text="{Binding SelectedDesc}" Height="auto" AcceptsReturn="True" Grid.Row="2" />
+            </Grid>
+            <StackPanel Grid.Column="2" VerticalAlignment="top">
+                <Button x:Name="linkButton" Content="Link"   Command="{Binding LinkJumpCommand}"    Height="25"     Margin="10,10,10,0"/>
+                <Button x:Name="feedsButon" Content="Feeds"  Command="{Binding FeedsCommand}"       Height="25"     Margin="10,10,10,0"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

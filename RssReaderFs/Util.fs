@@ -42,6 +42,11 @@ module Seq =
       }
 
 module Array =
+  let tryItem i self =
+    if 0 <= i && i < (self |> Array.length)
+    then Some (self.[i])
+    else None
+
   let replace src dst self =
     self |> Array.map (replace src dst)
 
@@ -116,6 +121,9 @@ module Xml =
 module UrlType =
   type Url = 
     | Url of string
+  with
+    override this.ToString() =
+      let (Url s) = this in s
 
 module Url =
   let ofString = Url
