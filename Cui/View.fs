@@ -82,15 +82,6 @@ type View (rc: RssClient) =
   member this.PrintFeeds(feeds) =
     feeds |> Array.iter (this.PrintFeed)
 
-  member this.PrintRemoveSourceResult(name, result) =
-    match result with
-    | Some src ->
-        printfn "Source '%s' has been removed: %s"
-          name (src |> RssSource.toSExpr)
-    | None ->
-        eprintfn "Unknown source name: %s"
-          name
-
   member this.PrintRenameSourceResult(result) =
     if result
     then printfn "Some sources are renamed."

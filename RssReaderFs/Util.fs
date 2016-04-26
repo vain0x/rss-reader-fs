@@ -2,6 +2,7 @@
 
 open System
 open System.Collections.Generic
+open Printf
 
 [<AutoOpen>]
 module Misc =
@@ -155,6 +156,9 @@ module Async =
 
 module Trial =
   open Chessie.ErrorHandling
+
+  let failf fmt =
+    kprintf fail fmt
 
   /// Runs a raisable function. Wraps the exception into Result.
   let runRaisable (f: unit -> 't): Result<'t, exn> =

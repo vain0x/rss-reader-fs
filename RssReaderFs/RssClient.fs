@@ -27,6 +27,12 @@ type RssClient private (path: string) =
     let () = reader <- rr'
     in old
 
+  member this.TryRemoveSource(srcName) =
+    trial {
+      let! rr = reader |> RssReader.tryRemoveSource srcName
+      reader <- rr
+    }
+
   member this.RenameSource(oldName, newName) =
     let rr  = reader
     let () = reader <- reader |> RssReader.renameSource oldName newName

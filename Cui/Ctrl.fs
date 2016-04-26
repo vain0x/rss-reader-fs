@@ -86,8 +86,8 @@ type Ctrl (rc: RssClient, view: View) =
           do view.PrintResult(result)
 
       | "remove" :: name :: _ ->
-          let result    = rc.RemoveSource(name)
-          do view.PrintRemoveSourceResult(name, result)
+          let result    = rc.TryRemoveSource(name)
+          do view.PrintResult(result)
 
       | "rename" :: oldName :: newName :: _ ->
           let result    = rc.RenameSource(oldName, newName)

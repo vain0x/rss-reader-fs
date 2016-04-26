@@ -150,6 +150,15 @@ module RssReader =
           return rr
     }
 
+  let tryRemoveSource srcName rr =
+    trial {
+      match rr |> removeSource srcName with
+      | (rr, Some _) ->
+          return rr
+      | (_, None) ->
+          return! Trial.failf "Source '%s' doesn't exist." srcName
+    }
+
   /// src にタグを付ける
   let addTag tagName src rr =
     let rr = rr |> addTagImpl tagName src
