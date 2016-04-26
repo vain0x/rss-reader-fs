@@ -55,9 +55,6 @@
   </Choose>
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
-    <Content Include="app.config">
-      <Paket>True</Paket>
-    </Content>
     <Compile Include="Util.fs" />
     <Compile Include="Domain.fs" />
     <Compile Include="RssItem.fs" />
@@ -65,7 +62,6 @@
     <Compile Include="RssSource.fs" />
     <Compile Include="RssReader.fs" />
     <Compile Include="RssClient.fs" />
-    <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Configuration">

@@ -8,7 +8,7 @@ open RssReaderFs
 type MainWindow() as this =
   inherit WpfViewModel.Base()
 
-  let path = @"feeds.json"
+  let path = @"feeds.yaml"
   let rc = RssClient.Create(path)
 
   do rc.AddSource(RssSource.ofFeed {Name = "Yahoo!ニュース"; Url=Url.ofString "http://dailynews.yahoo.co.jp/fc/rss.xml"; DoneSet=set[]}) |> ignore

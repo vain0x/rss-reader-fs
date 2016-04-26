@@ -123,13 +123,12 @@ module RssSource =
     | Union (name, srcs) ->
         Union (name, srcs |> Set.map (ofSpec feedMap))
 
-  let toJson (src: RssSource) =
+  let toYaml (src: RssSource) =
     src
     |> toSpec
-    |> Yaml.customDump
+    |> Yaml.dump
 
-  let ofJson feedMap json =
-    json
-    |> Yaml.customTryLoad<RssSourceSpec>
-    |> Option.get
+  let ofYaml feedMap yaml =
+    yaml
+    |> Yaml.load<RssSourceSpec>
     |> ofSpec feedMap
