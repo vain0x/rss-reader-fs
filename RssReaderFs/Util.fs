@@ -129,6 +129,9 @@ module Url =
   let ofString = Url
   let toString (Url s) = s
 
+module Exn =
+  let message (e: exn) = e.Message
+
 module Net =
   open System.Net
   open System.Xml
@@ -149,3 +152,27 @@ module Async =
 
   let AwaitTaskVoid : (Task -> Async<unit>) =
     Async.AwaitIAsyncResult >> Async.Ignore
+
+module Trial =
+  open Chessie.ErrorHandling
+
+  /// Runs a raisable function. Wraps the exception into Result.
+  let runRaisable (f: unit -> 't): Result<'t, exn> =
+    try
+      f () |> pass
+    with
+    | :? AggregateException as e ->
+        e.InnerExceptions |> Seq.toList |> Result.Bad
+    | e ->
+        fail e
+
+  /// Map the message list by function f.
+  let mapMessages
+      (f: list<'t> -> list<'u>) (self: Result<'x, 't>): Result<'x, 'u>
+    =
+    match self with
+    | Result.Ok (r, msgs)     -> Result.Ok  (r, msgs |> f)
+    | Result.Bad msgs         -> Result.Bad (msgs |> f)
+
+  let mapExnToMessage (self: Result<_, exn>): Result<_, string> =
+    self |> mapMessages (List.map Exn.message)

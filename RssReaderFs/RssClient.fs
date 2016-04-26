@@ -1,6 +1,7 @@
 ﻿namespace RssReaderFs
 
 open System
+open Chessie.ErrorHandling
 
 /// RSSクライアントクラス。
 /// 純粋である RssReader に、自己更新、ファイルIOの機能を加えたもの。
@@ -14,6 +15,12 @@ type RssClient private (path: string) =
     let (rr', old) = reader |> RssReader.addSource src
     let () = reader <- rr'
     in old
+
+  member this.TryAddSource(src) =
+    trial {
+      let! rr = reader |> RssReader.tryAddSource src
+      reader <- rr
+    }
 
   member this.RemoveSource(srcName) =
     let (rr', old) = reader |> RssReader.removeSource srcName

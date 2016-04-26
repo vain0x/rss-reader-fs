@@ -2,6 +2,7 @@
 
 open System
 open FsYaml
+open Chessie.ErrorHandling
 
 module RssSource =
   let ofFeed (feed: RssFeed) =
@@ -87,6 +88,11 @@ module RssSource =
         let srcName'  = srcName |> replace oldName newName
         let srcs'     = srcs |> Set.map (rename oldName newName)
         in Union (srcName', srcs')
+
+  let validate =
+    function
+    | Feed feed -> feed |> RssFeed.validate
+    | src -> pass ()
 
   let rec toSExpr =
     function
