@@ -11,6 +11,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "RssReaderFs.Cui", "Cui\RssR
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "RssReaderFs.Wpf.ViewModel", "RssReaderFs.Wpf.ViewModel\RssReaderFs.Wpf.ViewModel.fsproj", "{B4209CCB-5293-4D88-8286-97D2E4F81DD0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RssReaderFs.Wpf.View", "RssReaderFs.Wpf.View\RssReaderFs.Wpf.View.csproj", "{01AB9ABD-CDBF-4F88-B189-8F9345D28690}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{B4209CCB-5293-4D88-8286-97D2E4F81DD0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B4209CCB-5293-4D88-8286-97D2E4F81DD0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B4209CCB-5293-4D88-8286-97D2E4F81DD0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{01AB9ABD-CDBF-4F88-B189-8F9345D28690}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{01AB9ABD-CDBF-4F88-B189-8F9345D28690}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{01AB9ABD-CDBF-4F88-B189-8F9345D28690}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{01AB9ABD-CDBF-4F88-B189-8F9345D28690}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
