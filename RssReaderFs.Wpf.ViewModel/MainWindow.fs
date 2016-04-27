@@ -92,3 +92,6 @@ type MainWindow() as this =
   member this.FeedsWindow = feedsWindow
   
   member this.FeedsCommand = feedsCommand
+
+  member this.Save() =
+    rc.Save()

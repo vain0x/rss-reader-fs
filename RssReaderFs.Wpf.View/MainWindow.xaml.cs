@@ -39,6 +39,7 @@ namespace RssReaderFs.Wpf.View
         {
             _vm.FeedsWindow.Hide();
             _feedsWindow.Close();
+            _vm.Save();
         }
     }
 }
