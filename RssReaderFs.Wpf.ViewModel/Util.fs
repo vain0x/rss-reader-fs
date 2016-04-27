@@ -43,7 +43,7 @@ module WpfViewModel =
 
     let mutable dataOpt = (None: option<'t>)
 
-    member internal this.Data
+    member private this.Data
       with get ()       = dataOpt
       and  set value    =
         dataOpt <- value
@@ -53,6 +53,9 @@ module WpfViewModel =
       match dataOpt with
       | Some _ -> Visibility.Visible
       | None   -> Visibility.Collapsed
+
+    member this.Show(data) =
+      this.Data <- Some data
 
     /// Returns if actually hidden or not.
     member this.Hide() =

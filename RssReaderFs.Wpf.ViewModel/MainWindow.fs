@@ -29,12 +29,12 @@ type MainWindow() as this =
       (fun () -> selectedLink () |> String.IsNullOrEmpty |> not)
       (fun () -> selectedLink () |> Diagnostics.Process.Start |> ignore)
 
-  let feedsWindow = FeedsWindow()
+  let feedsWindow = FeedsWindow(rc)
 
   let (feedsCommand, _) =
     Command.create
       (fun () -> true)
-      (fun () -> feedsWindow.RssClient <- Some rc)
+      (fun () -> feedsWindow.Show(()))
 
   let addNewItems newItems =
     items <-
