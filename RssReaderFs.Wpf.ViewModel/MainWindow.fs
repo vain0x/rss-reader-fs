@@ -55,6 +55,10 @@ type MainWindow() as this =
 
   do checkUpdate ()
 
+  do rc.Changed |> Observable.add (fun () ->
+      this.RaisePropertyChanged ["Items"]
+      )
+
   member this.Items =
     items |> Array.map (RssItemRow.ofItem rc)
 
