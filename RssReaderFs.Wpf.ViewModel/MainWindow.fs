@@ -11,9 +11,6 @@ type MainWindow() as this =
   let path = @"feeds.yaml"
   let rc = RssClient.Create(path)
 
-  do rc.AddSource(RssSource.ofFeed {Name = "Yahoo!ニュース"; Url=Url.ofString "http://dailynews.yahoo.co.jp/fc/rss.xml"; DoneSet=set[]}) |> ignore
-  do rc.AddSource(RssSource.ofFeed {Name = "NHKニュース"; Url=Url.ofString "http://www3.nhk.or.jp/rss/news/cat0.xml"; DoneSet=Set.empty}) |> ignore
-
   let mutable items =
     ([||]: RssItem [])
 
