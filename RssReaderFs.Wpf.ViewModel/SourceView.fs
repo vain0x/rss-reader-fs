@@ -31,12 +31,17 @@ type SourceView(rc: RssClient) as this =
       |> flip Array.append items
     this.RaisePropertyChanged ["Items"]
     
+  let updateAsync () =
+    async {
+      let! newItems = rc.UpdateAllAsync
+      if newItems |> Array.isEmpty |> not then
+        addNewItems newItems
+    }
+
   let checkUpdate () =
     async {
       while true do
-        let! newItems = rc.UpdateAllAsync
-        if newItems |> Array.isEmpty |> not then
-          addNewItems newItems
+        do! updateAsync ()
         do! Async.Sleep(3 * 60 * 1000)
     }
     |> Async.Start
