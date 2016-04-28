@@ -6,6 +6,11 @@ open RssReaderFs
 type SourceView(rc: RssClient) as this =
   inherit WpfViewModel.Base()
 
+  let mutable srcName = AllSourceName
+
+  let srcOpt () =
+    rc.Reader |> RssReader.tryFindSource srcName
+
   let mutable items =
     ([||]: RssItem [])
 
@@ -33,9 +38,12 @@ type SourceView(rc: RssClient) as this =
     
   let updateAsync () =
     async {
-      let! newItems = rc.UpdateAllAsync
-      if newItems |> Array.isEmpty |> not then
-        addNewItems newItems
+      match srcOpt () with
+      | None -> ()
+      | Some src ->
+          let! newItems = rc.UpdateAllAsync
+          if newItems |> Array.isEmpty |> not then
+            addNewItems newItems
     }
 
   let checkUpdate () =
@@ -81,3 +89,11 @@ type SourceView(rc: RssClient) as this =
     and  set (_: string) = ()
 
   member this.LinkJumpCommand = linkJumpCommand
+
+  member this.SourceName
+    with get () = srcName
+    and  set newName =
+      srcName <- newName
+      items <- [||]
+      updateAsync () |> Async.Start
+      this.RaisePropertyChanged ["SourceName"; "Items"]
