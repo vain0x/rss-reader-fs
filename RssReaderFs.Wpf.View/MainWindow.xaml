@@ -8,7 +8,7 @@
         Title="RssReaderFs" Height="400" Width="640"
         Closing="Window_Closing"
         FontFamily="Yu Gothic">
-    <Grid>
+    <Grid x:Name="_sourceView">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="1*" />
         </Grid.ColumnDefinitions>
@@ -33,29 +33,20 @@
             />
         <Grid Grid.Row="2">
             <Grid.RowDefinitions>
+                <RowDefinition Height="40" />
+                <RowDefinition Height="auto" />
                 <RowDefinition Height="1*" />
             </Grid.RowDefinitions>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1*" />
-                <ColumnDefinition Width="80" />
-            </Grid.ColumnDefinitions>
-            <Grid Grid.Column="0" Margin="10">
+            <Label x:Name="titleLabel" Content="{Binding SelectedRow.Title}" FontSize="20" Grid.Row="0" />
+            <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="auto" />
                 </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="40" />
-                    <RowDefinition Height="30" />
-                    <RowDefinition Height="1*" />
-                </Grid.RowDefinitions>
-                <Label x:Name="titleLabel" Content="{Binding SelectedRow.Title}" FontSize="20" Grid.Row="0" />
-                <Label x:Name="sourceLabel" Content="{Binding SelectedRow.FeedName}" Height="35" Grid.Row="1"/>
-                <TextBox x:Name="descTextBox" Text="{Binding SelectedDesc}" Height="auto" TextWrapping="Wrap" AcceptsReturn="True" Grid.Row="2" />
+                <Label Grid.Column="0" x:Name="sourceLabel" Content="{Binding SelectedRow.FeedName}" />
+                <Button Grid.Column="1" x:Name="linkButton" Content="Link" Command="{Binding LinkCommand}" Width="80" Height="25" Margin="5" />
             </Grid>
-            <StackPanel Grid.Column="2" VerticalAlignment="top">
-                <Button x:Name="linkButton" Content="Link"   Command="{Binding LinkJumpCommand}"    Height="25"     Margin="10,10,10,0"/>
-                <Button x:Name="feedsButon" Content="Feeds"  Command="{Binding FeedsCommand}"       Height="25"     Margin="10,10,10,0"/>
-            </StackPanel>
+            <TextBox x:Name="descTextBox" Text="{Binding SelectedDesc}" Height="auto" TextWrapping="Wrap" AcceptsReturn="True" Grid.Row="2" />
         </Grid>
     </Grid>
 </Window>
