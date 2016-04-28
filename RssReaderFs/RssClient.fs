@@ -9,52 +9,60 @@ type RssClient private (path: string) =
   let mutable reader =
     RssReader.Serialize.loadOrEmpty path
 
-  member this.Reader = reader
+  let changed = Event<unit>()
+
+  member this.Changed = changed.Publish
+
+  member this.Reader
+    with get () = reader
+    and  set rr =
+      reader <- rr
+      changed.Trigger(())
 
   member this.AddSource(src) =
     let (rr', old) = reader |> RssReader.addSource src
-    let () = reader <- rr'
+    let () = this.Reader <- rr'
     in old
 
   member this.TryAddSource(src) =
     trial {
       let! rr = reader |> RssReader.tryAddSource src
-      reader <- rr
+      this.Reader <- rr
     }
 
   member this.RemoveSource(srcName) =
     let (rr', old) = reader |> RssReader.removeSource srcName
-    let () = reader <- rr'
+    let () = this.Reader <- rr'
     in old
 
   member this.TryRemoveSource(srcName) =
     trial {
       let! rr = reader |> RssReader.tryRemoveSource srcName
-      reader <- rr
+      this.Reader <- rr
     }
 
   member this.RenameSource(oldName, newName) =
     let rr  = reader
-    let () = reader <- reader |> RssReader.renameSource oldName newName
+    let () = this.Reader <- reader |> RssReader.renameSource oldName newName
     in rr <> reader
      
   member this.AddTag(tagName, src) =
     let (rr', old) = reader |> RssReader.addTag tagName src
-    let () = reader <- rr'
+    let () = this.Reader <- rr'
     in old
 
   member this.RemoveTag(tagName, src) =
     let (rr', old) = reader |> RssReader.removeTag tagName src
-    let () = reader <- rr'
+    let () = this.Reader <- rr'
     in old
 
   member this.ReadItem(item) =
-    reader <- reader |> RssReader.readItem item
+    this.Reader <- reader |> RssReader.readItem item
 
   member this.UpdateAsync(src) =
     async {
       let! (reader', items) = reader |> RssReader.updateAsync src
-      do reader <- reader'
+      do this.Reader <- reader'
       return items
     }
 

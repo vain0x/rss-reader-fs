@@ -5,8 +5,8 @@ open System.Windows
 open RssReaderFs
 open Chessie.ErrorHandling
 
-type AddFeedWindow() as this =
-  inherit WpfViewModel.DialogBase<RssClient>()
+type AddFeedWindow(rc: RssClient) as this =
+  inherit WpfViewModel.DialogBase<unit>()
 
   let mutable error = (null: string)
 
@@ -18,11 +18,10 @@ type AddFeedWindow() as this =
       error <- v
       this.RaisePropertyChanged ["Error"]
 
-  member val AddCommandPair =
+  member val AddCommand =
     Command.create
-      (fun _ -> this.Data |> Option.isSome)
+      (fun _ -> true)
       (fun _ ->
-        let rc      = this.Data |> Option.get
         let feed    =
           { Name = this.Name; Url = Url(this.Url); DoneSet = Set.empty }
         match rc.TryAddSource(RssSource.ofFeed feed) with
@@ -31,13 +30,4 @@ type AddFeedWindow() as this =
         | Bad msgs ->
             this.Error <- msgs |> String.concat (Environment.NewLine)
         )
-
-  member this.AddCommand                  = this.AddCommandPair |> fst 
-  member this.AddCommandCanExecuteChanged = this.AddCommandPair |> snd
-
-  member this.RssClient
-    with get () = this.Data
-    and  set value =
-      this.Data <- value
-      this.RaisePropertyChanged ["RssClient"]
-      this.AddCommandCanExecuteChanged()
+    |> fst

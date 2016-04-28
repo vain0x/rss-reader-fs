@@ -7,27 +7,22 @@ open System.Windows.Input
 open System.Windows.Threading
 open RssReaderFs
 
-type FeedsWindow() as this =
-  inherit WpfViewModel.DialogBase<RssClient>()
+type FeedsWindow(rc: RssClient) as this =
+  inherit WpfViewModel.DialogBase<unit>()
 
-  let addFeedWindow = AddFeedWindow()
+  let addFeedWindow = AddFeedWindow(rc)
+  
+  do rc.Changed |> Observable.add (fun () ->
+      this.RaisePropertyChanged ["Feeds"]
+      )
 
   let (addFeedCommand, _) =
     Command.create
       (fun () -> true)
-      (fun () -> addFeedWindow.RssClient <- this.Data)
-
-  member this.RssClient
-    with get ()       = this.Data
-    and  set value    =
-      this.Data <- value
-      this.RaisePropertyChanged
-        ["RssClient"; "Feeds"]
+      (fun () -> addFeedWindow.Show(()))
 
   member this.Feeds =
-    match this.RssClient with
-    | Some rc -> rc.Reader |> RssReader.allFeeds
-    | None -> [||]
+    rc.Reader |> RssReader.allFeeds
 
   member this.AddFeedCommand = addFeedCommand
 

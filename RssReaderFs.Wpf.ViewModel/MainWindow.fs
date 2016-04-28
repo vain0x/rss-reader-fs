@@ -11,9 +11,6 @@ type MainWindow() as this =
   let path = @"feeds.yaml"
   let rc = RssClient.Create(path)
 
-  do rc.AddSource(RssSource.ofFeed {Name = "Yahoo!ニュース"; Url=Url.ofString "http://dailynews.yahoo.co.jp/fc/rss.xml"; DoneSet=set[]}) |> ignore
-  do rc.AddSource(RssSource.ofFeed {Name = "NHKニュース"; Url=Url.ofString "http://www3.nhk.or.jp/rss/news/cat0.xml"; DoneSet=Set.empty}) |> ignore
-
   let mutable items =
     ([||]: RssItem [])
 
@@ -32,12 +29,12 @@ type MainWindow() as this =
       (fun () -> selectedLink () |> String.IsNullOrEmpty |> not)
       (fun () -> selectedLink () |> Diagnostics.Process.Start |> ignore)
 
-  let feedsWindow = FeedsWindow()
+  let feedsWindow = FeedsWindow(rc)
 
   let (feedsCommand, _) =
     Command.create
       (fun () -> true)
-      (fun () -> feedsWindow.RssClient <- Some rc)
+      (fun () -> feedsWindow.Show(()))
 
   let addNewItems newItems =
     items <-
@@ -57,6 +54,10 @@ type MainWindow() as this =
     |> Async.Start
 
   do checkUpdate ()
+
+  do rc.Changed |> Observable.add (fun () ->
+      this.RaisePropertyChanged ["Items"]
+      )
 
   member this.Items =
     items |> Array.map (RssItemRow.ofItem rc)
@@ -91,3 +92,6 @@ type MainWindow() as this =
   member this.FeedsWindow = feedsWindow
   
   member this.FeedsCommand = feedsCommand
+
+  member this.Save() =
+    rc.Save()
