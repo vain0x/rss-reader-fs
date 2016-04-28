@@ -19,7 +19,7 @@
                 </GridView>
             </ListView.View>
         </ListView>
-        <Expander Grid.Row="1" x:Name="addFeedExpander" Header="Add Feed">
+        <Expander Grid.Row="1" x:Name="addFeedExpander" Header="Add Feed"  IsExpanded="True">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="auto" />
