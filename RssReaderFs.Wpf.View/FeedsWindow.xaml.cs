@@ -22,27 +22,19 @@ namespace RssReaderFs.Wpf.View
     public partial class FeedsWindow : Window
     {
         private ViewModel.FeedsWindow _vm;
-        private AddFeedWindow _addFeedWindow;
 
         public FeedsWindow(ViewModel.FeedsWindow vm)
         {
+            InitializeComponent();
+
             _vm = vm;
             this.DataContext = _vm;
-
-            this._addFeedWindow = new AddFeedWindow(this._vm.AddFeedWindow);
-
-            InitializeComponent();
+            this.addFeedExpander.DataContext = _vm.AddFeedPanel;
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {
             e.Cancel = _vm.Hide();
-            this._vm.AddFeedWindow.Hide();
-
-            if (! e.Cancel)
-            {
-                _addFeedWindow.Close();
-            }
         }
     }
 }
