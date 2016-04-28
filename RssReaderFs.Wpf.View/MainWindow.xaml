@@ -8,7 +8,7 @@
         Title="RssReaderFs" Height="400" Width="640"
         Closing="Window_Closing"
         FontFamily="Yu Gothic">
-    <Grid>
+    <Grid x:Name="_sourceView">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="1*" />
         </Grid.ColumnDefinitions>

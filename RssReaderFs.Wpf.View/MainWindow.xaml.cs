@@ -27,12 +27,12 @@ namespace RssReaderFs.Wpf.View
 
         public MainWindow()
         {
+            InitializeComponent();
             _vm = new ViewModel.MainWindow();
             this.DataContext = _vm;
+            this._sourceView.DataContext = _vm.SourceView;
 
             _feedsWindow = new FeedsWindow(_vm.FeedsWindow);
-
-            InitializeComponent();
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
