@@ -11,6 +11,8 @@ type MainWindow() =
   let path = @"feeds.yaml"
   let rc = RssClient.Create(path)
 
+  let sourceTree = SourceTree(rc)
+
   let sourceView = SourceView(rc)
 
   let feedsWindow = FeedsWindow(rc)
@@ -23,6 +25,8 @@ type MainWindow() =
   member this.FeedsWindow = feedsWindow
   
   member this.FeedsCommand = feedsCommand
+
+  member this.SourceTree = sourceTree
 
   member this.SourceView = sourceView
 
