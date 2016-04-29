@@ -41,7 +41,7 @@ type SourceView(rc: RssClient) as this =
       match srcOpt () with
       | None -> ()
       | Some src ->
-          let! newItems = rc.UpdateAllAsync
+          let! newItems = rc.UpdateAsync(src)
           if newItems |> Array.isEmpty |> not then
             addNewItems newItems
     }

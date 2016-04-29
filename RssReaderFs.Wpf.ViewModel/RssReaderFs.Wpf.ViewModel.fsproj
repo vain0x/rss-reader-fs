@@ -54,6 +54,7 @@
     <Compile Include="Types.fs" />
     <Compile Include="Funcs.fs" />
     <Compile Include="FeedsWindow.fs" />
+    <Compile Include="SourceTree.fs" />
     <Compile Include="SourceView.fs" />
     <Compile Include="MainWindow.fs" />
     <Compile Include="AssemblyInfo.fs" />
