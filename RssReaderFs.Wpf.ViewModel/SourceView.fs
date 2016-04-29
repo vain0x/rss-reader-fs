@@ -34,7 +34,7 @@ type SourceView(rc: RssClient) as this =
       newItems
       |> Array.sortBy (fun item -> item.Date)
       |> flip Array.append items
-    this.RaisePropertyChanged ["Items"]
+    this.RaisePropertyChanged("Items")
     
   let updateAsync () =
     async {
@@ -57,7 +57,7 @@ type SourceView(rc: RssClient) as this =
   do checkUpdate ()
 
   do rc.Changed |> Observable.add (fun () ->
-      this.RaisePropertyChanged ["Items"]
+      this.RaisePropertyChanged("Items")
       )
 
   member this.Items =
@@ -68,8 +68,8 @@ type SourceView(rc: RssClient) as this =
     and  set v  =
       selectedIndex <- v
 
-      this.RaisePropertyChanged
-        ["SelectedRow"; "SelectedDesc"]
+      for name in ["SelectedRow"; "SelectedDesc"] do
+        this.RaisePropertyChanged(name)
 
       linkJumpCommandExecutabilityChanged this
 
@@ -96,4 +96,6 @@ type SourceView(rc: RssClient) as this =
       srcName <- newName
       items <- [||]
       updateAsync () |> Async.Start
-      this.RaisePropertyChanged ["SourceName"; "Items"]
+
+      for name in ["SourceName"; "Items"] do
+        this.RaisePropertyChanged(name)
