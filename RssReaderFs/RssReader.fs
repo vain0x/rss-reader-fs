@@ -3,6 +3,7 @@
 open System
 open System.Collections.Generic
 open FsYaml
+open Chessie.ErrorHandling
 
 module RssReader =
   let empty =
@@ -137,6 +138,27 @@ module RssReader =
             }
     | _ -> rr
 
+  let tryAddSource src rr =
+    trial {
+      match rr |> addSource src with
+      | (_, Some _) ->
+          return!
+            rr |> warn
+              ("The name has already been taken: " + (src |> RssSource.name) + ".")
+      | (rr, None) ->
+          do! src |> RssSource.validate |> Trial.mapExnToMessage
+          return rr
+    }
+
+  let tryRemoveSource srcName rr =
+    trial {
+      match rr |> removeSource srcName with
+      | (rr, Some _) ->
+          return rr
+      | (_, None) ->
+          return! Trial.failf "Source '%s' doesn't exist." srcName
+    }
+
   /// src にタグを付ける
   let addTag tagName src rr =
     let rr = rr |> addTagImpl tagName src
@@ -248,21 +270,21 @@ module RssReader =
           ) rr
     in rr
 
-  let toJson rr =
-    rr |> toSpec |> Yaml.customDump
+  let toYaml rr =
+    rr |> toSpec |> Yaml.dump
 
-  let ofJson json =
-    json |> Yaml.customTryLoad<RssReaderSpec> |> Option.get |> ofSpec
+  let ofYaml yaml =
+    yaml |> Yaml.load<RssReaderSpec> |> ofSpec
 
   module Serialize =
     open System.IO
 
     let load path =
       try
-        let json =
+        let yaml =
           File.ReadAllText(path)
         in
-          json |> ofJson |> Some
+          yaml |> ofYaml |> Some
       with
       | _ -> None
 
@@ -272,7 +294,7 @@ module RssReader =
       | None -> empty
 
     let save path rr =
-      let json =
-        rr |> toJson
+      let yaml =
+        rr |> toYaml
       in
-        File.WriteAllText(path, json)
+        File.WriteAllText(path, yaml)

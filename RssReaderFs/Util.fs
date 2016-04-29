@@ -2,6 +2,7 @@
 
 open System
 open System.Collections.Generic
+open Printf
 
 [<AutoOpen>]
 module Misc =
@@ -42,6 +43,11 @@ module Seq =
       }
 
 module Array =
+  let tryItem i self =
+    if 0 <= i && i < (self |> Array.length)
+    then Some (self.[i])
+    else None
+
   let replace src dst self =
     self |> Array.map (replace src dst)
 
@@ -116,10 +122,16 @@ module Xml =
 module UrlType =
   type Url = 
     | Url of string
+  with
+    override this.ToString() =
+      let (Url s) = this in s
 
 module Url =
   let ofString = Url
   let toString (Url s) = s
+
+module Exn =
+  let message (e: exn) = e.Message
 
 module Net =
   open System.Net
@@ -142,52 +154,29 @@ module Async =
   let AwaitTaskVoid : (Task -> Async<unit>) =
     Async.AwaitIAsyncResult >> Async.Ignore
 
-module ObjectElementSeq =
-  open System
-  open System.Linq
-  open Microsoft.FSharp.Reflection
+module Trial =
+  open Chessie.ErrorHandling
 
-  let cast (t: Type) (xs: obj seq) =
-    let enumerable = typeof<Enumerable>
-    let cast =
-      let nonGeneric = enumerable.GetMethod("Cast")
-      nonGeneric.MakeGenericMethod([| t |])
-    cast.Invoke(null, [| xs |])
+  let failf fmt =
+    kprintf fail fmt
 
-  let toSet (t: Type) (xs: obj seq) =
-    let setType         = typedefof<Set<_>>.MakeGenericType(t)
-    let parameter       = xs |> cast t
-    let parameterType   = typedefof<seq<_>>.MakeGenericType([| t |])
-    let constructor'    = setType.GetConstructor([| parameterType |])
-    in constructor'.Invoke([| parameter |])
+  /// Runs a raisable function. Wraps the exception into Result.
+  let runRaisable (f: unit -> 't): Result<'t, exn> =
+    try
+      f () |> pass
+    with
+    | :? AggregateException as e ->
+        e.InnerExceptions |> Seq.toList |> Result.Bad
+    | e ->
+        fail e
 
-module Yaml =
-  open FsYaml
-  open FsYaml.NativeTypes
-  open FsYaml.RepresentationTypes
-  open FsYaml.CustomTypeDefinition
+  /// Map the message list by function f.
+  let mapMessages
+      (f: list<'t> -> list<'u>) (self: Result<'x, 't>): Result<'x, 'u>
+    =
+    match self with
+    | Result.Ok (r, msgs)     -> Result.Ok  (r, msgs |> f)
+    | Result.Bad msgs         -> Result.Bad (msgs |> f)
 
-  let setDef =
-    {
-      Accept = isGenericTypeDef (typedefof<Set<_>>)
-      Construct = fun construct' t ->
-        function
-        | Sequence (s, _) ->
-            let elemType = t.GetGenericArguments().[0]
-            let elems = s |> List.map (construct' elemType)
-            in ObjectElementSeq.toSet elemType elems
-        | otherwise -> raise (mustBeSequence t otherwise)
-      Represent =
-        representSeqAsSequence
-    }
-
-  let customDefs =
-    [
-      setDef
-    ]
-
-  let customDump x =
-    Yaml.dumpWith customDefs x
-
-  let customTryLoad<'t> =
-    Yaml.tryLoadWith<'t> customDefs
+  let mapExnToMessage (self: Result<_, exn>): Result<_, string> =
+    self |> mapMessages (List.map Exn.message)

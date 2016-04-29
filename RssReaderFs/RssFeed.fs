@@ -1,6 +1,7 @@
 ﻿namespace RssReaderFs
 
 open System
+open Chessie.ErrorHandling
 
 module RssFeed =
   let doneSet (feed: RssFeed) =
@@ -45,3 +46,9 @@ module RssFeed =
 
       return (feed, undones)
     }
+
+  let validate feed =
+    Trial.runRaisable (fun () ->
+      feed |> downloadAsync |> Async.RunSynchronously
+      )
+    |> Trial.lift (fun _ -> ())

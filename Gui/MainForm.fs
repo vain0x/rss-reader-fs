@@ -13,8 +13,8 @@ type MainForm () as this =
     , MinimumSize = Size(320, 240)
     )
 
-  let pathState = @"RssReaderFsGuiMainFormState.json"
-  let path = @"feeds.json"
+  let pathState = @"RssReaderFsGuiMainFormState.yaml"
+  let path = @"feeds.yaml"
 
   let rc = RssClient.Create(path)
   
@@ -190,10 +190,10 @@ type MainForm () as this =
 
   let loadState () =
     try
-      let json =
+      let yaml =
         File.ReadAllText(pathState)
       let state =
-        Yaml.load<MainFormState> (json)
+        Yaml.load<MainFormState> (yaml)
       do
         this.Location <- state.Location
         this.Size     <- state.Size
@@ -217,10 +217,10 @@ type MainForm () as this =
               yield col.Width
           |]
       }
-    let json =
+    let yaml =
       Yaml.dump state
     do
-      File.WriteAllText(pathState, json)
+      File.WriteAllText(pathState, yaml)
 
   // Add handlers
   do

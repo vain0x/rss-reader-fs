@@ -6,7 +6,7 @@ open RssReaderFs
 module Program =
   [<EntryPoint>]
   let main argv =
-    let rc = RssClient.Create(@"feeds.json")
+    let rc = RssClient.Create(@"feeds.yaml")
     let view = View(rc)
     let rrc = Ctrl(rc, view)
 
