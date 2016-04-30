@@ -31,8 +31,8 @@ module WpfViewModel =
     let (propertyChanged, raisePropertyChanged) =
       NotifyPropertyChanged.create this
 
-    member internal this.RaisePropertyChanged(names) =
-      names |> Seq.iter raisePropertyChanged
+    member internal this.RaisePropertyChanged(name) =
+      name |> raisePropertyChanged
 
     interface INotifyPropertyChanged with
       [<CLIEvent>]
@@ -47,7 +47,7 @@ module WpfViewModel =
       with get ()       = dataOpt
       and  set value    =
         dataOpt <- value
-        this.RaisePropertyChanged ["Visibility"]  // No need to notify change of `Data`
+        this.RaisePropertyChanged("Visibility")  // No need to notify change of `Data`
 
     member this.Visibility =
       match dataOpt with

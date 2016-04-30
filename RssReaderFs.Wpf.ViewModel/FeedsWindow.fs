@@ -19,7 +19,7 @@ type AddFeedPanel(rc: RssClient) as this =
     with get () = error
     and  set v  =
       error <- v
-      this.RaisePropertyChanged ["Error"]
+      this.RaisePropertyChanged("Error")
 
   member this.Reset() =
     this.Name     <- ""
@@ -46,7 +46,7 @@ type FeedsWindow(rc: RssClient) as this =
   let addFeedPanel = AddFeedPanel(rc)
   
   do rc.Changed |> Observable.add (fun () ->
-      this.RaisePropertyChanged ["Feeds"]
+      this.RaisePropertyChanged("Feeds")
       )
 
   member this.Feeds =
