@@ -33,10 +33,13 @@ module RssReader =
 
   /// The maximum source
   let allFeedSource rr: RssSource =
-    rr
-    |> allFeeds
-    |> Array.map (fun feed -> feed.Name)
-    |> (fun feedNames -> RssSource.union AllSourceName (feedNames |> Set.ofArray))
+    let allUnion =
+      rr |> sourceMap
+      |> Map.valueSet
+      |> Set.collect (fun src ->
+          src |> RssSource.atomSources rr |> Set.map (RssSource.name)
+          )
+    in RssSource.union AllSourceName allUnion
 
   let tryFindFeed url rr =
     rr |> feedMap |> Map.tryFind url

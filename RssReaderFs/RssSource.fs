@@ -17,6 +17,20 @@ module RssSource =
   let ofTwitterUser name =
     TwitterUser (name, DateTime.Now)
 
+  let rec atomSources (rr: RssReader) src =
+    let collect srcName =
+      rr.SourceMap |> Map.tryFind srcName
+      |> Option.map (atomSources rr)
+      |> Option.getOr Set.empty
+    match src with
+    | Feed _
+    | TwitterUser _
+      -> Set.singleton src
+    | Unread srcName ->
+        srcName |> collect
+    | Union (_, srcNames) ->
+        srcNames |> Set.collect (fun srcName -> collect srcName)
+
   let rec name =
     function
     | Feed feed -> feed.Name
