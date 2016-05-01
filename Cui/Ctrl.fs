@@ -31,29 +31,20 @@ type Ctrl (rc: RssClient, view: View) =
 
   member this.UpdateAndShowCount(srcName) =
     async {
-      match this.TryFindSource(srcName) with
-      | None -> ()
-      | Some src ->
-          let! items = rc.UpdateAsync(src)
-          do view.PrintCount(items)
+      let! items = rc.UpdateAsync(srcName)
+      do view.PrintCount(items)
     }
 
   member this.UpdateAndShowDetails(srcName) =
     async {
-      match this.TryFindSource(srcName) with
-      | None -> ()
-      | Some src ->
-          let! items = rc.UpdateAsync(src)
-          do view.PrintItems(items)
+      let! items = rc.UpdateAsync(srcName)
+      do view.PrintItems(items)
     }
 
   member this.UpdateAndShowTitles(srcName) =
     async {
-      match this.TryFindSource(srcName) with
-      | None -> ()
-      | Some src ->
-          let! items = rc.UpdateAsync(src)
-          do view.PrintItemTitles(items)
+      let! items = rc.UpdateAsync(srcName)
+      do view.PrintItemTitles(items)
     }
 
   member private this.ProcCommandImpl(command) =
@@ -97,29 +88,27 @@ type Ctrl (rc: RssClient, view: View) =
           do view.PrintSources(rc.Reader |> RssReader.sourceMap |> Map.toList)
 
       | "tag" :: tagName :: srcName :: _ ->
-          let result    = this.TryFindSource(srcName)
-          do view.PrintAddTagResult(tagName, srcName, result)
+          let result    = rc.AddTag(TagName tagName, srcName)
+          do view.PrintAddTagResult(TagName tagName, srcName, result)
 
       | "detag" :: tagName :: srcName :: _ ->
-          let result    = this.TryFindSource(srcName)
-          do view.PrintRemoveTagResult(tagName, srcName, result)
+          let result    = rc.RemoveTag(TagName tagName, srcName)
+          do view.PrintRemoveTagResult(TagName tagName, srcName, result)
 
       | "tags" :: srcName :: _ ->
-          match this.TryFindSource(srcName) with
-          | None -> ()
-          | Some src ->
-              rc.Reader
-              |> RssReader.tagSetOf src
-              |> Set.iter (fun tagName ->
-                  view.PrintTag(tagName)
-                  )
+          rc.Reader
+          |> RssReader.tagSetOf srcName
+          |> Set.iter (fun tagName ->
+              view.PrintTag(tagName)
+              )
 
       | "tags" :: _ ->
           rc.Reader
-          |> RssReader.tagMap 
-          |> Map.iter (fun tagName _ ->
-              view.PrintTag(tagName)
-              )
+          |> RssReader.sourceMap
+          |> Seq.iter
+              (function
+                | KeyValue (_, Union (tagName, _)) -> view.PrintTag(TagName tagName)
+                | _ -> ())
 
       | _ ->
           view.PrintUnknownCommand(command)

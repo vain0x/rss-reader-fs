@@ -15,6 +15,11 @@ module Misc =
     then dst
     else self
 
+  let fold' xs f s =
+    xs |> Seq.fold (fun s x -> f x s) s
+
+  type Url = string
+
 module Nullable =
   let toOption =
     function
@@ -68,8 +73,16 @@ module Dictionary =
       |]
 
 module Set =
+  let ofOption: option<'x> -> Set<'x> =
+    function
+    | Some x -> Set.singleton x
+    | None -> Set.empty
+
   let collect f self =
     self |> Seq.map f |> Set.unionMany
+
+  let choose (f: 'x -> option<'y>) (self: Set<'x>): Set<'y> =
+    self |> collect (fun x -> f x |> ofOption)
 
   let tryFind value self =
     if self |> Set.contains value
@@ -77,6 +90,9 @@ module Set =
     else None
 
 module Map =
+  let singleton k v =
+    Map.ofList [(k, v)]
+
   let keySet self =
     self |> Map.toList |> List.map fst |> Set.ofList
 
@@ -99,6 +115,23 @@ module Map =
         |> Map.remove oldKey
         |> Map.add newKey value
 
+  let size self =
+    self |> Map.toSeq |> Seq.length
+
+  let appendWith (f: 'x -> 'x -> 'x) (l: Map<'k, 'x>) (r: Map<'k, 'x>): Map<'k, 'x> =
+    let body f l r =
+      l |> Map.fold (fun m k v ->
+        let v' =
+          match m |> Map.tryFind k with
+          | None      -> v
+          | Some v'   -> f v v'
+        in m |> Map.add k v'
+        ) r
+    in
+      if (l |> size) < (r |> size)
+      then body f l r
+      else body (flip f) r l
+
 module DateTime =
   let tryParse s =
     DateTime.TryParse(s)
@@ -118,18 +151,6 @@ module Xml =
     xnode.SelectNodes(xpath)
     |> Seq.ofCollection
 
-[<AutoOpen>]
-module UrlType =
-  type Url = 
-    | Url of string
-  with
-    override this.ToString() =
-      let (Url s) = this in s
-
-module Url =
-  let ofString = Url
-  let toString (Url s) = s
-
 module Exn =
   let message (e: exn) = e.Message
 
@@ -139,7 +160,7 @@ module Net =
 
   let downloadXmlAsync (feedUrl: Url) =
     async {
-      let req       = WebRequest.Create(feedUrl |> Url.toString)
+      let req       = WebRequest.Create(feedUrl)
       let! resp     = req.GetResponseAsync() |> Async.AwaitTask
       let stream    = resp.GetResponseStream()
       let xmlReader = new XmlTextReader(stream)

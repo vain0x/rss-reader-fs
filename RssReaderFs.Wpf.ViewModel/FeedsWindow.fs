@@ -31,7 +31,7 @@ type AddFeedPanel(rc: RssClient) as this =
       (fun _ -> true)
       (fun _ ->
         let feed    =
-          { Name = this.Name; Url = Url(this.Url); DoneSet = Set.empty }
+          { Name = this.Name; Url = this.Url; DoneSet = Set.empty }
         match rc.TryAddSource(RssSource.ofFeed feed) with
         | Ok ((), _) ->
             this.Reset() |> ignore

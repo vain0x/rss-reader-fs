@@ -24,40 +24,34 @@ module Domain =
 
   type SourceName = string
   
-  type TagName = SourceName
+  type TagName =
+    | TagName of SourceName
+  with
+    override this.ToString() =
+      let (TagName s) = this in s
 
-  type RssSourceT<'Feed when 'Feed: comparison> =
-    | Feed          of 'Feed
-    | Unread        of RssSourceT<'Feed>
-    | Union         of SourceName * Set<RssSourceT<'Feed>>
-
-  type RssSourceSpec =
-    RssSourceT<Url>
-  
   type RssSource =
-    RssSourceT<RssFeed>
+    | Feed          of RssFeed
+    | Unread        of SourceName
+    | Union         of SourceName * Set<SourceName>
+
+  type RssSourceUpdate =
+    {
+      DoneSet       : Map<SourceName, Set<RssItem>>
+    }
 
   type RssReader =
     {
       /// 購読しているフィード全体。
-      /// 各フィードについて、対応するソースが SourceMap に加えられる。
-      FeedMap       : Map<Url, RssFeed>
+      /// 各 Feed ソースに対応する対を含む。
+      FeedMap       : Map<Url, SourceName>
       /// タグ全体。
       /// 各タグについて、それがついたソース全体からなる Union が SourceMap に加えられる。
-      TagMap        : Map<TagName, Set<RssSource>>
+      TagMap        : Map<SourceName, Set<TagName>>
       /// 使用できるソース全体。
       /// 常に、FeedMap に含まれるすべてのフィードを RssSource.Feed として含む。
       /// 常に、TagMap に含まれるタグ付き集合を RssSource.Union として含む。
       SourceMap     : Map<SourceName, RssSource>
-    }
-
-  /// 情報の重複が少ない形式。
-  /// シリアライズするときなどに使う。
-  type RssReaderSpec =
-    {
-      Feeds         : RssFeed []
-      Tags          : Map<TagName, Set<SourceName>>
-      SourceSpecSet : Set<RssSourceSpec>
     }
 
   /// 全フィードからなる RssSource の名前
