@@ -15,6 +15,9 @@ module Misc =
     then dst
     else self
 
+  let fold' xs f s =
+    xs |> Seq.fold (fun s x -> f x s) s
+
   type Url = string
 
 module Nullable =
@@ -87,6 +90,9 @@ module Set =
     else None
 
 module Map =
+  let singleton k v =
+    Map.ofList [(k, v)]
+
   let keySet self =
     self |> Map.toList |> List.map fst |> Set.ofList
 
@@ -108,6 +114,23 @@ module Map =
         self
         |> Map.remove oldKey
         |> Map.add newKey value
+
+  let size self =
+    self |> Map.toSeq |> Seq.length
+
+  let appendWith (f: 'x -> 'x -> 'x) (l: Map<'k, 'x>) (r: Map<'k, 'x>): Map<'k, 'x> =
+    let body f l r =
+      l |> Map.fold (fun m k v ->
+        let v' =
+          match m |> Map.tryFind k with
+          | None      -> v
+          | Some v'   -> f v v'
+        in m |> Map.add k v'
+        ) r
+    in
+      if (l |> size) < (r |> size)
+      then body f l r
+      else body (flip f) r l
 
 module DateTime =
   let tryParse s =

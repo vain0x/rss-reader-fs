@@ -69,3 +69,17 @@ module RssSource =
 
   let ofYaml yaml =
     yaml |> Yaml.load<RssSource>
+
+module RssSourceUpdate =
+  let empty =
+    {
+      DoneSet       = Map.empty
+    }
+
+  let merge l r =
+    {
+      DoneSet       = Map.appendWith (Set.union) l.DoneSet r.DoneSet
+    }
+
+  let mergeMany =
+    List.fold merge empty

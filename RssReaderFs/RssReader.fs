@@ -212,36 +212,54 @@ module RssReader =
           rr |> sourceMap |> Map.add (feed.Name) (Feed feed')
         in { rr with SourceMap = sourceMap' }
 
+  let updateSource (update: RssSourceUpdate) rr =
+    rr
+    |> fold' update.DoneSet
+        (fun (KeyValue (srcName, doneSet')) rr ->
+          match rr |> tryFindSource srcName with
+          | Some (Feed feed) ->
+              let src'          = Feed { feed with DoneSet = doneSet' }
+              let sourceMap'    = rr |> sourceMap |> Map.add srcName src'
+              in { rr with SourceMap = sourceMap' }
+          | _ -> rr
+        )
+
   let rec fetchItemsAsync src rr =
     async {
       match src with
       | Feed feed ->
-          let! (feed', items)     = feed |> RssFeed.updateAsync
-          let sourceMap'          = rr.SourceMap |> Map.add feed.Name (Feed feed')
-          let rr'                 = { rr with SourceMap = sourceMap' }
-          return (rr', items)
+          let! (doneSet, items)   = feed |> RssFeed.updateAsync
+          let update              = [{ DoneSet = Map.singleton feed.Name doneSet }]
+          return (update, items)
       | Unread srcName ->
           match rr |> tryFindSource srcName with
           | None ->
-              return (rr, [||])
+              return ([], [||])
           | Some src ->
-              let! (rr', items)   = rr |> fetchItemsAsync src
-              return (rr', src |> RssSource.unreadItems rr' items)
+              let! (updates, items)   = rr |> fetchItemsAsync src
+              let rr'                 = rr |> updateSource (RssSourceUpdate.mergeMany updates)
+              return (updates, src |> RssSource.unreadItems rr' items)
       | Union (srcName, srcNames) ->
-          return
-            srcNames |> Set.fold (fun (rr, items) srcName ->
-              rr |> tryFindSource srcName
-              |> Option.map (fun src ->
-                  let (rr', newItems) = rr |> fetchItemsAsync src |>Async.RunSynchronously
-                  let items'          = Array.append items newItems
-                  in (rr', items')
-                  )
-              |> Option.getOr (rr, items)
-              ) (rr, [||])
+          return!
+            srcNames |> Set.toArray |> Array.choose (fun srcName ->
+                rr |> tryFindSource srcName
+                |> Option.map (fun src -> rr |> fetchItemsAsync src)
+                )
+            |> Async.Parallel
+            |> Async.map (fun x ->
+                let (updateListArray, itemArrayArray) = x |> Array.unzip
+                let updates   = updateListArray |> Array.toList |> List.collect id
+                let items     = itemArrayArray  |> Array.collect id
+                in (updates, items)
+                )
    }
 
   let updateAsync src rr =
-    rr |> fetchItemsAsync (src |> RssSource.ofUnread)
+    async {
+      let! (updates, items)   = rr |> fetchItemsAsync (src |> RssSource.ofUnread)
+      let rr'                 = rr |> updateSource (updates |> RssSourceUpdate.mergeMany)
+      return (rr', items)
+    }
 
   let toYaml rr =
     rr |> Yaml.dump<RssReader>

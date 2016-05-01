@@ -35,6 +35,11 @@ module Domain =
     | Unread        of SourceName
     | Union         of SourceName * Set<SourceName>
 
+  type RssSourceUpdate =
+    {
+      DoneSet       : Map<SourceName, Set<RssItem>>
+    }
+
   type RssReader =
     {
       /// 購読しているフィード全体。

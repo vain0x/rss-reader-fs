@@ -39,12 +39,7 @@ module RssFeed =
         |> Seq.toArray
         |> Array.partition (fun item -> feed |> doneSet |> Set.contains item)
 
-      let feed =
-        { feed with
-            DoneSet = dones |> Set.ofArray
-        }
-
-      return (feed, undones)
+      return (dones |> Set.ofArray, undones)
     }
 
   let validate feed =
