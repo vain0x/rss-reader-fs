@@ -90,41 +90,35 @@ type View (rc: RssClient) =
   member this.PrintSources(srcs) =
     srcs
     |> List.iter (fun (_, src) ->
-        printfn "%s" (src |> RssSource.toSExpr)
+        printfn "%s" (src |> RssSource.toSExpr (reader ()))
         )
 
   member this.PrintAddTagResult(tagName, srcName, result) =
     match result with
-    | None -> ()
-    | Some src ->
-        match rc.AddTag(tagName, src) with
-        | Some _ ->
-            eprintfn "Source '%s' does already exist."
-              tagName
-        | None ->
-            printfn "Tag '%s' is added to '%s'."
-              tagName srcName
+    | None ->
+        printfn "Tag '%s' is added to '%s'."
+          (string tagName) srcName
+    | Some srcName ->
+        eprintfn "Source '%s' does already exist."
+          (string tagName)
 
   member this.PrintRemoveTagResult(tagName, srcName, result) =
     match result with
-    | None -> ()
-    | Some src ->
-        match rc.RemoveTag(tagName, src) with
-        | None ->
-            eprintfn "Source '%s' doesn't have tag '%s'."
-              srcName tagName
-        | Some _ ->
-            printfn "Tag '%s' is removed from '%s'."
-              tagName srcName
-
+    | None ->
+        eprintfn "Source '%s' doesn't have tag '%s'."
+          srcName (string tagName)
+    | Some _ ->
+        printfn "Tag '%s' is removed from '%s'."
+          (string tagName) srcName
 
   member this.PrintTag(tagName) =
-    match rc.Reader |> RssReader.tagMap |> Map.tryFind tagName with
-    | None -> eprintfn "Unknown tag name: %s" tagName
+    match rc.Reader |> RssReader.tryFindTaggedSources tagName with
+    | None ->
+        eprintfn "Unknown tag name: %s" (string tagName)
     | Some srcs ->
         printfn "%s %s"
-          tagName
-          (String.Join(" ", srcs |> Set.map (RssSource.toSExpr)))
+          (string tagName)
+          (String.Join(" ", srcs |> Set.map (RssSource.toSExpr (reader ()))))
 
   member this.PrintResult(result) =
     match result with

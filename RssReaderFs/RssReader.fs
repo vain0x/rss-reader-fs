@@ -23,20 +23,27 @@ module RssReader =
     rr.SourceMap
 
   let allFeeds rr =
-    rr.FeedMap
-    |> Map.toArray
-    |> Array.map snd
+    rr |> sourceMap |> Seq.choose (fun (KeyValue (_, v)) ->
+        match v with
+        | Feed feed -> Some feed
+        | _ -> None
+        )
+    |> Seq.toArray
 
   /// The maximum source
   let allFeedSource rr: RssSource =
     rr
     |> allFeeds
-    |> Array.map RssSource.ofFeed
-    |> Set.ofArray
-    |> (fun srcs -> RssSource.union AllSourceName srcs)
+    |> Array.map (fun feed -> feed.Name)
+    |> (fun feedNames -> RssSource.union AllSourceName (feedNames |> Set.ofArray))
 
   let tryFindFeed url rr =
     rr |> feedMap |> Map.tryFind url
+    |> Option.bind (fun name ->
+        match rr |> sourceMap |> Map.tryFind name with
+        | Some (Feed feed) -> Some feed
+        | _ -> None
+        )
 
   let feedName url rr =
     match rr |> tryFindFeed url with
@@ -45,44 +52,45 @@ module RssReader =
 
   /// フィードを追加する処理のうち、FeedMap を更新する部分
   let internal addFeedImpl feed rr =
-    { rr with FeedMap = rr |> feedMap |> Map.add (feed.Url) feed }
+    { rr with FeedMap = rr |> feedMap |> Map.add (feed.Url) (feed.Name) }
 
   /// フィードを除去する処理のうち、FeedMap を更新する部分
   let internal removeFeedImpl url rr =
     { rr with FeedMap = rr |> feedMap |> Map.remove url }
 
-  let internal updateFeeds feeds rr =
-    let feedMap' =
-      feeds
-      |> Seq.fold
-          (fun feedMap feed -> feedMap |> Map.add (feed.Url) feed)
-          (rr |> feedMap)
-    in { rr with FeedMap = feedMap' }
-
   /// src にタグを付ける処理のうち、TagMap を更新する部分
-  let internal addTagImpl tagName src rr =
-    let srcs' =
-      match rr |> tagMap |> Map.tryFind tagName with
-      | None -> Set.singleton src
-      | Some srcs -> srcs |> Set.add src
-    in { rr with TagMap = rr |> tagMap |> Map.add tagName srcs' }
+  let internal addTagImpl tagName srcName rr =
+    let tags' =
+      match rr |> tagMap |> Map.tryFind srcName with
+      | None -> Set.singleton tagName
+      | Some tags -> tags |> Set.add tagName
+    in { rr with TagMap = rr |> tagMap |> Map.add srcName tags' }
 
   /// src からタグを外す処理のうち、TagMap を更新する部分
-  let internal removeTagImpl tagName src rr =
-    let srcs' =
-      match rr |> tagMap |> Map.tryFind tagName with
+  let internal removeTagImpl tagName srcName rr =
+    let tags' =
+      match rr |> tagMap |> Map.tryFind srcName with
       | None -> Set.empty
-      | Some srcs -> srcs |> Set.remove src
+      | Some tags -> tags |> Set.remove tagName
     let tagMap' =
-      if srcs' |> Set.isEmpty
-      then rr |> tagMap |> Map.remove tagName
-      else rr |> tagMap |> Map.add tagName srcs'
+      if tags' |> Set.isEmpty
+      then rr |> tagMap |> Map.remove srcName
+      else rr |> tagMap |> Map.add srcName tags'
     in { rr with TagMap = tagMap' }
 
   let tryFindSource srcName rr =
     match srcName with
     | AllSourceName -> rr |> allFeedSource |> Some
     | _ -> rr |> sourceMap |> Map.tryFind srcName
+
+  let tryFindTaggedSources (tagName: TagName) rr =
+    rr |> sourceMap |> Map.tryFind (string tagName)
+    |> Option.bind (fun src ->
+        match src with
+        | Union (_, srcNames) ->
+            srcNames |> Set.choose (fun name -> rr |> tryFindSource name) |> Some
+        | _ -> None
+        )
 
   let addSource src rr =
     let rr =
@@ -124,12 +132,12 @@ module RssReader =
             FeedMap =
               rr
               |> feedMap
-              |> Map.map (fun _ -> RssFeed.rename oldName newName)
+              |> Map.map (fun _ -> replace oldName newName)
             TagMap = 
               rr
               |> tagMap
               |> Map.replaceKey oldName newName
-              |> Map.map (fun _ -> Set.map (RssSource.rename oldName newName))
+              |> Map.map (fun _ -> Set.map (replace (TagName oldName) (TagName newName)))
             SourceMap =
               rr
               |> sourceMap
@@ -160,121 +168,86 @@ module RssReader =
     }
 
   /// src にタグを付ける
-  let addTag tagName src rr =
-    let rr = rr |> addTagImpl tagName src
-    let (rr, old) =
-      match rr |> tryFindSource tagName with
-      | Some (Union (tagName, srcs)) as old ->
-        let sourceMap' =
-          rr
-          |> sourceMap
-          |> Map.add tagName (srcs |> Set.add src |> RssSource.union tagName)
-        let rr =
-          { rr with SourceMap = sourceMap' }
+  let addTag tagName srcName rr =
+    let rr = rr |> addTagImpl tagName srcName
+    match rr |> tryFindSource (string tagName) with
+    | Some (Union (_, srcNames)) ->
+        let srcNames'   = srcNames |> Set.add srcName |> RssSource.union (string tagName)
+        let sourceMap'  = rr |> sourceMap |> Map.add (string tagName) srcNames'
+        let rr          = { rr with SourceMap = sourceMap' }
         in (rr, None)  // タグ付けの障害になるものはなかった、という意味で None を返す
-      | _ ->
-        rr
-        |> addSource (RssSource.union tagName (Set.singleton src))
-    in (rr, old)
+    | _ ->
+        rr |> addSource (RssSource.union (string tagName) (Set.singleton srcName))
 
   /// src からタグを外す
   let removeTag tagName src rr =
     let rr = rr |> removeTagImpl tagName src
-    let (rr, old) =
-      match rr |> tryFindSource tagName with
-      | Some (Union (tagName, srcs)) ->
-          let old     = srcs |> Set.tryFind src
-          let srcs'   = srcs |> Set.remove src
-          let sourceMap' =
-            if srcs' |> Set.isEmpty
-            then rr |> sourceMap |> Map.remove tagName
-            else rr |> sourceMap |> Map.add tagName (srcs' |> RssSource.union tagName)
-          let rr =
-            { rr with SourceMap = sourceMap' }
-          in (rr, old)
-      | _ -> (rr, None)
-    in (rr, old)
+    match rr |> tryFindSource (string tagName) with
+    | Some (Union (tagName, srcNames)) ->
+        let old         = srcNames |> Set.tryFind src
+        let srcNames'   = srcNames |> Set.remove src
+        let sourceMap'  =
+          if srcNames' |> Set.isEmpty
+          then rr |> sourceMap |> Map.remove tagName
+          else rr |> sourceMap |> Map.add tagName (srcNames' |> RssSource.union tagName)
+        let rr =
+          { rr with SourceMap = sourceMap' }
+        in (rr, old)
+    | _ -> (rr, None)
 
   /// src についているタグの集合
-  let tagSetOf src rr =
+  let tagSetOf srcName rr =
     rr
     |> tagMap
-    |> Map.filter (fun tagName srcs ->
-        // srcs のいずれかが、src 全体を部分として含んでいること
-        srcs
-        |> Set.collect (RssSource.subSources)
-        |> Set.contains src
-        )
-    |> Map.keySet
+    |> Map.tryFind srcName
+    |> Option.getOr Set.empty
 
   let readItem (item: RssItem) rr =
-    match rr |> feedMap |> Map.tryFind (item.Url) with
+    match rr |> tryFindFeed (item.Url) with
     | None -> rr
     | Some feed ->
         let feed' =
           { feed with DoneSet = feed |> RssFeed.doneSet |> Set.add item }
-        let feedMap' =
-          rr |> feedMap |> Map.add (feed.Url) feed'
-        in { rr with FeedMap = feedMap' }
+        let sourceMap' =
+          rr |> sourceMap |> Map.add (feed.Name) (Feed feed')
+        in { rr with SourceMap = sourceMap' }
+
+  let rec fetchItemsAsync src rr =
+    async {
+      match src with
+      | Feed feed ->
+          let! (feed', items)     = feed |> RssFeed.updateAsync
+          let sourceMap'          = rr.SourceMap |> Map.add feed.Name (Feed feed')
+          let rr'                 = { rr with SourceMap = sourceMap' }
+          return (rr', items)
+      | Unread srcName ->
+          match rr |> tryFindSource srcName with
+          | None ->
+              return (rr, [||])
+          | Some src ->
+              let! (rr', items)   = rr |> fetchItemsAsync src
+              return (rr', src |> RssSource.unreadItems rr' items)
+      | Union (srcName, srcNames) ->
+          return
+            srcNames |> Set.fold (fun (rr, items) srcName ->
+              rr |> tryFindSource srcName
+              |> Option.map (fun src ->
+                  let (rr', newItems) = rr |> fetchItemsAsync src |>Async.RunSynchronously
+                  let items'          = Array.append items newItems
+                  in (rr', items')
+                  )
+              |> Option.getOr (rr, items)
+              ) (rr, [||])
+   }
 
   let updateAsync src rr =
-    async {
-      let! (feeds', unreadItems) =
-        src
-        |> RssSource.ofUnread
-        |> RssSource.fetchItemsAsync
-      let rr = rr |> updateFeeds feeds'
-      return (rr, unreadItems)
-    }
-
-  let toSpec rr =
-    let feeds =
-      rr |> allFeeds
-    let tags =
-      rr
-      |> tagMap
-      |> Map.map (fun _ src -> src |> Set.map RssSource.name)
-    let srcSpecs =
-      rr
-      |> sourceMap
-      |> Map.valueSet
-      |> Set.map (RssSource.toSpec)
-    in
-      {
-        Feeds           = feeds
-        Tags            = tags
-        SourceSpecSet   = srcSpecs
-      }
-
-  let ofSpec (spec: RssReaderSpec) =
-    let feedMap =
-      spec.Feeds
-      |> Array.map (fun feed -> (feed.Url, feed))
-      |> Map.ofArray
-    let rr =
-      feedMap
-      |> Map.fold (fun rr _ feed -> rr |> addSource (Feed feed) |> fst) empty
-    let rr =
-      spec.SourceSpecSet
-      |> Set.map (RssSource.ofSpec feedMap)
-      |> Set.fold (fun rr src -> rr |> addSource src |> fst) rr
-    let rr =
-      spec.Tags
-      |> Map.fold (fun rr tagName srcNameSet ->
-          srcNameSet
-          |> Set.fold (fun rr srcName ->
-              match rr |> tryFindSource srcName with
-              | Some src -> rr |> addTag tagName src |> fst
-              | None -> rr
-              ) rr
-          ) rr
-    in rr
+    rr |> fetchItemsAsync (src |> RssSource.ofUnread)
 
   let toYaml rr =
-    rr |> toSpec |> Yaml.dump
+    rr |> Yaml.dump<RssReader>
 
   let ofYaml yaml =
-    yaml |> Yaml.load<RssReaderSpec> |> ofSpec
+    yaml |> Yaml.load<RssReader>
 
   module Serialize =
     open System.IO

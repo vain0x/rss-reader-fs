@@ -8,133 +8,64 @@ module RssSource =
   let ofFeed (feed: RssFeed) =
     Feed feed
 
-  let ofUnread source =
-    Unread source
+  let ofUnread srcName =
+    Unread srcName
 
   let union name sources =
     Union (name, sources)
 
   let rec name =
     function
-    | Feed (feed: RssFeed) -> feed.Name
-    | Unread src -> src |> name
-    | Union (name, _) -> name
+    | Feed feed -> feed.Name
+    | Unread name
+    | Union (name, _)
+      -> name
 
-  let rec toFeeds =
+  let rec rename oldName newName =
     function
-    | Feed feed ->
-        Set.singleton feed
-    | Unread src ->
-        src |> toFeeds
-    | Union (_, srcs) ->
-        srcs |> Set.collect toFeeds
-
-  /// このソースに全体が含まれているソースの集合
-  let rec subSources self =
-    match self with
-    | Feed _
-    | Unread _ ->  // Unread は未読分を含まないので、元のソースを「含む」とはみなさない
-        Set.singleton self
-    | Union (_, srcs) ->
-        srcs |> Set.collect subSources |> Set.add self
-
-  /// items: このソースが受信対象とするフィードが発信したアイテムの列
-  let rec filterItems items =
-    function
-    | Feed _ ->
-        items
-
-    | Unread src ->
-        let doneSet =
-          src
-          |> toFeeds
-          |> Set.collect RssFeed.doneSet
-        in
-          src
-          |> filterItems items
-          |> Array.filter (fun item -> doneSet |> Set.contains item |> not)
-
-    | Union (_, srcSet) ->
-        srcSet |> Set.fold filterItems items
-
-  let fetchItemsAsync src =
-    async {
-      let feeds =
-        src |> toFeeds
-
-      let! feedItemsArray =
-        feeds
-        |> Seq.map (RssFeed.updateAsync)
-        |> Async.Parallel
-
-      let (feeds', itemsArray) =
-        feedItemsArray |> Array.unzip
-
-      let items =
-        itemsArray
-        |> Array.collect id
-        |> flip filterItems src
-
-      return (feeds', items)
-    }
-
-  let rec rename oldName newName self =
-    match self with
     | Feed feed ->
         feed |> RssFeed.rename oldName newName |> Feed
-    | Unread src ->
-        src |> rename oldName newName |> Unread
+    | Unread srcName ->
+        srcName |> replace oldName newName |> Unread
     | Union (srcName, srcs) ->
         let srcName'  = srcName |> replace oldName newName
-        let srcs'     = srcs |> Set.map (rename oldName newName)
+        let srcs'     = srcs |> Set.map (replace oldName newName)
         in Union (srcName', srcs')
+
+  let rec unreadItems (rr: RssReader) (items: RssItem []) =
+    function
+    | Feed feed ->
+        items |> Array.filter (fun item -> feed.DoneSet |> Set.contains item |> not)
+    | Unread srcName ->
+        let src = rr.SourceMap |> Map.find srcName
+        in unreadItems rr items src
+    | Union (srcName, srcNames) ->
+        srcNames |> Set.fold (fun items srcName ->
+            rr.SourceMap |> Map.find srcName
+            |> unreadItems rr items
+            ) items
 
   let validate =
     function
     | Feed feed -> feed |> RssFeed.validate
-    | src -> pass ()
+    | _ -> pass ()
 
-  let rec toSExpr =
+  let rec toSExpr (rr: RssReader) =
     function
-    | Feed (feed: RssFeed) ->
+    | Feed feed ->
         sprintf """(feed %s "%s")"""
-          (feed.Name) (feed.Url |> Url.toString)
-    | Unread src ->
-        sprintf "(unread %s)" (src |> toSExpr)
-    | Union (name, srcs) ->
-        if srcs |> Set.isEmpty
-        then "()"
-        else
-          sprintf "(union %s %s)"
-            name
-            (String.Join(" ", srcs |> Set.map toSExpr))
+          feed.Name (feed.Url |> Url.toString)
+    | Unread srcName ->
+        sprintf "(unread %s)" (rr.SourceMap |> Map.find srcName |> toSExpr rr)
+    | Union (name, srcNames) ->
+        sprintf "(union %s %s)"
+          name
+          (srcNames
+            |> Set.map (fun name -> rr.SourceMap |> Map.find name |> toSExpr rr)
+            |> String.concat " ")
 
-  let rec toSpec =
-    function
-    | Feed (feed: RssFeed) ->
-        Feed (feed.Url)
-    | Unread src ->
-        Unread (src |> toSpec)
-    | Union (name, srcs) ->
-        Union (name, srcs |> Set.map toSpec)
+  let toYaml src =
+    src |> Yaml.dump<RssSource>
 
-  let rec ofSpec feedMap =
-    function
-    | Feed url ->
-        match feedMap |> Map.tryFind url with
-        | Some feed -> Feed feed
-        | None -> failwithf "Unregistered URL: %s" (url |> Url.toString)
-    | Unread src ->
-        Unread (src |> ofSpec feedMap)
-    | Union (name, srcs) ->
-        Union (name, srcs |> Set.map (ofSpec feedMap))
-
-  let toYaml (src: RssSource) =
-    src
-    |> toSpec
-    |> Yaml.dump
-
-  let ofYaml feedMap yaml =
-    yaml
-    |> Yaml.load<RssSourceSpec>
-    |> ofSpec feedMap
+  let ofYaml yaml =
+    yaml |> Yaml.load<RssSource>

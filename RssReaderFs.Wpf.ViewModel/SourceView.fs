@@ -38,12 +38,9 @@ type SourceView(rc: RssClient) as this =
     
   let updateAsync () =
     async {
-      match srcOpt () with
-      | None -> ()
-      | Some src ->
-          let! newItems = rc.UpdateAsync(src)
-          if newItems |> Array.isEmpty |> not then
-            addNewItems newItems
+      let! newItems = rc.UpdateAsync(srcName)
+      if newItems |> Array.isEmpty |> not then
+        addNewItems newItems
     }
 
   let checkUpdate () =

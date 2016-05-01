@@ -68,8 +68,16 @@ module Dictionary =
       |]
 
 module Set =
+  let ofOption: option<'x> -> Set<'x> =
+    function
+    | Some x -> Set.singleton x
+    | None -> Set.empty
+
   let collect f self =
     self |> Seq.map f |> Set.unionMany
+
+  let choose (f: 'x -> option<'y>) (self: Set<'x>): Set<'y> =
+    self |> collect (fun x -> f x |> ofOption)
 
   let tryFind value self =
     if self |> Set.contains value
