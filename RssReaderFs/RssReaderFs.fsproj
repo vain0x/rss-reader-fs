@@ -60,6 +60,7 @@
       <Link>ErrorHandling.fs</Link>
     </Compile>
     <Compile Include="Util.fs" />
+    <Compile Include="SecretSettings.fs" />
     <Compile Include="Domain.fs" />
     <Compile Include="RssItem.fs" />
     <Compile Include="RssFeed.fs" />
