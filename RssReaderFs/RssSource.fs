@@ -54,7 +54,7 @@ module RssSource =
     function
     | Feed feed ->
         sprintf """(feed %s "%s")"""
-          feed.Name (feed.Url |> Url.toString)
+          feed.Name (feed.Url)
     | Unread srcName ->
         sprintf "(unread %s)" (rr.SourceMap |> Map.find srcName |> toSExpr rr)
     | Union (name, srcNames) ->

@@ -10,13 +10,13 @@ module RssFeed =
   let create name (url: string) =
     {
       Name        = name
-      Url         = Url.ofString (url)
+      Url         = url
       DoneSet     = Set.empty
     }
 
   let nameUrl (feed: RssFeed) =
     sprintf "%s <%s>"
-      feed.Name (feed.Url |> Url.toString)
+      feed.Name (feed.Url)
 
   let rename oldName newName (feed: RssFeed) =
     let name' = feed.Name |> replace oldName newName

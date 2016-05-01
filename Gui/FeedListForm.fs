@@ -12,7 +12,7 @@ type FeedListForm (rc: RssClient) as this =
     )
 
   let lvItemFromRssFeed (feed: RssFeed) =
-    ListViewItem([| feed.Name; feed.Url |> Url.toString |])
+    ListViewItem([| feed.Name; feed.Url |])
 
   let listView =
     new ListView

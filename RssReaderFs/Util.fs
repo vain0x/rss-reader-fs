@@ -15,6 +15,8 @@ module Misc =
     then dst
     else self
 
+  type Url = string
+
 module Nullable =
   let toOption =
     function
@@ -126,18 +128,6 @@ module Xml =
     xnode.SelectNodes(xpath)
     |> Seq.ofCollection
 
-[<AutoOpen>]
-module UrlType =
-  type Url = 
-    | Url of string
-  with
-    override this.ToString() =
-      let (Url s) = this in s
-
-module Url =
-  let ofString = Url
-  let toString (Url s) = s
-
 module Exn =
   let message (e: exn) = e.Message
 
@@ -147,7 +137,7 @@ module Net =
 
   let downloadXmlAsync (feedUrl: Url) =
     async {
-      let req       = WebRequest.Create(feedUrl |> Url.toString)
+      let req       = WebRequest.Create(feedUrl)
       let! resp     = req.GetResponseAsync() |> Async.AwaitTask
       let stream    = resp.GetResponseStream()
       let xmlReader = new XmlTextReader(stream)
