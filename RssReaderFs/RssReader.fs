@@ -11,6 +11,7 @@ module RssReader =
       FeedMap         = Map.empty
       TagMap          = Map.empty
       SourceMap       = Map.empty
+      TwitterToken    = Twitter.getAppOnlyToken ()
     }
 
   let internal feedMap (rr: RssReader) =
@@ -51,11 +52,11 @@ module RssReader =
     | None -> sprintf "<%s>" url
 
   /// フィードを追加する処理のうち、FeedMap を更新する部分
-  let internal addFeedImpl feed rr =
+  let internal addFeedImpl feed (rr: RssReader) =
     { rr with FeedMap = rr |> feedMap |> Map.add (feed.Url) (feed.Name) }
 
   /// フィードを除去する処理のうち、FeedMap を更新する部分
-  let internal removeFeedImpl url rr =
+  let internal removeFeedImpl url (rr: RssReader) =
     { rr with FeedMap = rr |> feedMap |> Map.remove url }
 
   /// src にタグを付ける処理のうち、TagMap を更新する部分
@@ -154,7 +155,7 @@ module RssReader =
             rr |> warn
               ("The name has already been taken: " + (src |> RssSource.name) + ".")
       | (rr, None) ->
-          do! src |> RssSource.validate |> Trial.mapExnToMessage
+          do! src |> RssSource.validate rr |> Trial.mapExnToMessage
           return rr
     }
 
@@ -252,6 +253,10 @@ module RssReader =
                 let items     = itemArrayArray  |> Array.collect id
                 in (updates, items)
                 )
+      | TwitterUser (name, date) ->
+          let! statuses   = rr.TwitterToken |> Twitter.userTweetsAsync name
+          let items       = [| for status in statuses -> RssItem.ofTweet status |]
+          return ([], items)
    }
 
   let updateAsync src rr =
@@ -261,11 +266,30 @@ module RssReader =
       return (rr', items)
     }
 
+  let ofSpec (spec: RssReaderSpec) =
+    {
+      FeedMap         = spec.FeedMap
+      TagMap          = spec.TagMap
+      SourceMap       = spec.SourceMap
+      TwitterToken    =
+        match spec.BearToken with
+        | None            -> Twitter.getAppOnlyToken()
+        | Some bearToken  -> Twitter.createAppOnlyToken bearToken
+    }
+
+  let toSpec (rr: RssReader) =
+    {
+      FeedMap         = rr.FeedMap
+      TagMap          = rr.TagMap
+      SourceMap       = rr.SourceMap
+      BearToken       = rr.TwitterToken.BearerToken |> Some
+    }
+
   let toYaml rr =
-    rr |> Yaml.dump<RssReader>
+    rr |> toSpec |> Yaml.dump<RssReaderSpec>
 
   let ofYaml yaml =
-    yaml |> Yaml.load<RssReader>
+    yaml |> Yaml.load<RssReaderSpec> |> ofSpec
 
   module Serialize =
     open System.IO

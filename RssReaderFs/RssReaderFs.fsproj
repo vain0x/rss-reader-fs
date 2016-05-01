@@ -62,6 +62,7 @@
     <Compile Include="Util.fs" />
     <Compile Include="SecretSettings.fs" />
     <Compile Include="Domain.fs" />
+    <Compile Include="Tweet.fs" />
     <Compile Include="RssItem.fs" />
     <Compile Include="RssFeed.fs" />
     <Compile Include="RssSource.fs" />

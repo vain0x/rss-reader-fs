@@ -14,15 +14,19 @@ module RssSource =
   let union name sources =
     Union (name, sources)
 
+  let ofTwitterUser name =
+    TwitterUser (name, DateTime.Now)
+
   let rec name =
     function
     | Feed feed -> feed.Name
     | Unread name
     | Union (name, _)
+    | TwitterUser (name, _)
       -> name
 
-  let rec rename oldName newName =
-    function
+  let rec rename oldName newName self =
+    match self with
     | Feed feed ->
         feed |> RssFeed.rename oldName newName |> Feed
     | Unread srcName ->
@@ -31,6 +35,8 @@ module RssSource =
         let srcName'  = srcName |> replace oldName newName
         let srcs'     = srcs |> Set.map (replace oldName newName)
         in Union (srcName', srcs')
+    | TwitterUser _
+      -> self
 
   let rec unreadItems (rr: RssReader) (items: RssItem []) =
     function
@@ -44,10 +50,15 @@ module RssSource =
             rr.SourceMap |> Map.find srcName
             |> unreadItems rr items
             ) items
+    | TwitterUser (_, date) ->
+        items |> Array.filter (fun item -> item.Date > date)
 
-  let validate =
+  let validate (rr: RssReader) =
     function
     | Feed feed -> feed |> RssFeed.validate
+    | TwitterUser (name, _) ->
+        rr.TwitterToken |> Twitter.tryFindUser name
+        |> Trial.ignore
     | _ -> pass ()
 
   let rec toSExpr (rr: RssReader) =
@@ -63,6 +74,8 @@ module RssSource =
           (srcNames
             |> Set.map (fun name -> rr.SourceMap |> Map.find name |> toSExpr rr)
             |> String.concat " ")
+    | TwitterUser (name, _) ->
+        sprintf "(twitter-user %s)" name
 
   let toYaml src =
     src |> Yaml.dump<RssSource>
