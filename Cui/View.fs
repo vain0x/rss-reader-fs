@@ -83,7 +83,7 @@ type View (rc: RssReader) =
     | Details   -> this.PrintItems(items)
 
   member this.PrintMessages(msgs) =
-    msgs |> List.iter (eprintfn "%s")
+    msgs |> List.iter (Error.toString >> eprintfn "%s")
 
   member this.PrintResult(result) =
     match result with
@@ -108,8 +108,6 @@ type View (rc: RssReader) =
               this.PrintMessages(msgs)
       | SourceSeq srcs ->
           this.PrintSources(srcs)
-      | UnknownSourceName srcName ->
-          eprintfn "Unknown source name: %s" srcName
       | UnknownCommand command ->
           eprintfn "Unknown command: %s" (command |> String.concat " ")
     }

@@ -10,7 +10,7 @@ type Ctrl (rc: RssReader, sendResult: CommandResult -> Async<unit>) =
   member this.TryFindSource(srcName) =
     rc
     |> RssReader.tryFindSource srcName
-    |> Trial.failIfNone ("Unknown source name:" + srcName)
+    |> Trial.failIfNone (srcName |> SourceDoesNotExist)
 
   member this.CheckNewItemsAsync(?timeout, ?thresh) =
     let timeout = defaultArg timeout  (5 * 60 * 1000)  // 5 min

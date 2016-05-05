@@ -8,7 +8,7 @@ open System.Windows.Threading
 open Chessie.ErrorHandling
 open RssReaderFs
 
-type AddFeedPanel(rr: RssReader, raiseError: seq<string> -> unit) as this =
+type AddFeedPanel(rr: RssReader, raiseError: seq<Error> -> unit) as this =
   inherit WpfViewModel.Base()
 
   let mutable name = ""
@@ -41,7 +41,7 @@ type AddFeedPanel(rr: RssReader, raiseError: seq<string> -> unit) as this =
         )
     |> fst
 
-type FollowPanel(rr: RssReader, raiseError: seq<string> -> unit) as this =
+type FollowPanel(rr: RssReader, raiseError: seq<Error> -> unit) as this =
   inherit WpfViewModel.Base()
 
   let mutable name = ""
@@ -73,7 +73,7 @@ type FeedsWindow(rc: RssReader) as this =
   let mutable error = ""
 
   let raiseError msgs =
-    error <- msgs |> String.concat Environment.NewLine
+    error <- msgs |> Seq.map Error.toString |> String.concat Environment.NewLine
     this.RaisePropertyChanged("Error")
     this.RaisePropertyChanged("ErrorVisibility")
 

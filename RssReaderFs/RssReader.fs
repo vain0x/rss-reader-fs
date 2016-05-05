@@ -107,9 +107,9 @@ module RssReader =
       let srcName = src |> Source.name
       match rr |> tryFindSource srcName with
       | Some _ ->
-          return! () |> warn (sprintf "The name has already been taken: %s." srcName)
+          return! Trial.fail (SourceAlreadyExists srcName)
       | None ->
-          do! src |> Source.validate rr |> Trial.mapExnToMessage
+          do! src |> Source.validate rr |> Trial.mapFailure (List.map ExnError)
           match src with
           | AllSource
           | TagSource _     -> () // never
@@ -125,7 +125,7 @@ module RssReader =
       | Some src ->
           match src with
           | AllSource ->
-              return! Trial.failf "Source '%s' can't be removed." AllSourceName
+              return! fail (SourceCannotBeRemoved AllSourceName)
           | Feed feed ->
               (rr |> set<RssFeed>).Remove(feed) |> ignore
           | TwitterUser tu ->
@@ -135,7 +135,7 @@ module RssReader =
               (rr |> set<Tag>).RemoveRange(rows) |> ignore
           (rr |> ctx).SaveChanges() |> ignore
       | None ->
-          return! Trial.failf "Source '%s' doesn't exist." srcName
+          return! fail (SourceDoesNotExist srcName)
     }
     |> Trial.lift (raisingChanged rr)
 
@@ -150,7 +150,7 @@ module RssReader =
           match src with
           | AllSource
           | TwitterUser _
-            -> return! Trial.failf "Source '%s' can't be renamed." oldName
+            -> return! fail (SourceCannotBeRenamed oldName)
           | Feed feed ->
               feed.Name <- newName
               |> DbCtx.saving (rr |> ctx)
@@ -159,9 +159,9 @@ module RssReader =
               |> Array.iter (fun tag -> tag.TagName <- newName)
               |> DbCtx.saving (rr |> ctx)
       | (None, _) ->
-          return! Trial.failf "Source '%s' doesn't exist." oldName
+          return! fail (SourceDoesNotExist oldName)
       | (_, Some _) ->
-          return! Trial.failf "Source '%s' does already exist." newName
+          return! fail (SourceAlreadyExists newName)
     }
     |> Trial.lift (raisingChanged rr)
 
@@ -177,7 +177,7 @@ module RssReader =
           |> DbCtx.saving (rr |> ctx)
           |> raisingChanged rr
       | Some src ->
-          return! Trial.failf "Source '%s' does exist." (src |> Source.name)
+          return! fail (src |> Source.name |> SourceAlreadyExists)
     }
 
   /// src からタグを外す
@@ -190,7 +190,7 @@ module RssReader =
         |> DbCtx.saving (rr |> ctx)
         |> raisingChanged rr
       else
-        return! Trial.warnf () "Source '%s' doesn't has the tag '%s'." srcName tagName
+        return! () |> warn (SourceDoesNotHaveTag (srcName, tagName))
     }
 
   /// src についているタグの集合

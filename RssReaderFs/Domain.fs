@@ -1,5 +1,6 @@
 ﻿namespace RssReaderFs
 
+open System
 open CoreTweet
 
 [<AutoOpen>]
@@ -18,6 +19,14 @@ module Domain =
       TwitterToken      : OAuth2Token
       ChangedEvent      : Event<unit>
     }
+
+  type Error =
+    | ExnError                      of Exception
+    | SourceAlreadyExists           of string
+    | SourceDoesNotExist            of string
+    | SourceCannotBeRemoved         of string
+    | SourceCannotBeRenamed         of string
+    | SourceDoesNotHaveTag          of srcName: string * tagName: TagName
 
   [<Literal>]
   let AllSourceName = "ALL"

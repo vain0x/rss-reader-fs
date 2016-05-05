@@ -115,6 +115,7 @@
     <Compile Include="Entity.fs" />
     <Compile Include="Database.fs" />
     <Compile Include="Domain.fs" />
+    <Compile Include="Error.fs" />
     <Compile Include="Twitter.fs" />
     <Compile Include="Article.fs" />
     <Compile Include="RssFeed.fs" />

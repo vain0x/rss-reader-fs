@@ -11,8 +11,7 @@ module Types =
     | Details
 
   type CommandResult =
-    | Result                  of Result<unit, string>
-    | ArticleSeq              of Result<Async<Article [] * PrintFormat>, string>
+    | Result                  of Result<unit, Error>
+    | ArticleSeq              of Result<Async<Article [] * PrintFormat>, Error>
     | SourceSeq               of seq<Source>
-    | UnknownSourceName       of string
     | UnknownCommand          of list<string>
