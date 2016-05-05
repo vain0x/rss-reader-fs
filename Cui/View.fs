@@ -85,7 +85,7 @@ type View (rc: RssClient) =
   member this.PrintSources(srcs) =
     srcs
     |> Seq.iter (fun src ->
-        printfn "%s" (src |> RssSource.name)
+        printfn "%s" (src |> Source.name)
         )
 
   member this.PrintTag(tagName) =

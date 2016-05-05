@@ -12,4 +12,4 @@ type SourceTree(rc: RssClient) as this =
 
   member this.Feeds       = rc.Reader |> RssReader.allFeeds |> Array.map (fun feed -> feed.Name)
   member this.Tags        = rc.Reader |> RssReader.allTags
-  member this.Sources     = rc.Reader |> RssReader.allAtomicSources |> Seq.map (RssSource.name)
+  member this.Sources     = rc.Reader |> RssReader.allAtomicSources |> Seq.map (Source.name)

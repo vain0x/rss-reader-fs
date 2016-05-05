@@ -43,8 +43,8 @@ module RssReader =
   let twitterUsers rr =
     rr |> set<TwitterUser> |> Array.ofSeq
 
-  let allFeedSource rr: RssSource =
-    RssSource.all
+  let allFeedSource rr: Source =
+    Source.all
 
   let tryFindFeed url rr =
     (rr |> set<RssFeed>).FirstOrDefault(fun feed -> feed.Url = url)
@@ -63,7 +63,7 @@ module RssReader =
   let tryFindTagSource (tagName: TagName) rr =
     if (rr |> set<Tag>).FirstOrDefault(fun tag -> tag.TagName = tagName) = null
     then None
-    else RssSource.ofTag tagName |> Some
+    else Source.ofTag tagName |> Some
 
   let feedName url rr =
     match rr |> tryFindFeed url with
@@ -72,19 +72,19 @@ module RssReader =
 
   let tryFindSource srcName rr =
     if srcName = AllSourceName
-    then RssSource.all |> Some
+    then Source.all |> Some
     else
       seq {
-        yield rr |> tryFindFeed         srcName |> Option.map (RssSource.ofFeed)
-        yield rr |> tryFindTwitterUser  srcName |> Option.map (RssSource.ofTwitterUser)
+        yield rr |> tryFindFeed         srcName |> Option.map (Source.ofFeed)
+        yield rr |> tryFindTwitterUser  srcName |> Option.map (Source.ofTwitterUser)
         yield rr |> tryFindTagSource    srcName
       }
       |> Seq.tryPick id
 
   let allAtomicSources rr =
     seq {
-      yield! rr |> allFeeds       |> Seq.map RssSource.ofFeed
-      yield! rr |> twitterUsers   |> Seq.map RssSource.ofTwitterUser
+      yield! rr |> allFeeds       |> Seq.map Source.ofFeed
+      yield! rr |> twitterUsers   |> Seq.map Source.ofTwitterUser
     }
 
   let addFeed feed rr =
@@ -95,12 +95,12 @@ module RssReader =
 
   let tryAddSource src rr =
     trial {
-      let srcName = src |> RssSource.name
+      let srcName = src |> Source.name
       match rr |> tryFindSource srcName with
       | Some _ ->
           return! () |> warn (sprintf "The name has already been taken: %s." srcName)
       | None ->
-          do! src |> RssSource.validate rr |> Trial.mapExnToMessage
+          do! src |> Source.validate rr |> Trial.mapExnToMessage
           match src with
           | AllSource
           | TagSource _     -> () // never
@@ -164,7 +164,7 @@ module RssReader =
           (rr |> set<Tag>).Add(tag) |> ignore
           |> DbCtx.saving (rr |> ctx)
       | Some src ->
-          return! Trial.failf "Source '%s' does exist." (src |> RssSource.name)
+          return! Trial.failf "Source '%s' does exist." (src |> Source.name)
     }
 
   /// src からタグを外す

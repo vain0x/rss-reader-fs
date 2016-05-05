@@ -33,7 +33,7 @@ type AddFeedPanel(rc: RssClient, raiseError: seq<string> -> unit) as this =
       (fun _ ->
         let feed    =
           RssFeed(Name = this.Name, Url = this.Url)
-        match rc.TryAddSource(RssSource.ofFeed feed) with
+        match rc.TryAddSource(Source.ofFeed feed) with
         | Ok ((), _) ->
             this.Reset() |> ignore
         | Bad msgs ->
@@ -59,7 +59,7 @@ type FollowPanel(rc: RssClient, raiseError: seq<string> -> unit) as this =
       (fun _ -> true)
       (fun _ ->
           let twitterUser = Entity.TwitterUser(ScreenName = this.Name)
-          match rc.TryAddSource(RssSource.ofTwitterUser twitterUser) with
+          match rc.TryAddSource(Source.ofTwitterUser twitterUser) with
           | Ok ((), _) ->
               this.Reset()
           | Bad msgs ->

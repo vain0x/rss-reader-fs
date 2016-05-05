@@ -82,12 +82,12 @@ type Ctrl (rc: RssClient, view: View) =
 
       | "feed" :: name :: url :: _ ->
           let feed      = RssFeed.create name url
-          let result    = rc.TryAddSource(feed |> RssSource.ofFeed)
+          let result    = rc.TryAddSource(feed |> Source.ofFeed)
           do view.PrintResult(result)
 
       | "twitter-user" :: name :: _ ->
           let twitterUser = Entity.TwitterUser(ScreenName = name, ReadDate = DateTime.Now)
-          do view.PrintResult(rc.TryAddSource(RssSource.ofTwitterUser twitterUser))
+          do view.PrintResult(rc.TryAddSource(Source.ofTwitterUser twitterUser))
 
       | "remove" :: name :: _ ->
           let result    = rc.TryRemoveSource(name)

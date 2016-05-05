@@ -45,7 +45,7 @@ type RssClient private () =
     |> tap raiseChanged
 
   member this.UpdateAllAsync =
-    this.UpdateAsync(RssSource.all)
+    this.UpdateAsync(Source.all)
 
   static member Create() =
     new RssClient()

@@ -2,7 +2,7 @@
 
 open Chessie.ErrorHandling
 
-module RssSource =
+module Source =
   let all =
     AllSource
 
