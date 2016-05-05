@@ -25,7 +25,8 @@ type RssClient private () =
     |> tap raiseChanged
 
   member this.RenameSource(oldName, newName) =
-    failwith "not implemented"
+    reader |> RssReader.renameSource oldName newName
+    |> tap raiseChanged
      
   member this.AddTag(tagName, srcName) =
     reader |> RssReader.addTag tagName srcName

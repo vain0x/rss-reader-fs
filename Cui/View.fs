@@ -82,11 +82,6 @@ type View (rc: RssClient) =
   member this.PrintFeeds(feeds) =
     feeds |> Array.iter (this.PrintFeed)
 
-  member this.PrintRenameSourceResult(result) =
-    if result
-    then printfn "Some sources are renamed."
-    else printfn "No sources are renamed."
-
   member this.PrintSources(srcs) =
     srcs
     |> Seq.iter (fun src ->

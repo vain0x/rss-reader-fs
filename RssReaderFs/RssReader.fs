@@ -128,6 +128,31 @@ module RssReader =
           return! Trial.failf "Source '%s' doesn't exist." srcName
     }
 
+  let renameSource oldName newName rr =
+    trial {
+      match
+        ( rr |> tryFindSource oldName
+        , rr |> tryFindSource newName
+        )
+        with
+      | (Some src, None) ->
+          match src with
+          | AllSource
+          | TwitterUser _
+            -> return! Trial.failf "Source '%s' can't be renamed." oldName
+          | Feed feed ->
+              feed.Name <- newName
+              |> DbCtx.saving (rr |> ctx)
+          | TagSource tagName ->
+              (rr |> set<Tag>).Where(fun tag -> tag.TagName = tagName).ToArray()
+              |> Array.iter (fun tag -> tag.TagName <- newName)
+              |> DbCtx.saving (rr |> ctx)
+      | (None, _) ->
+          return! Trial.failf "Source '%s' doesn't exist." oldName
+      | (_, Some _) ->
+          return! Trial.failf "Source '%s' does already exist." newName
+    }
+
   /// src にタグを付ける
   /// TODO: 循環的なタグづけを禁止する
   let addTag tagName srcName rr =

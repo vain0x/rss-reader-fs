@@ -95,7 +95,7 @@ type Ctrl (rc: RssClient, view: View) =
 
       | "rename" :: oldName :: newName :: _ ->
           let result    = rc.RenameSource(oldName, newName)
-          do view.PrintRenameSourceResult(result)
+          do view.PrintResult(result)
 
       | "sources" :: _ ->
           do view.PrintSources(rc.Reader |> RssReader.allAtomicSources)
