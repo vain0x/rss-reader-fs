@@ -8,8 +8,8 @@ module RssItem =
   let create title desc link date url =
     RssItem
       ( Title     = title
-      , Desc      = (desc |> Option.toObj)
-      , Link      = (link |> Option.toObj)
+      , Desc      = desc
+      , Link      = link
       , Date      = date
       , Url       = url
       )

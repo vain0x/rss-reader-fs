@@ -128,10 +128,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\RssReaderFs.Domain\RssReaderFs.Domain.csproj">
-      <Project>{df7565ae-69b3-4b34-848e-f56a8f4fcaba}</Project>
-      <Name>RssReaderFs.Domain</Name>
-    </ProjectReference>
     <ProjectReference Include="..\RssReaderFs.Wpf.ViewModel\RssReaderFs.Wpf.ViewModel.fsproj">
       <Project>{b4209ccb-5293-4d88-8286-97d2e4f81dd0}</Project>
       <Name>RssReaderFs.Wpf.ViewModel</Name>

@@ -86,7 +86,7 @@ type Ctrl (rc: RssClient, view: View) =
           do view.PrintResult(result)
 
       | "twitter-user" :: name :: _ ->
-          let twitterUser = TwitterUser(ScreenName = name, ReadDate = DateTime.Now)
+          let twitterUser = Entity.TwitterUser(ScreenName = name, ReadDate = DateTime.Now)
           do view.PrintResult(rc.TryAddSource(RssSource.ofTwitterUser twitterUser))
 
       | "remove" :: name :: _ ->

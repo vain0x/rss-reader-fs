@@ -34,11 +34,11 @@ type View (rc: RssClient) =
     let () =
       printfn "%s%s" header (item.Title)
       printfn "* Date: %s" (item.Date.ToString("G"))
-      printfn "* Link: %s" (item.LinkOpt |> Option.getOr "(no link)")
+      printfn "* Link: %s" (item.Link |> Option.getOr "(no link)")
       src |> Option.iter (fun feed ->
           printfn "* From: %s" (feed.Name)
           )
-      item.DescOpt |> Option.iter (printfn "* Desc:\r\n%s")
+      item.Desc |> Option.iter (printfn "* Desc:\r\n%s")
     let () =
       rc.ReadItem(item) |> ignore
     in ()

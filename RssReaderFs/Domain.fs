@@ -6,10 +6,6 @@ open CoreTweet
 module Domain =
   type TagName          = string
 
-  type RssItem with
-    member this.DescOpt = this.Desc |> Option.ofObj
-    member this.LinkOpt = this.Link |> Option.ofObj
-
   type RssSource =
     | AllSource
     | Feed              of RssFeed

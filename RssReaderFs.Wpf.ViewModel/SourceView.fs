@@ -21,7 +21,7 @@ type SourceView(rc: RssClient) as this =
 
   let selectedLink () =
     selectedItem ()
-    |> Option.bind (fun item -> item.LinkOpt)
+    |> Option.bind (fun item -> item.Link)
     |> Option.getOr ""
 
   let (linkJumpCommand, linkJumpCommandExecutabilityChanged) =
@@ -84,7 +84,7 @@ type SourceView(rc: RssClient) as this =
     with get () =
       items
       |> Array.tryItem selectedIndex
-      |> Option.bind (fun item -> item.DescOpt)
+      |> Option.bind (fun item -> item.Desc)
       |> Option.getOr "(No description.)"
     and  set (_: string) = ()
 

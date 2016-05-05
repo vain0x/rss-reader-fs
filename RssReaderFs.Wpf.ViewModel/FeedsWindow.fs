@@ -48,7 +48,7 @@ type FollowPanel(rc: RssClient, raiseError: seq<string> -> unit) as this =
     Command.create
       (fun _ -> true)
       (fun _ ->
-          let twitterUser = TwitterUser(ScreenName = this.Name)
+          let twitterUser = Entity.TwitterUser(ScreenName = this.Name)
           match rc.TryAddSource(RssSource.ofTwitterUser twitterUser) with
           | Ok ((), _) ->
               this.Reset()

@@ -462,11 +462,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\RssReaderFs.Domain\RssReaderFs.Domain.csproj">
-      <Name>RssReaderFs.Domain</Name>
-      <Project>{df7565ae-69b3-4b34-848e-f56a8f4fcaba}</Project>
-      <Private>True</Private>
-    </ProjectReference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <Private>True</Private>
