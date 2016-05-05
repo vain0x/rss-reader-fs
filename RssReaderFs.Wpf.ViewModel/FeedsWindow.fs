@@ -11,8 +11,6 @@ open RssReaderFs
 type AddFeedPanel(rc: RssClient, raiseError: seq<string> -> unit) as this =
   inherit WpfViewModel.Base()
 
-  let mutable error = ""
-
   member val Name   = "" with get, set
   member val Url    = "" with get, set
 
