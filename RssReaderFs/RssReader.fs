@@ -96,12 +96,6 @@ module RssReader =
       yield! rr |> twitterUsers   |> Seq.map Source.ofTwitterUser
     }
 
-  let addFeed feed rr =
-    (rr |> ctx).Set<RssFeed>().Add(feed) |> DbCtx.saving (rr |> ctx)
-
-  let addTwitterUser tu rr =
-    (rr |> ctx).Set<TwitterUser>().Add(tu) |> DbCtx.saving (rr |> ctx) |> ignore
-
   let tryAddSource src rr =
     trial {
       let srcName = src |> Source.name
