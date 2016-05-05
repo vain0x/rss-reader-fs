@@ -6,7 +6,7 @@ open System.Collections.Generic
 open Chessie.ErrorHandling
 open RssReaderFs
 
-type Ctrl (rc: RssClient, view: View) =
+type Ctrl (rc: RssClient, sendResult: CommandResult -> Async<unit>) =
   member this.TryFindSource(srcName) =
     rc.Reader
     |> RssReader.tryFindSource srcName
@@ -19,9 +19,8 @@ type Ctrl (rc: RssClient, view: View) =
     let rec loop () =
       async {
         let! newItems = rc.UpdateAllAsync
-        do
-          if newItems |> Array.isEmpty |> not then
-            view.PrintCount(newItems)
+        if newItems |> Array.isEmpty |> not then
+          do! (newItems, Count) |> Async.inject |> Trial.inject |> ArticleSeq |> sendResult
         do! Async.Sleep(timeout)
         return! loop ()
       }
@@ -110,7 +109,7 @@ type Ctrl (rc: RssClient, view: View) =
             line.Split([|' '|], StringSplitOptions.RemoveEmptyEntries)
             |> Array.toList
           let result = this.ProcCommand(command)
-          do! view.PrintCommandResult(result)
+          do! sendResult result
           return! kont
     }
 

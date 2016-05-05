@@ -8,7 +8,7 @@ module Program =
   let main argv =
     let rc = RssClient.Create()
     let view = View(rc)
-    let rrc = Ctrl(rc, view)
+    let rrc = Ctrl(rc, view.PrintCommandResult)
 
     try
       match argv with
