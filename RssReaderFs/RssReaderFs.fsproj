@@ -145,6 +145,13 @@
       <HintPath>..\packages\YamlDotNet\lib\net35\YamlDotNet.dll</HintPath>
     </Reference>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\RssReaderFs.Domain\RssReaderFs.Domain.csproj">
+      <Name>RssReaderFs.Domain</Name>
+      <Project>{df7565ae-69b3-4b34-848e-f56a8f4fcaba}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+  </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
