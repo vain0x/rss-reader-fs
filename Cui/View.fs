@@ -6,18 +6,6 @@ open System.Collections.Generic
 open Chessie.ErrorHandling
 open RssReaderFs
 
-type PrintFormat =
-  | Count
-  | Titles
-  | Details
-
-type CommandResult =
-  | Result                  of Result<unit, string>
-  | ArticleSeq              of Result<Async<Article [] * PrintFormat>, string>
-  | SourceSeq               of seq<Source>
-  | UnknownSourceName       of string
-  | UnknownCommand          of list<string>
-
 type View (rc: RssClient) =
   let reader () =
     rc.Reader
@@ -125,3 +113,11 @@ type View (rc: RssClient) =
       | UnknownCommand command ->
           eprintfn "Unknown command: %s" (command |> String.concat " ")
     }
+
+  member this.Interactive(rrc: Ctrl) =
+    let rec loop () =
+      async {
+        let! line = Console.In.ReadLineAsync() |> Async.AwaitTask
+        return! rrc.ProcCommandLine(loop (), line)
+      }
+    in loop ()

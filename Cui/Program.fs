@@ -18,7 +18,7 @@ module Program =
           rrc.CheckNewItemsAsync()
           |> Async.Start
 
-          rrc.Interactive()
+          view.Interactive(rrc)
           |> Async.RunSynchronously
       | _ ->
           view.PrintCommandResult(rrc.ProcCommand(argv |> Array.toList))

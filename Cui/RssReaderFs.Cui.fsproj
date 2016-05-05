@@ -456,8 +456,9 @@
       <Paket>True</Paket>
     </Content>
     <Compile Include="Util.fs" />
-    <Compile Include="View.fs" />
+    <Compile Include="Types.fs" />
     <Compile Include="Ctrl.fs" />
+    <Compile Include="View.fs" />
     <Compile Include="Program.fs" />
     <None Include="App.config" />
   </ItemGroup>

@@ -112,11 +112,3 @@ type Ctrl (rc: RssClient, sendResult: CommandResult -> Async<unit>) =
           do! sendResult result
           return! kont
     }
-
-  member this.Interactive() =
-    let rec loop () =
-      async {
-        let! line = Console.In.ReadLineAsync() |> Async.AwaitTask
-        return! this.ProcCommandLine(loop (), line)
-      }
-    in loop ()
