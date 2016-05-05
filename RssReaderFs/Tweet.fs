@@ -27,3 +27,7 @@ module Twitter =
       |> pass
     with
     | _ -> fail (Exception("No user found."))
+
+  module Status =
+    let permanentLink (status: Status) =
+      sprintf "https://twitter.com/%s/status/%d" status.User.ScreenName status.Id

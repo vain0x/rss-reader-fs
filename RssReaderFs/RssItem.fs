@@ -36,7 +36,7 @@ module RssItem =
     {
       Title       = status.Text
       Desc        = status.Text |> Some
-      Link        = None
+      Link        = status |> Twitter.Status.permanentLink |> Some
       Date        = status.CreatedAt.DateTime
-      Url         = "http://twitter.com/" + status.User.Name
+      Url         = "https://twitter.com/" + status.User.ScreenName
     }
