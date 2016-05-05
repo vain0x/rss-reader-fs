@@ -11,10 +11,16 @@ open RssReaderFs
 type AddFeedPanel(rc: RssClient, raiseError: seq<string> -> unit) as this =
   inherit WpfViewModel.Base()
 
-  let mutable error = ""
+  let mutable name = ""
+  let mutable url  = ""
 
-  member val Name   = "" with get, set
-  member val Url    = "" with get, set
+  member this.Name
+    with get () = name
+    and  set v  = name <- v; this.RaisePropertyChanged("Name")
+
+  member this.Url
+    with get () = url
+    and  set v  = url <- v; this.RaisePropertyChanged("Url")
 
   member this.Reset() =
     this.Name     <- ""
@@ -38,7 +44,11 @@ type AddFeedPanel(rc: RssClient, raiseError: seq<string> -> unit) as this =
 type FollowPanel(rc: RssClient, raiseError: seq<string> -> unit) as this =
   inherit WpfViewModel.Base()
 
-  member val Name = "" with get, set
+  let mutable name = ""
+
+  member this.Name
+    with get () = name
+    and  set v  = name <- v; this.RaisePropertyChanged("Name")
 
   member this.Reset() =
     this.Name <- ""
