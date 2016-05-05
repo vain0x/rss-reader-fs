@@ -2,7 +2,7 @@
 
 [<AutoOpen>]
 module Types =
-  type RssItemRow =
+  type ArticleRow =
     {
       Title           : string
       Date            : string

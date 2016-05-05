@@ -12,7 +12,7 @@
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <TargetFSharpCoreVersion>4.4.0.0</TargetFSharpCoreVersion>
-    <Name>RssReaderFs</Name>
+    <Name>RssReaderFs.Core</Name>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -115,12 +115,12 @@
     <Compile Include="Entity.fs" />
     <Compile Include="Database.fs" />
     <Compile Include="Domain.fs" />
-    <Compile Include="Tweet.fs" />
-    <Compile Include="RssItem.fs" />
+    <Compile Include="Error.fs" />
+    <Compile Include="Twitter.fs" />
+    <Compile Include="Article.fs" />
     <Compile Include="RssFeed.fs" />
-    <Compile Include="RssSource.fs" />
+    <Compile Include="Source.fs" />
     <Compile Include="RssReader.fs" />
-    <Compile Include="RssClient.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Configuration">

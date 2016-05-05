@@ -1,4 +1,4 @@
-﻿namespace RssReaderFs
+﻿namespace RssReaderFs.Core
 
 open System
 open System.Collections.Generic
@@ -196,11 +196,17 @@ module Net =
 module Async =
   open System.Threading.Tasks
 
+  let inject x =
+    async { return x }
+
   let AwaitTaskVoid : (Task -> Async<unit>) =
     Async.AwaitIAsyncResult >> Async.Ignore
 
 module Trial =
   open Chessie.ErrorHandling
+
+  let inject x =
+    trial { return x }
 
   let ignore self =
     self |> Trial.lift (konst ())

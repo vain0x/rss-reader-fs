@@ -1,9 +1,9 @@
 ﻿[<AutoOpen>]
 module RssReaderFs.Wpf.ViewModel.Funcs
 
-open RssReaderFs
+open RssReaderFs.Core
 
-module RssItemRow =
+module ArticleRow =
   let empty =
     {
       Title         = ""
@@ -11,9 +11,9 @@ module RssItemRow =
       FeedName      = ""
     }
 
-  let ofItem (rc: RssClient) (item: RssItem) =
+  let ofItem (rc: RssReader) (item: Article) =
     {
       Title         = item.Title
       Date          = item.Date.ToString("G")
-      FeedName      = rc.Reader |> RssReader.feedName item.Url
+      FeedName      = rc |> RssReader.feedName item.Url
     }

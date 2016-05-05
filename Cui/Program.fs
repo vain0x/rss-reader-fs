@@ -1,14 +1,14 @@
 ﻿namespace RssReaderFs.Cui
 
 open System
-open RssReaderFs
+open RssReaderFs.Core
 
 module Program =
   [<EntryPoint>]
   let main argv =
-    let rc = RssClient.Create()
+    let rc = RssReader.create ()
     let view = View(rc)
-    let rrc = Ctrl(rc, view)
+    let rrc = Ctrl(rc, view.PrintCommandResult)
 
     try
       match argv with
@@ -18,13 +18,13 @@ module Program =
           rrc.CheckNewItemsAsync()
           |> Async.Start
 
-          rrc.Interactive()
+          view.Interactive(rrc)
           |> Async.RunSynchronously
       | _ ->
-          rrc.ProcCommand(argv |> Array.toList)
+          view.PrintCommandResult(rrc.ProcCommand(argv |> Array.toList))
           |> Async.RunSynchronously
     finally
-      rc.Save()
+      rc |> RssReader.save
 
     // exit code
     0

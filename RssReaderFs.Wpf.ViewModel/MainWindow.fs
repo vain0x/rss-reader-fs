@@ -3,12 +3,12 @@
 open System
 open System.ComponentModel
 open System.Windows.Threading
-open RssReaderFs
+open RssReaderFs.Core
 
 type MainWindow() =
   inherit WpfViewModel.Base()
 
-  let rc = RssClient.Create()
+  let rc = RssReader.create()
 
   let sourceTree = SourceTree(rc)
 
@@ -30,4 +30,4 @@ type MainWindow() =
   member this.SourceView = sourceView
 
   member this.Save() =
-    rc.Save()
+    rc |> RssReader.save

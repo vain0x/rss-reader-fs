@@ -1,4 +1,4 @@
-﻿namespace RssReaderFs
+﻿namespace RssReaderFs.Core
 
 open System
 open System.ComponentModel.DataAnnotations
@@ -12,7 +12,7 @@ module Entity =
     member val Id = 0L with get, set
 
   [<AllowNullLiteral>]
-  type RssItem() =
+  type Article() =
     inherit EntityWithId()
 
     [<Required>]
@@ -31,7 +31,7 @@ module Entity =
   [<AllowNullLiteral>]
   type ReadLog() =
     [<Key>]
-    member val RssItemId = 0L with get, set
+    member val ArticleId = 0L with get, set
 
     [<Required>]
     member val Date = DateTime.Now with get, set

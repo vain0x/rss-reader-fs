@@ -1,8 +1,8 @@
-﻿namespace RssReaderFs
+﻿namespace RssReaderFs.Core
 
 open Chessie.ErrorHandling
 
-module RssSource =
+module Source =
   let all =
     AllSource
 

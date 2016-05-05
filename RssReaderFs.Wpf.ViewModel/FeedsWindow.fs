@@ -6,9 +6,9 @@ open System.Windows
 open System.Windows.Input
 open System.Windows.Threading
 open Chessie.ErrorHandling
-open RssReaderFs
+open RssReaderFs.Core
 
-type AddFeedPanel(rc: RssClient, raiseError: seq<string> -> unit) as this =
+type AddFeedPanel(rr: RssReader, raiseError: seq<Error> -> unit) as this =
   inherit WpfViewModel.Base()
 
   let mutable name = ""
@@ -33,7 +33,7 @@ type AddFeedPanel(rc: RssClient, raiseError: seq<string> -> unit) as this =
       (fun _ ->
         let feed    =
           RssFeed(Name = this.Name, Url = this.Url)
-        match rc.TryAddSource(RssSource.ofFeed feed) with
+        match rr |> RssReader.tryAddSource (Source.ofFeed feed) with
         | Ok ((), _) ->
             this.Reset() |> ignore
         | Bad msgs ->
@@ -41,7 +41,7 @@ type AddFeedPanel(rc: RssClient, raiseError: seq<string> -> unit) as this =
         )
     |> fst
 
-type FollowPanel(rc: RssClient, raiseError: seq<string> -> unit) as this =
+type FollowPanel(rr: RssReader, raiseError: seq<Error> -> unit) as this =
   inherit WpfViewModel.Base()
 
   let mutable name = ""
@@ -59,7 +59,7 @@ type FollowPanel(rc: RssClient, raiseError: seq<string> -> unit) as this =
       (fun _ -> true)
       (fun _ ->
           let twitterUser = Entity.TwitterUser(ScreenName = this.Name)
-          match rc.TryAddSource(RssSource.ofTwitterUser twitterUser) with
+          match rr |> RssReader.tryAddSource (Source.ofTwitterUser twitterUser) with
           | Ok ((), _) ->
               this.Reset()
           | Bad msgs ->
@@ -67,13 +67,13 @@ type FollowPanel(rc: RssClient, raiseError: seq<string> -> unit) as this =
           )
     |> fst
 
-type FeedsWindow(rc: RssClient) as this =
+type FeedsWindow(rc: RssReader) as this =
   inherit WpfViewModel.DialogBase<unit>()
 
   let mutable error = ""
 
   let raiseError msgs =
-    error <- msgs |> String.concat Environment.NewLine
+    error <- msgs |> Seq.map Error.toString |> String.concat Environment.NewLine
     this.RaisePropertyChanged("Error")
     this.RaisePropertyChanged("ErrorVisibility")
 
@@ -81,15 +81,15 @@ type FeedsWindow(rc: RssClient) as this =
 
   let followPanel = FollowPanel(rc, raiseError)
   
-  do rc.Changed |> Observable.add (fun () ->
+  do rc |> RssReader.changed |> Observable.add (fun () ->
       this.RaisePropertyChanged("Feeds")
       )
 
   member this.Feeds =
-    rc.Reader |> RssReader.allFeeds
+    rc |> RssReader.allFeeds
 
   member this.TwitterUsers =
-    rc.Reader |> RssReader.twitterUsers |> Array.map (fun tu -> tu.ScreenName)
+    rc |> RssReader.twitterUsers |> Array.map (fun tu -> tu.ScreenName)
 
   member this.AddFeedPanel = addFeedPanel
 

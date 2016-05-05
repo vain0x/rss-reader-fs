@@ -1,4 +1,4 @@
-﻿namespace RssReaderFs
+﻿namespace RssReaderFs.Core
 
 open System
 open System.Linq
@@ -7,7 +7,7 @@ open FsYaml
 open Chessie.ErrorHandling
 
 module RssReader =
-  let create () =
+  let create (): RssReader =
     let ctx             = new DbCtx()
     let configOpt       = ctx.Set<Config>().Find(DefaultConfigName) |> Option.ofObj
     let token           =
@@ -26,6 +26,7 @@ module RssReader =
       {
         Ctx             = ctx
         TwitterToken    = token
+        ChangedEvent    = Event<unit>()
       }
 
   let ctx (rr: RssReader) =
@@ -34,88 +35,91 @@ module RssReader =
   let set<'t when 't: not struct> rr =
     (rr |> ctx).Set<'t>()
 
-  let allFeeds rr =
+  let private changedEvent (rr: RssReader) = rr.ChangedEvent
+
+  let changed rr: IEvent<unit> =
+    (rr |> changedEvent).Publish
+
+  let raisingChanged rr (x: 'x): 'x =
+    x |> tap (fun _ -> (rr |> changedEvent).Trigger())
+
+  let allFeeds rr: RssFeed [] =
     rr |> set<RssFeed> |> Array.ofSeq
 
-  let allTags rr =
+  let allTags rr: Set<string> =
     rr |> set<Tag> |> Seq.map (fun tag -> tag.TagName) |> Set.ofSeq
 
-  let twitterUsers rr =
+  let twitterUsers rr: TwitterUser [] =
     rr |> set<TwitterUser> |> Array.ofSeq
 
-  let allFeedSource rr: RssSource =
-    RssSource.all
+  let allFeedSource rr: Source =
+    Source.all
 
-  let tryFindFeed url rr =
+  let tryFindFeed url rr: option<RssFeed> =
     (rr |> set<RssFeed>).FirstOrDefault(fun feed -> feed.Url = url)
     |> Option.ofObj
 
-  let tryFindTwitterUser (name: string) rr =
+  let tryFindTwitterUser (name: string) rr: option<TwitterUser> =
     (rr |> set<TwitterUser>).Find(name)
     |> Option.ofObj
     
-  let findTaggedSourceNames tagName rr =
+  let findTaggedSourceNames tagName rr: Set<string> =
     (rr |> set<Tag>)
       .Where(fun tag -> tag.TagName = tagName)
       .Select(fun tag -> tag.SourceName)
     |> Set.ofSeq
 
-  let tryFindTagSource (tagName: TagName) rr =
+  let tryFindTagSource (tagName: TagName) rr: option<Source> =
     if (rr |> set<Tag>).FirstOrDefault(fun tag -> tag.TagName = tagName) = null
     then None
-    else RssSource.ofTag tagName |> Some
+    else Source.ofTag tagName |> Some
 
-  let feedName url rr =
+  let feedName (url: string) rr: string =
     match rr |> tryFindFeed url with
     | Some feed -> feed |> RssFeed.nameUrl
     | None -> sprintf "<%s>" url
 
-  let tryFindSource srcName rr =
+  let tryFindSource (srcName: string) rr: option<Source> =
     if srcName = AllSourceName
-    then RssSource.all |> Some
+    then Source.all |> Some
     else
       seq {
-        yield rr |> tryFindFeed         srcName |> Option.map (RssSource.ofFeed)
-        yield rr |> tryFindTwitterUser  srcName |> Option.map (RssSource.ofTwitterUser)
+        yield rr |> tryFindFeed         srcName |> Option.map (Source.ofFeed)
+        yield rr |> tryFindTwitterUser  srcName |> Option.map (Source.ofTwitterUser)
         yield rr |> tryFindTagSource    srcName
       }
       |> Seq.tryPick id
 
-  let allAtomicSources rr =
+  let allAtomicSources rr: seq<Source> =
     seq {
-      yield! rr |> allFeeds       |> Seq.map RssSource.ofFeed
-      yield! rr |> twitterUsers   |> Seq.map RssSource.ofTwitterUser
+      yield! rr |> allFeeds       |> Seq.map Source.ofFeed
+      yield! rr |> twitterUsers   |> Seq.map Source.ofTwitterUser
     }
 
-  let addFeed feed rr =
-    (rr |> ctx).Set<RssFeed>().Add(feed) |> DbCtx.saving (rr |> ctx)
-
-  let addTwitterUser tu rr =
-    (rr |> ctx).Set<TwitterUser>().Add(tu) |> DbCtx.saving (rr |> ctx) |> ignore
-
-  let tryAddSource src rr =
+  let tryAddSource (src: Source) rr: Result<unit, Error> =
     trial {
-      let srcName = src |> RssSource.name
+      let srcName = src |> Source.name
       match rr |> tryFindSource srcName with
       | Some _ ->
-          return! () |> warn (sprintf "The name has already been taken: %s." srcName)
+          return! Trial.fail (SourceAlreadyExists srcName)
       | None ->
-          do! src |> RssSource.validate rr |> Trial.mapExnToMessage
+          do! src |> Source.validate rr |> Trial.mapFailure (List.map ExnError)
           match src with
           | AllSource
           | TagSource _     -> () // never
           | Feed feed       -> (rr |> set<RssFeed>).Add(feed) |> ignore
           | TwitterUser tw  -> (rr |> set<TwitterUser>).Add(tw) |> ignore
           (rr |> ctx).SaveChanges() |> ignore
+          |> raisingChanged rr
     }
 
-  let tryRemoveSource srcName rr =
+  let tryRemoveSource (srcName: string) rr: Result<unit, Error> =
     trial {
       match rr |> tryFindSource srcName with
       | Some src ->
           match src with
           | AllSource ->
-              return! Trial.failf "Source '%s' can't be removed." AllSourceName
+              return! fail (SourceCannotBeRemoved AllSourceName)
           | Feed feed ->
               (rr |> set<RssFeed>).Remove(feed) |> ignore
           | TwitterUser tu ->
@@ -125,10 +129,11 @@ module RssReader =
               (rr |> set<Tag>).RemoveRange(rows) |> ignore
           (rr |> ctx).SaveChanges() |> ignore
       | None ->
-          return! Trial.failf "Source '%s' doesn't exist." srcName
+          return! fail (SourceDoesNotExist srcName)
     }
+    |> Trial.lift (raisingChanged rr)
 
-  let renameSource oldName newName rr =
+  let renameSource (oldName: string) (newName: string) rr: Result<unit, Error> =
     trial {
       match
         ( rr |> tryFindSource oldName
@@ -139,7 +144,7 @@ module RssReader =
           match src with
           | AllSource
           | TwitterUser _
-            -> return! Trial.failf "Source '%s' can't be renamed." oldName
+            -> return! fail (SourceCannotBeRenamed oldName)
           | Feed feed ->
               feed.Name <- newName
               |> DbCtx.saving (rr |> ctx)
@@ -148,14 +153,15 @@ module RssReader =
               |> Array.iter (fun tag -> tag.TagName <- newName)
               |> DbCtx.saving (rr |> ctx)
       | (None, _) ->
-          return! Trial.failf "Source '%s' doesn't exist." oldName
+          return! fail (SourceDoesNotExist oldName)
       | (_, Some _) ->
-          return! Trial.failf "Source '%s' does already exist." newName
+          return! fail (SourceAlreadyExists newName)
     }
+    |> Trial.lift (raisingChanged rr)
 
   /// src にタグを付ける
   /// TODO: 循環的なタグづけを禁止する
-  let addTag tagName srcName rr =
+  let addTag (tagName: TagName) (srcName: string) rr: Result<unit, Error> =
     trial {
       match rr |> tryFindSource tagName with
       | Some (TagSource _)
@@ -163,38 +169,50 @@ module RssReader =
           let tag = Tag(TagName = tagName, SourceName = srcName)
           (rr |> set<Tag>).Add(tag) |> ignore
           |> DbCtx.saving (rr |> ctx)
+          |> raisingChanged rr
       | Some src ->
-          return! Trial.failf "Source '%s' does exist." (src |> RssSource.name)
+          return! fail (src |> Source.name |> SourceAlreadyExists)
     }
 
   /// src からタグを外す
-  let removeTag tagName srcName rr =
+  let removeTag (tagName: TagName) (srcName: string) rr: Result<unit, Error> =
     trial {
       let rows =
         (rr |> set<Tag>).Where(fun tag -> tag.TagName = tagName && tag.SourceName = srcName)
       if rows.Any() then
         (rr |> set<Tag>).RemoveRange(rows) |> ignore
         |> DbCtx.saving (rr |> ctx)
+        |> raisingChanged rr
       else
-        return! Trial.warnf () "Source '%s' doesn't has the tag '%s'." srcName tagName
+        return! () |> warn (SourceDoesNotHaveTag (srcName, tagName))
     }
 
   /// src についているタグの集合
-  let tagSetOf srcName rr =
+  let tagSetOf (srcName: string) rr: Set<TagName> =
     (rr |> set<Tag>)
       .Where(fun tag -> tag.SourceName = srcName)
       .Select(fun tag -> tag.TagName)
     |> Set.ofSeq
 
+  let dumpSource (src: Source) rr: string =
+    match src with
+    | AllSource         -> AllSourceName
+    | Feed feed         -> sprintf "feed %s %s" feed.Name feed.Url
+    | TwitterUser tu    -> sprintf "twitter-user %s" tu.ScreenName
+    | TagSource tagName ->
+        let srcNames = rr |> findTaggedSourceNames tagName
+        in sprintf "tag %s %s" tagName (srcNames |> String.concat " ")
+
   /// Note: The read date of items already read can't be updated.
-  let readItem (item: RssItem) rr =
+  let readItem (item: Article) rr: ReadLog =
     (rr |> set<ReadLog>).Find(item.Id)
     |> Option.ofObj
     |> Option.getOrElse (fun () ->
-      (rr |> set<ReadLog>).Add(ReadLog(RssItemId = item.Id, Date = DateTime.Now))
+      (rr |> set<ReadLog>).Add(ReadLog(ArticleId = item.Id, Date = DateTime.Now))
       )
+    |> raisingChanged rr
 
-  let rec fetchItemsAsync src rr =
+  let rec fetchItemsAsync (src: Source) rr: Async<Article []> =
     async {
       match src with
       | AllSource ->
@@ -208,7 +226,7 @@ module RssReader =
           return items |> Seq.toArray
       | TwitterUser tu ->
           let! statuses   = rr.TwitterToken |> Twitter.userTweetsAsync (tu.ScreenName)
-          let items       = [| for status in statuses -> RssItem.ofTweet status |]
+          let items       = [| for status in statuses -> Article.ofTweet status |]
           return items
       | TagSource tagName ->
           let! itemArrayArray =
@@ -220,14 +238,19 @@ module RssReader =
           return itemArrayArray |> Array.collect id
    }
 
-  let updateAsync src rr =
+  /// Returns only new articles.
+  let updateAsync (src: Source) rr: Async<Article []> =
     let ctx = rr |> ctx
     ctx.SaveChanges() |> ignore
     ctx |> DbCtx.withTransaction (fun _ -> async {
         let! items = rr |> fetchItemsAsync src
         let (news, _) =
           items |> Array.uniqueBy (fun item -> (item.Title, item.Date, item.Url))
-          |> Array.partition (fun item -> item |> RssItem.insert ctx)
+          |> Array.partition (fun item -> item |> Article.insert ctx)
         ctx.SaveChanges() |> ignore
         return news
       })
+    |> raisingChanged rr
+
+  let save rr: unit =
+    (rr |> ctx).SaveChanges() |> ignore

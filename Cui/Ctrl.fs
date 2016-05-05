@@ -3,16 +3,14 @@
 open System
 open System.IO
 open System.Collections.Generic
-open RssReaderFs
+open Chessie.ErrorHandling
+open RssReaderFs.Core
 
-type Ctrl (rc: RssClient, view: View) =
+type Ctrl (rc: RssReader, sendResult: CommandResult -> Async<unit>) =
   member this.TryFindSource(srcName) =
-    rc.Reader
+    rc
     |> RssReader.tryFindSource srcName
-    |> tap (fun opt ->
-        if opt |> Option.isNone then
-          view.PrintUnknownSourceNameError(srcName)
-        )
+    |> Trial.failIfNone (srcName |> SourceDoesNotExist)
 
   member this.CheckNewItemsAsync(?timeout, ?thresh) =
     let timeout = defaultArg timeout  (5 * 60 * 1000)  // 5 min
@@ -20,108 +18,81 @@ type Ctrl (rc: RssClient, view: View) =
 
     let rec loop () =
       async {
-        let! newItems = rc.UpdateAllAsync
-        do
-          if newItems |> Array.isEmpty |> not then
-            view.PrintCount(newItems)
+        let! newItems = rc |> RssReader.updateAsync Source.all
+        if newItems |> Array.isEmpty |> not then
+          do! (newItems, Count) |> Async.inject |> Trial.inject |> ArticleSeq |> sendResult
         do! Async.Sleep(timeout)
         return! loop ()
       }
     in loop ()
 
-  member this.UpdateAndShowCount(srcName) =
-    async {
-      match this.TryFindSource(srcName) with
-      | None -> ()
-      | Some src ->
-          let! items = rc.UpdateAsync(src)
-          do view.PrintCount(items)
-    }
-
-  member this.UpdateAndShowDetails(srcName) =
-    async {
-      match this.TryFindSource(srcName) with
-      | None -> ()
-      | Some src ->
-          let! items = rc.UpdateAsync(src)
-          do view.PrintItems(items)
-    }
-
-  member this.UpdateAndShowTitles(srcName) =
-    async {
-      match this.TryFindSource(srcName) with
-      | None -> ()
-      | Some src ->
-          let! items = rc.UpdateAsync(src)
-          do view.PrintItemTitles(items)
-    }
+  member this.UpdateAndShow(srcName, fmt) =
+    this.TryFindSource(srcName)
+    |> Trial.lift (fun src -> async {
+        let! items = rc |> RssReader.updateAsync src
+        return (items, fmt)
+        })
+    |> ArticleSeq
 
   member private this.ProcCommandImpl(command) =
-    async {
       match command with
       | "update" :: srcName :: _ ->
-          do! this.UpdateAndShowCount(srcName)
-
+          this.UpdateAndShow(srcName, Count)
       | "update" :: _ ->
-          do! this.UpdateAndShowCount(AllSourceName)
-
+          this.UpdateAndShow(AllSourceName, Count)
       | "show" :: srcName :: _ ->
-          do! this.UpdateAndShowDetails(srcName)
-
+          this.UpdateAndShow(srcName, Details)
       | "show" :: _ ->
-          do! this.UpdateAndShowDetails(AllSourceName)
-          
+          this.UpdateAndShow(AllSourceName, Details)
       | "list" :: srcName :: _ ->
-          do! this.UpdateAndShowTitles(srcName)
-
+          this.UpdateAndShow(srcName, Titles)
       | "list" :: _ ->
-          do! this.UpdateAndShowTitles(AllSourceName)
+          this.UpdateAndShow(AllSourceName, Titles)
 
       | "feeds" :: _ ->
-          do view.PrintFeeds(rc.Reader |> RssReader.allFeeds)
+          rc |> RssReader.allFeeds
+          |> Seq.map (Source.ofFeed)
+          |> SourceSeq
 
       | "feed" :: name :: url :: _ ->
           let feed      = RssFeed.create name url
-          let result    = rc.TryAddSource(feed |> RssSource.ofFeed)
-          do view.PrintResult(result)
+          let result    = rc |> RssReader.tryAddSource (feed |> Source.ofFeed)
+          in result |> Result
 
       | "twitter-user" :: name :: _ ->
           let twitterUser = Entity.TwitterUser(ScreenName = name, ReadDate = DateTime.Now)
-          do view.PrintResult(rc.TryAddSource(RssSource.ofTwitterUser twitterUser))
+          let src         = Source.ofTwitterUser twitterUser
+          let result      = rc |> RssReader.tryAddSource src
+          in result |> Result
 
       | "remove" :: name :: _ ->
-          let result    = rc.TryRemoveSource(name)
-          do view.PrintResult(result)
+          rc |> RssReader.tryRemoveSource name |> Result
 
       | "rename" :: oldName :: newName :: _ ->
-          let result    = rc.RenameSource(oldName, newName)
-          do view.PrintResult(result)
+          rc |> RssReader.renameSource oldName newName |> Result
 
       | "sources" :: _ ->
-          do view.PrintSources(rc.Reader |> RssReader.allAtomicSources)
+          rc |> RssReader.allAtomicSources |> SourceSeq
 
       | "tag" :: tagName :: srcName :: _ ->
-          let result    = rc.AddTag(tagName, srcName)
-          do view.PrintResult(result)
+          rc |> RssReader.addTag tagName srcName |> Result
 
       | "detag" :: tagName :: srcName :: _ ->
-          let result    = rc.RemoveTag(tagName, srcName)
-          do view.PrintResult(result)
+          rc |> RssReader.removeTag tagName srcName |> Result
 
       | "tags" :: srcName :: _ ->
-          rc.Reader
+          rc
           |> RssReader.tagSetOf srcName
-          |> Set.iter (fun tagName ->
-              view.PrintTag(tagName)
-              )
+          |> Seq.map (Source.ofTag)
+          |> SourceSeq
 
       | "tags" :: _ ->
-          rc.Reader |> RssReader.allTags
-          |> Set.iter (fun tagName -> view.PrintTag(tagName))
+          rc |> RssReader.allTags
+          |> Seq.map (Source.ofTag)
+          |> SourceSeq
 
       | _ ->
-          view.PrintUnknownCommand(command)
-    }
+          UnknownCommand command
 
   member this.ProcCommand(command) =
     lockConsole (fun () -> this.ProcCommandImpl(command))
@@ -137,14 +108,7 @@ type Ctrl (rc: RssClient, view: View) =
           let command =
             line.Split([|' '|], StringSplitOptions.RemoveEmptyEntries)
             |> Array.toList
-          do! this.ProcCommand(command)
+          let result = this.ProcCommand(command)
+          do! sendResult result
           return! kont
     }
-
-  member this.Interactive() =
-    let rec loop () =
-      async {
-        let! line = Console.In.ReadLineAsync() |> Async.AwaitTask
-        return! this.ProcCommandLine(loop (), line)
-      }
-    in loop ()
