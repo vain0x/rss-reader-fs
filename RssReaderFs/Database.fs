@@ -9,7 +9,7 @@ module Database =
 
     override this.OnModelCreating(mb: DbModelBuilder) =
       // configure tables
-      mb.Entity<RssItem       >() |> ignore
+      mb.Entity<Article       >() |> ignore
       mb.Entity<ReadLog       >() |> ignore
       mb.Entity<TwitterUser   >() |> ignore
       mb.Entity<RssFeed       >() |> ignore

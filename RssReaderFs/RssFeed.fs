@@ -16,7 +16,7 @@ module RssFeed =
     async {
       let url = feed.Url
       let! xml = Net.downloadXmlAsync(url)
-      return (xml |> RssItem.parseXml url)
+      return (xml |> Article.parseXml url)
     }
 
   let validate feed =

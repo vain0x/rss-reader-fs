@@ -24,7 +24,7 @@ type View (rc: RssClient) =
       then printfn "No new items."
       else printfn "New %d items!" len
 
-  member this.PrintItem(item: RssItem, ?header) =
+  member this.PrintItem(item: Article, ?header) =
     let header =
       match header with
       | Some h -> h + " "
@@ -43,7 +43,7 @@ type View (rc: RssClient) =
       rc.ReadItem(item) |> ignore
     in ()
 
-  member this.PrintItems(items: RssItem []) =
+  member this.PrintItems(items: Article []) =
     let len = items |> Seq.length
     in
       if len = 0
@@ -63,7 +63,7 @@ type View (rc: RssClient) =
               )
             )
 
-  member this.PrintItemTitles(items: RssItem []) =
+  member this.PrintItemTitles(items: Article []) =
     let len = items |> Array.length
     in
       if len = 0

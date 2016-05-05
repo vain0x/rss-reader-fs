@@ -187,11 +187,11 @@ module RssReader =
     |> Set.ofSeq
 
   /// Note: The read date of items already read can't be updated.
-  let readItem (item: RssItem) rr =
+  let readItem (item: Article) rr =
     (rr |> set<ReadLog>).Find(item.Id)
     |> Option.ofObj
     |> Option.getOrElse (fun () ->
-      (rr |> set<ReadLog>).Add(ReadLog(RssItemId = item.Id, Date = DateTime.Now))
+      (rr |> set<ReadLog>).Add(ReadLog(ArticleId = item.Id, Date = DateTime.Now))
       )
 
   let rec fetchItemsAsync src rr =
@@ -208,7 +208,7 @@ module RssReader =
           return items |> Seq.toArray
       | TwitterUser tu ->
           let! statuses   = rr.TwitterToken |> Twitter.userTweetsAsync (tu.ScreenName)
-          let items       = [| for status in statuses -> RssItem.ofTweet status |]
+          let items       = [| for status in statuses -> Article.ofTweet status |]
           return items
       | TagSource tagName ->
           let! itemArrayArray =
@@ -227,7 +227,7 @@ module RssReader =
         let! items = rr |> fetchItemsAsync src
         let (news, _) =
           items |> Array.uniqueBy (fun item -> (item.Title, item.Date, item.Url))
-          |> Array.partition (fun item -> item |> RssItem.insert ctx)
+          |> Array.partition (fun item -> item |> Article.insert ctx)
         ctx.SaveChanges() |> ignore
         return news
       })

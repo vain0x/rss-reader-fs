@@ -12,7 +12,7 @@ type SourceView(rc: RssClient) as this =
     rc.Reader |> RssReader.tryFindSource srcName
 
   let mutable items =
-    ([||]: RssItem [])
+    ([||]: Article [])
 
   let mutable selectedIndex = -1
 
@@ -29,7 +29,7 @@ type SourceView(rc: RssClient) as this =
       (fun () -> selectedLink () |> String.IsNullOrEmpty |> not)
       (fun () -> selectedLink () |> Diagnostics.Process.Start |> ignore)
 
-  let addNewItems (newItems: RssItem []) =
+  let addNewItems (newItems: Article []) =
     items <-
       newItems
       |> Array.sortBy (fun item -> item.Date)
@@ -61,7 +61,7 @@ type SourceView(rc: RssClient) as this =
       )
 
   member this.Items =
-    items |> Array.map (RssItemRow.ofItem rc)
+    items |> Array.map (ArticleRow.ofItem rc)
 
   member this.SelectedIndex
     with get () = selectedIndex
@@ -75,10 +75,10 @@ type SourceView(rc: RssClient) as this =
 
   member this.SelectedItem = selectedItem ()
 
-  member this.SelectedRow: RssItemRow =
+  member this.SelectedRow: ArticleRow =
     match items |> Array.tryItem selectedIndex with
-    | Some item -> item |> RssItemRow.ofItem rc
-    | None -> RssItemRow.empty
+    | Some item -> item |> ArticleRow.ofItem rc
+    | None -> ArticleRow.empty
 
   member this.SelectedDesc
     with get () =
