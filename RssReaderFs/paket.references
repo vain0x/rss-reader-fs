@@ -1,3 +1,9 @@
+System.Data.SQLite
+System.Data.SQLite.Core
+System.Data.SQLite.EF6
+System.Data.SQLite.Linq
+EntityFramework
+SQLite.CodeFirst
 CoreTweet
 FsYaml
 File:ErrorHandling.fs .
