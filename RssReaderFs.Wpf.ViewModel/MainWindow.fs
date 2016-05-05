@@ -8,7 +8,7 @@ open RssReaderFs
 type MainWindow() =
   inherit WpfViewModel.Base()
 
-  let rc = RssClient.Create()
+  let rc = RssReader.create()
 
   let sourceTree = SourceTree(rc)
 
@@ -30,4 +30,4 @@ type MainWindow() =
   member this.SourceView = sourceView
 
   member this.Save() =
-    rc.Save()
+    rc |> RssReader.save

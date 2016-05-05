@@ -120,7 +120,6 @@
     <Compile Include="RssFeed.fs" />
     <Compile Include="Source.fs" />
     <Compile Include="RssReader.fs" />
-    <Compile Include="RssClient.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Configuration">

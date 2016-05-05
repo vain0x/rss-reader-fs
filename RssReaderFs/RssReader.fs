@@ -26,6 +26,7 @@ module RssReader =
       {
         Ctx             = ctx
         TwitterToken    = token
+        ChangedEvent    = Event<unit>()
       }
 
   let ctx (rr: RssReader) =
@@ -33,6 +34,14 @@ module RssReader =
 
   let set<'t when 't: not struct> rr =
     (rr |> ctx).Set<'t>()
+
+  let private changedEvent (rr: RssReader) = rr.ChangedEvent
+
+  let changed rr =
+    (rr |> changedEvent).Publish
+
+  let raisingChanged rr x =
+    x |> tap (fun _ -> (rr |> changedEvent).Trigger())
 
   let allFeeds rr =
     rr |> set<RssFeed> |> Array.ofSeq
@@ -107,6 +116,7 @@ module RssReader =
           | Feed feed       -> (rr |> set<RssFeed>).Add(feed) |> ignore
           | TwitterUser tw  -> (rr |> set<TwitterUser>).Add(tw) |> ignore
           (rr |> ctx).SaveChanges() |> ignore
+          |> raisingChanged rr
     }
 
   let tryRemoveSource srcName rr =
@@ -127,6 +137,7 @@ module RssReader =
       | None ->
           return! Trial.failf "Source '%s' doesn't exist." srcName
     }
+    |> Trial.lift (raisingChanged rr)
 
   let renameSource oldName newName rr =
     trial {
@@ -152,6 +163,7 @@ module RssReader =
       | (_, Some _) ->
           return! Trial.failf "Source '%s' does already exist." newName
     }
+    |> Trial.lift (raisingChanged rr)
 
   /// src にタグを付ける
   /// TODO: 循環的なタグづけを禁止する
@@ -163,6 +175,7 @@ module RssReader =
           let tag = Tag(TagName = tagName, SourceName = srcName)
           (rr |> set<Tag>).Add(tag) |> ignore
           |> DbCtx.saving (rr |> ctx)
+          |> raisingChanged rr
       | Some src ->
           return! Trial.failf "Source '%s' does exist." (src |> Source.name)
     }
@@ -175,6 +188,7 @@ module RssReader =
       if rows.Any() then
         (rr |> set<Tag>).RemoveRange(rows) |> ignore
         |> DbCtx.saving (rr |> ctx)
+        |> raisingChanged rr
       else
         return! Trial.warnf () "Source '%s' doesn't has the tag '%s'." srcName tagName
     }
@@ -202,6 +216,7 @@ module RssReader =
     |> Option.getOrElse (fun () ->
       (rr |> set<ReadLog>).Add(ReadLog(ArticleId = item.Id, Date = DateTime.Now))
       )
+    |> raisingChanged rr
 
   let rec fetchItemsAsync src rr =
     async {
@@ -240,3 +255,7 @@ module RssReader =
         ctx.SaveChanges() |> ignore
         return news
       })
+    |> raisingChanged rr
+
+  let save rr: unit =
+    (rr |> ctx).SaveChanges() |> ignore

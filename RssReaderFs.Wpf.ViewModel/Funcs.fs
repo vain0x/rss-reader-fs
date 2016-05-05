@@ -11,9 +11,9 @@ module ArticleRow =
       FeedName      = ""
     }
 
-  let ofItem (rc: RssClient) (item: Article) =
+  let ofItem (rc: RssReader) (item: Article) =
     {
       Title         = item.Title
       Date          = item.Date.ToString("G")
-      FeedName      = rc.Reader |> RssReader.feedName item.Url
+      FeedName      = rc |> RssReader.feedName item.Url
     }

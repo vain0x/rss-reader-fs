@@ -16,6 +16,7 @@ module Domain =
     {
       Ctx               : DbCtx
       TwitterToken      : OAuth2Token
+      ChangedEvent      : Event<unit>
     }
 
   [<Literal>]
