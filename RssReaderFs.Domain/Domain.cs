@@ -14,7 +14,7 @@ namespace RssReaderFs
         public long Id { get; set; }
     }
 
-    public class Article : EntityWithId
+    public class RssItem : EntityWithId
     {
         [Required]
         public string Title { get; set; }
@@ -32,7 +32,7 @@ namespace RssReaderFs
     public class ReadLog : IEntity
     {
         [Key]
-        public long ArticleId { get; set; }
+        public long RssItemId { get; set; }
 
         public DateTime Date { get; set; }
     }

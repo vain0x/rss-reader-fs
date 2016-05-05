@@ -34,16 +34,16 @@ type View (rc: RssClient) =
     let () =
       printfn "%s%s" header (item.Title)
       printfn "* Date: %s" (item.Date.ToString("G"))
-      printfn "* Link: %s" (item.Link |> Option.getOr "(no link)")
-      src |> Option.iter (fun { Name = name } ->
-          printfn "* From: %s" name
+      printfn "* Link: %s" (item.LinkOpt |> Option.getOr "(no link)")
+      src |> Option.iter (fun feed ->
+          printfn "* From: %s" (feed.Name)
           )
-      item.Desc |> Option.iter (printfn "* Desc:\r\n%s")
+      item.DescOpt |> Option.iter (printfn "* Desc:\r\n%s")
     let () =
-      rc.ReadItem(item)
+      rc.ReadItem(item) |> ignore
     in ()
 
-  member this.PrintItems(items) =
+  member this.PrintItems(items: RssItem []) =
     let len = items |> Seq.length
     in
       if len = 0
@@ -89,36 +89,15 @@ type View (rc: RssClient) =
 
   member this.PrintSources(srcs) =
     srcs
-    |> List.iter (fun (_, src) ->
-        printfn "%s" (src |> RssSource.toSExpr (reader ()))
+    |> Seq.iter (fun src ->
+        printfn "%s" (src |> RssSource.name)
         )
 
-  member this.PrintAddTagResult(tagName, srcName, result) =
-    match result with
-    | None ->
-        printfn "Tag '%s' is added to '%s'."
-          (string tagName) srcName
-    | Some srcName ->
-        eprintfn "Source '%s' does already exist."
-          (string tagName)
-
-  member this.PrintRemoveTagResult(tagName, srcName, result) =
-    match result with
-    | None ->
-        eprintfn "Source '%s' doesn't have tag '%s'."
-          srcName (string tagName)
-    | Some _ ->
-        printfn "Tag '%s' is removed from '%s'."
-          (string tagName) srcName
-
   member this.PrintTag(tagName) =
-    match rc.Reader |> RssReader.tryFindTaggedSources tagName with
-    | None ->
-        eprintfn "Unknown tag name: %s" (string tagName)
-    | Some srcs ->
-        printfn "%s %s"
-          (string tagName)
-          (String.Join(" ", srcs |> Set.map (RssSource.toSExpr (reader ()))))
+    let srcNames = rc.Reader |> RssReader.findTaggedSourceNames tagName
+    printfn "(tag %s %s)"
+      (string tagName)
+      (srcNames |> String.concat " ")
 
   member this.PrintResult(result) =
     match result with

@@ -112,8 +112,8 @@
     </Compile>
     <Compile Include="Util.fs" />
     <Compile Include="SecretSettings.fs" />
-    <Compile Include="Domain.fs" />
     <Compile Include="Database.fs" />
+    <Compile Include="Domain.fs" />
     <Compile Include="Tweet.fs" />
     <Compile Include="RssItem.fs" />
     <Compile Include="RssFeed.fs" />

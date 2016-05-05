@@ -17,11 +17,11 @@ module Twitter =
   let createAppOnlyToken bearToken =
     OAuth2Token.Create(SecretSettings.consumerKey, SecretSettings.consumerSecret, bearToken)
 
-  let userTweetsAsync name (token: OAuth2Token) =
+  let userTweetsAsync (name: string) (token: OAuth2Token) =
     token.Statuses.UserTimelineAsync(Map.singleton "screen_name" name)
     |> Async.AwaitTask
 
-  let tryFindUser name (token: OAuth2Token) =
+  let tryFindUser (name: string) (token: OAuth2Token) =
     try
       token.Users.Lookup(Map.singleton "screen_name" name).Item(0)
       |> pass

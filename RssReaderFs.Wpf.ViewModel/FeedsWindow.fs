@@ -26,7 +26,7 @@ type AddFeedPanel(rc: RssClient, raiseError: seq<string> -> unit) as this =
       (fun _ -> true)
       (fun _ ->
         let feed    =
-          { Name = this.Name; Url = this.Url; DoneSet = Set.empty }
+          RssFeed(Name = this.Name, Url = this.Url)
         match rc.TryAddSource(RssSource.ofFeed feed) with
         | Ok ((), _) ->
             this.Reset() |> ignore
@@ -48,7 +48,8 @@ type FollowPanel(rc: RssClient, raiseError: seq<string> -> unit) as this =
     Command.create
       (fun _ -> true)
       (fun _ ->
-          match rc.TryAddSource(RssSource.ofTwitterUser this.Name) with
+          let twitterUser = TwitterUser(ScreenName = this.Name)
+          match rc.TryAddSource(RssSource.ofTwitterUser twitterUser) with
           | Ok ((), _) ->
               this.Reset()
           | Bad msgs ->
@@ -78,7 +79,7 @@ type FeedsWindow(rc: RssClient) as this =
     rc.Reader |> RssReader.allFeeds
 
   member this.TwitterUsers =
-    rc.Reader |> RssReader.twitterUsers
+    rc.Reader |> RssReader.twitterUsers |> Array.map (fun tu -> tu.ScreenName)
 
   member this.AddFeedPanel = addFeedPanel
 

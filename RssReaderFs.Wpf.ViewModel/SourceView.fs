@@ -21,7 +21,7 @@ type SourceView(rc: RssClient) as this =
 
   let selectedLink () =
     selectedItem ()
-    |> Option.bind (fun item -> item.Link)
+    |> Option.bind (fun item -> item.LinkOpt)
     |> Option.getOr ""
 
   let (linkJumpCommand, linkJumpCommandExecutabilityChanged) =
@@ -29,7 +29,7 @@ type SourceView(rc: RssClient) as this =
       (fun () -> selectedLink () |> String.IsNullOrEmpty |> not)
       (fun () -> selectedLink () |> Diagnostics.Process.Start |> ignore)
 
-  let addNewItems newItems =
+  let addNewItems (newItems: RssItem []) =
     items <-
       newItems
       |> Array.sortBy (fun item -> item.Date)
@@ -38,9 +38,12 @@ type SourceView(rc: RssClient) as this =
     
   let updateAsync () =
     async {
-      let! newItems = rc.UpdateAsync(srcName)
-      if newItems |> Array.isEmpty |> not then
-        addNewItems newItems
+      match rc.Reader |> RssReader.tryFindSource srcName with
+      | None -> ()
+      | Some src ->
+          let! newItems = rc.UpdateAsync(src)
+          if newItems |> Array.isEmpty |> not then
+            addNewItems newItems
     }
 
   let checkUpdate () =
@@ -81,7 +84,7 @@ type SourceView(rc: RssClient) as this =
     with get () =
       items
       |> Array.tryItem selectedIndex
-      |> Option.bind (fun item -> item.Desc)
+      |> Option.bind (fun item -> item.DescOpt)
       |> Option.getOr "(No description.)"
     and  set (_: string) = ()
 
