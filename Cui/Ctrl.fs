@@ -79,12 +79,6 @@ type Ctrl (rc: RssClient, view: View) =
       | "twitter-user" :: userId :: _ ->
           do view.PrintResult(rc.TryAddSource(RssSource.ofTwitterUser userId))
 
-      | "tu" :: name :: _ ->
-          let users = rc.Reader.TwitterToken.Users.Lookup (Map.singleton "screen_name" name)
-          for i in 0..(users.Count - 1) do
-            let user = users.[i]
-            printfn "%s @%s" user.Name user.ScreenName
-
       | "remove" :: name :: _ ->
           let result    = rc.TryRemoveSource(name)
           do view.PrintResult(result)
