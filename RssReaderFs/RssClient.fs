@@ -4,73 +4,51 @@ open System
 open Chessie.ErrorHandling
 
 /// RSSクライアントクラス。
-/// 純粋である RssReader に、自己更新、ファイルIOの機能を加えたもの。
-type RssClient private (path: string) =
-  let mutable reader =
-    RssReader.Serialize.loadOrEmpty path
+/// RssReader に更新通知の機能を加えたもの。
+type RssClient private () =
+  let reader =
+    RssReader.create ()
 
   let changed = Event<unit>()
+  let raiseChanged _ = changed.Trigger()
 
   member this.Changed = changed.Publish
 
-  member this.Reader
-    with get () = reader
-    and  set rr =
-      reader <- rr
-      changed.Trigger(())
-
-  member this.AddSource(src) =
-    let (rr', old) = reader |> RssReader.addSource src
-    let () = this.Reader <- rr'
-    in old
+  member this.Reader = reader
 
   member this.TryAddSource(src) =
-    trial {
-      let! rr = reader |> RssReader.tryAddSource src
-      this.Reader <- rr
-    }
-
-  member this.RemoveSource(srcName) =
-    let (rr', old) = reader |> RssReader.removeSource srcName
-    let () = this.Reader <- rr'
-    in old
+    reader |> RssReader.tryAddSource src
+    |> tap raiseChanged
 
   member this.TryRemoveSource(srcName) =
-    trial {
-      let! rr = reader |> RssReader.tryRemoveSource srcName
-      this.Reader <- rr
-    }
+    reader |> RssReader.tryRemoveSource srcName
+    |> tap raiseChanged
 
   member this.RenameSource(oldName, newName) =
-    let rr  = reader
-    let () = this.Reader <- reader |> RssReader.renameSource oldName newName
-    in rr <> reader
+    reader |> RssReader.renameSource oldName newName
+    |> tap raiseChanged
      
-  member this.AddTag(tagName, src) =
-    let (rr', old) = reader |> RssReader.addTag tagName src
-    let () = this.Reader <- rr'
-    in old
+  member this.AddTag(tagName, srcName) =
+    reader |> RssReader.addTag tagName srcName
+    |> tap raiseChanged
 
-  member this.RemoveTag(tagName, src) =
-    let (rr', old) = reader |> RssReader.removeTag tagName src
-    let () = this.Reader <- rr'
-    in old
+  member this.RemoveTag(tagName, srcName) =
+    reader |> RssReader.removeTag tagName srcName
+    |> tap raiseChanged
 
   member this.ReadItem(item) =
-    this.Reader <- reader |> RssReader.readItem item
+    reader |> RssReader.readItem item
+    |> tap raiseChanged
 
   member this.UpdateAsync(src) =
-    async {
-      let! (reader', items) = reader |> RssReader.updateAsync src
-      do this.Reader <- reader'
-      return items
-    }
+    reader |> RssReader.updateAsync src
+    |> tap raiseChanged
 
   member this.UpdateAllAsync =
-    this.UpdateAsync(AllSourceName)
+    this.UpdateAsync(RssSource.all)
 
-  static member Create(path) =
-    new RssClient(path)
+  static member Create() =
+    new RssClient()
 
   member this.Save() =
-    reader |> RssReader.Serialize.save path
+    reader.Ctx.SaveChanges() |> ignore

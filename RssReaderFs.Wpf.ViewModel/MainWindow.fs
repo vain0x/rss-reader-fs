@@ -8,8 +8,7 @@ open RssReaderFs
 type MainWindow() =
   inherit WpfViewModel.Base()
 
-  let path = @"feeds.yaml"
-  let rc = RssClient.Create(path)
+  let rc = RssClient.Create()
 
   let sourceTree = SourceTree(rc)
 

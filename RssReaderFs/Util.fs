@@ -34,6 +34,11 @@ module Option =
     | None -> def
     | Some x -> x
 
+  let getOrElse f =
+    function
+    | None -> f ()
+    | Some x -> x
+
   let ofTrial =
     function
     | (true, value) -> Some value
@@ -49,6 +54,20 @@ module Seq =
         (^T: (member Item: int -> _) (self, i))
       }
 
+  let uniqueBy (f: 'x -> 'y) (xs: seq<'x>): seq<'x> =
+    let set = HashSet<'y>()
+    seq {
+      for x in xs do
+        let y = f x
+        yield 
+          if set.Contains(y)
+          then None
+          else
+            set.Add(y) |> ignore
+            Some x
+    }
+    |> Seq.choose id
+
 module Array =
   let tryItem i self =
     if 0 <= i && i < (self |> Array.length)
@@ -57,6 +76,9 @@ module Array =
 
   let replace src dst self =
     self |> Array.map (replace src dst)
+
+  let uniqueBy f self =
+    self |> Seq.uniqueBy f |> Seq.toArray
 
 module Dictionary =
   open System.Collections.Generic
@@ -182,6 +204,9 @@ module Trial =
 
   let ignore self =
     self |> Trial.lift (konst ())
+
+  let warnf x fmt =
+    kprintf (fun msg -> warn msg x) fmt
 
   let failf fmt =
     kprintf fail fmt

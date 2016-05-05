@@ -1,45 +1,22 @@
 ﻿namespace RssReaderFs
 
 open System
+open System.Linq
 open Chessie.ErrorHandling
 
 module RssFeed =
-  let doneSet (feed: RssFeed) =
-    feed.DoneSet
-
   let create name (url: string) =
-    {
-      Name        = name
-      Url         = url
-      DoneSet     = Set.empty
-    }
+    RssFeed(Name = name, Url = url)
 
   let nameUrl (feed: RssFeed) =
     sprintf "%s <%s>"
       feed.Name (feed.Url)
-
-  let rename oldName newName (feed: RssFeed) =
-    let name' = feed.Name |> replace oldName newName
-    in { feed with Name = name' }
 
   let downloadAsync (feed: RssFeed) =
     async {
       let url = feed.Url
       let! xml = Net.downloadXmlAsync(url)
       return (xml |> RssItem.parseXml url)
-    }
-
-  let updateAsync feed =
-    async {
-      let! items = feed |> downloadAsync
-
-      // 読了済みのものと分離する
-      let (dones, undones) =
-        items
-        |> Seq.toArray
-        |> Array.partition (fun item -> feed |> doneSet |> Set.contains item)
-
-      return (dones |> Set.ofArray, undones)
     }
 
   let validate feed =

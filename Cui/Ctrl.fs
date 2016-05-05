@@ -31,20 +31,29 @@ type Ctrl (rc: RssClient, view: View) =
 
   member this.UpdateAndShowCount(srcName) =
     async {
-      let! items = rc.UpdateAsync(srcName)
-      do view.PrintCount(items)
+      match this.TryFindSource(srcName) with
+      | None -> ()
+      | Some src ->
+          let! items = rc.UpdateAsync(src)
+          do view.PrintCount(items)
     }
 
   member this.UpdateAndShowDetails(srcName) =
     async {
-      let! items = rc.UpdateAsync(srcName)
-      do view.PrintItems(items)
+      match this.TryFindSource(srcName) with
+      | None -> ()
+      | Some src ->
+          let! items = rc.UpdateAsync(src)
+          do view.PrintItems(items)
     }
 
   member this.UpdateAndShowTitles(srcName) =
     async {
-      let! items = rc.UpdateAsync(srcName)
-      do view.PrintItemTitles(items)
+      match this.TryFindSource(srcName) with
+      | None -> ()
+      | Some src ->
+          let! items = rc.UpdateAsync(src)
+          do view.PrintItemTitles(items)
     }
 
   member private this.ProcCommandImpl(command) =
@@ -76,8 +85,9 @@ type Ctrl (rc: RssClient, view: View) =
           let result    = rc.TryAddSource(feed |> RssSource.ofFeed)
           do view.PrintResult(result)
 
-      | "twitter-user" :: userId :: _ ->
-          do view.PrintResult(rc.TryAddSource(RssSource.ofTwitterUser userId))
+      | "twitter-user" :: name :: _ ->
+          let twitterUser = Entity.TwitterUser(ScreenName = name, ReadDate = DateTime.Now)
+          do view.PrintResult(rc.TryAddSource(RssSource.ofTwitterUser twitterUser))
 
       | "remove" :: name :: _ ->
           let result    = rc.TryRemoveSource(name)
@@ -85,18 +95,18 @@ type Ctrl (rc: RssClient, view: View) =
 
       | "rename" :: oldName :: newName :: _ ->
           let result    = rc.RenameSource(oldName, newName)
-          do view.PrintRenameSourceResult(result)
+          do view.PrintResult(result)
 
       | "sources" :: _ ->
-          do view.PrintSources(rc.Reader |> RssReader.sourceMap |> Map.toList)
+          do view.PrintSources(rc.Reader |> RssReader.allAtomicSources)
 
       | "tag" :: tagName :: srcName :: _ ->
-          let result    = rc.AddTag(TagName tagName, srcName)
-          do view.PrintAddTagResult(TagName tagName, srcName, result)
+          let result    = rc.AddTag(tagName, srcName)
+          do view.PrintResult(result)
 
       | "detag" :: tagName :: srcName :: _ ->
-          let result    = rc.RemoveTag(TagName tagName, srcName)
-          do view.PrintRemoveTagResult(TagName tagName, srcName, result)
+          let result    = rc.RemoveTag(tagName, srcName)
+          do view.PrintResult(result)
 
       | "tags" :: srcName :: _ ->
           rc.Reader
@@ -106,12 +116,8 @@ type Ctrl (rc: RssClient, view: View) =
               )
 
       | "tags" :: _ ->
-          rc.Reader
-          |> RssReader.sourceMap
-          |> Seq.iter
-              (function
-                | KeyValue (_, Union (tagName, _)) -> view.PrintTag(TagName tagName)
-                | _ -> ())
+          rc.Reader |> RssReader.allTags
+          |> Set.iter (fun tagName -> view.PrintTag(tagName))
 
       | _ ->
           view.PrintUnknownCommand(command)
