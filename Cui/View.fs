@@ -6,9 +6,14 @@ open System.Collections.Generic
 open Chessie.ErrorHandling
 open RssReaderFs
 
+type PrintFormat =
+  | Count
+  | Titles
+  | Details
+
 type CommandResult =
   | Result                  of Result<unit, string>
-  | ResultAsync             of Result<Async<unit>, string>
+  | ArticleSeq              of Result<Async<Article [] * PrintFormat>, string>
   | SourceSeq               of seq<Source>
   | UnknownSourceName       of string
   | UnknownCommand          of list<string>
@@ -83,6 +88,12 @@ type View (rc: RssClient) =
     for src in srcs do 
       this.PrintSource(src)
 
+  member this.PrintArticles(items, fmt) =
+    match fmt with
+    | Count     -> this.PrintCount(items)
+    | Titles    -> this.PrintItemTitles(items)
+    | Details   -> this.PrintItems(items)
+
   member this.PrintMessages(msgs) =
     msgs |> List.iter (eprintfn "%s")
 
@@ -96,14 +107,15 @@ type View (rc: RssClient) =
     async {
       match result with
       | Result r -> this.PrintResult(r)
-      | ResultAsync r ->
+      | ArticleSeq r ->
           match r with
           | Pass a ->
-              do! a
-              printfn "Succeeded."
+              let! (items, fmt) = a
+              this.PrintArticles(items, fmt)
           | Warn (a, msgs) ->
-              do! a
+              let! (items, fmt) = a
               this.PrintMessages(msgs)
+              this.PrintArticles(items, fmt)
           | Fail msgs ->
               this.PrintMessages(msgs)
       | SourceSeq srcs ->

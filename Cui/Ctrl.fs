@@ -27,46 +27,28 @@ type Ctrl (rc: RssClient, view: View) =
       }
     in loop ()
 
-  member this.UpdateAndShowCount(srcName) =
+  member this.UpdateAndShow(srcName, fmt) =
     this.TryFindSource(srcName)
     |> Trial.lift (fun src -> async {
         let! items = rc.UpdateAsync(src)
-        do view.PrintCount(items)
+        return (items, fmt)
         })
-
-  member this.UpdateAndShowDetails(srcName) =
-    this.TryFindSource(srcName)
-    |> Trial.lift (fun src -> async {
-        let! items = rc.UpdateAsync(src)
-        do view.PrintItems(items)
-        })
-
-  member this.UpdateAndShowTitles(srcName) =
-    this.TryFindSource(srcName)
-    |> Trial.lift (fun src -> async {
-        let! items = rc.UpdateAsync(src)
-        do view.PrintItemTitles(items)
-        })
+    |> ArticleSeq
 
   member private this.ProcCommandImpl(command) =
       match command with
       | "update" :: srcName :: _ ->
-          this.UpdateAndShowCount(srcName) |> ResultAsync
-
+          this.UpdateAndShow(srcName, Count)
       | "update" :: _ ->
-          this.UpdateAndShowCount(AllSourceName) |> ResultAsync
-
+          this.UpdateAndShow(AllSourceName, Count)
       | "show" :: srcName :: _ ->
-          this.UpdateAndShowDetails(srcName) |> ResultAsync
-
+          this.UpdateAndShow(srcName, Details)
       | "show" :: _ ->
-          this.UpdateAndShowDetails(AllSourceName) |> ResultAsync
-          
+          this.UpdateAndShow(AllSourceName, Details)
       | "list" :: srcName :: _ ->
-          this.UpdateAndShowTitles(srcName) |> ResultAsync
-
+          this.UpdateAndShow(srcName, Titles)
       | "list" :: _ ->
-          this.UpdateAndShowTitles(AllSourceName) |> ResultAsync
+          this.UpdateAndShow(AllSourceName, Titles)
 
       | "feeds" :: _ ->
           rc.Reader |> RssReader.allFeeds
