@@ -1,4 +1,4 @@
-﻿namespace RssReaderFs
+﻿namespace RssReaderFs.Core
 
 open System.Data.Entity
 open SQLite.CodeFirst

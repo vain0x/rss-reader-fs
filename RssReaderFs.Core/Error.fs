@@ -1,4 +1,4 @@
-﻿namespace RssReaderFs
+﻿namespace RssReaderFs.Core
 
 module Error =
   let toString =

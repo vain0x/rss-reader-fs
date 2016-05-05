@@ -4,7 +4,7 @@ open System
 open System.IO
 open System.Collections.Generic
 open Chessie.ErrorHandling
-open RssReaderFs
+open RssReaderFs.Core
 
 type Ctrl (rc: RssReader, sendResult: CommandResult -> Async<unit>) =
   member this.TryFindSource(srcName) =

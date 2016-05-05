@@ -1,7 +1,7 @@
 ﻿[<AutoOpen>]
 module RssReaderFs.Wpf.ViewModel.Funcs
 
-open RssReaderFs
+open RssReaderFs.Core
 
 module ArticleRow =
   let empty =

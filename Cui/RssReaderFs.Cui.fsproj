@@ -470,8 +470,10 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
-    <ProjectReference Include="..\RssReaderFs\RssReaderFs.fsproj">
-      <Name>RssReaderFs</Name>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\RssReaderFs.Core\RssReaderFs.Core.fsproj">
+      <Name>RssReaderFs.Core</Name>
       <Project>{a7c8142e-4c32-4dc6-8787-aa9e293a3a7a}</Project>
       <Private>True</Private>
     </ProjectReference>

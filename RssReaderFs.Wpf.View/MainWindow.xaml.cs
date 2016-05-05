@@ -12,7 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using RssReaderFs;
+using RssReaderFs.Core;
 using RssReaderFs.Wpf;
 
 namespace RssReaderFs.Wpf.View
@@ -33,7 +33,7 @@ namespace RssReaderFs.Wpf.View
             this._sourceView.DataContext = _vm.SourceView;
             this._sourceTree.DataContext = _vm.SourceTree;
 
-            this._sourceTree.Items.Insert(0, RssReaderFs.Domain.AllSourceName);
+            this._sourceTree.Items.Insert(0, Domain.AllSourceName);
 
             _feedsWindow = new FeedsWindow(_vm.FeedsWindow);
         }

@@ -3,7 +3,7 @@
 open System
 open System.ComponentModel
 open System.Windows.Threading
-open RssReaderFs
+open RssReaderFs.Core
 
 type MainWindow() =
   inherit WpfViewModel.Base()

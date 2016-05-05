@@ -1,7 +1,7 @@
 ﻿namespace RssReaderFs.Cui
 
 open Chessie.ErrorHandling
-open RssReaderFs
+open RssReaderFs.Core
 
 [<AutoOpen>]
 module Types =

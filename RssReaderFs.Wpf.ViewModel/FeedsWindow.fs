@@ -6,7 +6,7 @@ open System.Windows
 open System.Windows.Input
 open System.Windows.Threading
 open Chessie.ErrorHandling
-open RssReaderFs
+open RssReaderFs.Core
 
 type AddFeedPanel(rr: RssReader, raiseError: seq<Error> -> unit) as this =
   inherit WpfViewModel.Base()

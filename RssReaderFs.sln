@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "RssReaderFs", "RssReaderFs\RssReaderFs.fsproj", "{A7C8142E-4C32-4DC6-8787-AA9E293A3A7A}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "RssReaderFs.Core", "RssReaderFs.Core\RssReaderFs.Core.fsproj", "{A7C8142E-4C32-4DC6-8787-AA9E293A3A7A}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "RssReaderFs.Cui", "Cui\RssReaderFs.Cui.fsproj", "{E37A1131-B10D-4DFD-B7DD-FF52A2397F52}"
 EndProject

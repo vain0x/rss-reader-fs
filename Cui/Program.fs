@@ -1,7 +1,7 @@
 ﻿namespace RssReaderFs.Cui
 
 open System
-open RssReaderFs
+open RssReaderFs.Core
 
 module Program =
   [<EntryPoint>]

@@ -132,9 +132,9 @@
       <Project>{b4209ccb-5293-4d88-8286-97d2e4f81dd0}</Project>
       <Name>RssReaderFs.Wpf.ViewModel</Name>
     </ProjectReference>
-    <ProjectReference Include="..\RssReaderFs\RssReaderFs.fsproj">
+    <ProjectReference Include="..\RssReaderFs.Core\RssReaderFs.Core.fsproj">
       <Project>{a7c8142e-4c32-4dc6-8787-aa9e293a3a7a}</Project>
-      <Name>RssReaderFs</Name>
+      <Name>RssReaderFs.Core</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

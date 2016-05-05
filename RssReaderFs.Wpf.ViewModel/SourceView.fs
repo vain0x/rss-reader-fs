@@ -1,7 +1,7 @@
 ﻿namespace RssReaderFs.Wpf.ViewModel
 
 open System
-open RssReaderFs
+open RssReaderFs.Core
 
 type SourceView(rc: RssReader) as this =
   inherit WpfViewModel.Base()
