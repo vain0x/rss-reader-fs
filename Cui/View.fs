@@ -76,23 +76,12 @@ type View (rc: RssClient) =
               (item.Date.ToString("G")) item.Title
             )
 
-  member this.PrintFeed(feed) =
-    printfn "%s" (feed |> RssFeed.nameUrl)
-
-  member this.PrintFeeds(feeds) =
-    feeds |> Array.iter (this.PrintFeed)
+  member this.PrintSource(src) =
+    printfn "%s" (rc.Reader |> RssReader.dumpSource src)
 
   member this.PrintSources(srcs) =
-    srcs
-    |> Seq.iter (fun src ->
-        printfn "%s" (src |> Source.name)
-        )
-
-  member this.PrintTag(tagName) =
-    let srcNames = rc.Reader |> RssReader.findTaggedSourceNames tagName
-    printfn "(tag %s %s)"
-      (string tagName)
-      (srcNames |> String.concat " ")
+    for src in srcs do 
+      this.PrintSource(src)
 
   member this.PrintResult(result) =
     match result with

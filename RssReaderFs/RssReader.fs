@@ -186,6 +186,15 @@ module RssReader =
       .Select(fun tag -> tag.TagName)
     |> Set.ofSeq
 
+  let dumpSource src rr =
+    match src with
+    | AllSource         -> AllSourceName
+    | Feed feed         -> sprintf "feed %s %s" feed.Name feed.Url
+    | TwitterUser tu    -> sprintf "twitter-user %s" tu.ScreenName
+    | TagSource tagName ->
+        let srcNames = rr |> findTaggedSourceNames tagName
+        in sprintf "tag %s %s" tagName (srcNames |> String.concat " ")
+
   /// Note: The read date of items already read can't be updated.
   let readItem (item: Article) rr =
     (rr |> set<ReadLog>).Find(item.Id)

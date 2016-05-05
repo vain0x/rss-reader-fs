@@ -78,7 +78,7 @@ type Ctrl (rc: RssClient, view: View) =
           do! this.UpdateAndShowTitles(AllSourceName)
 
       | "feeds" :: _ ->
-          do view.PrintFeeds(rc.Reader |> RssReader.allFeeds)
+          do view.PrintSources(rc.Reader |> RssReader.allFeeds |> Array.map (Source.ofFeed))
 
       | "feed" :: name :: url :: _ ->
           let feed      = RssFeed.create name url
@@ -111,13 +111,13 @@ type Ctrl (rc: RssClient, view: View) =
       | "tags" :: srcName :: _ ->
           rc.Reader
           |> RssReader.tagSetOf srcName
-          |> Set.iter (fun tagName ->
-              view.PrintTag(tagName)
-              )
+          |> Seq.map (Source.ofTag)
+          |> view.PrintSources
 
       | "tags" :: _ ->
           rc.Reader |> RssReader.allTags
-          |> Set.iter (fun tagName -> view.PrintTag(tagName))
+          |> Seq.map (Source.ofTag)
+          |> view.PrintSources
 
       | _ ->
           view.PrintUnknownCommand(command)
