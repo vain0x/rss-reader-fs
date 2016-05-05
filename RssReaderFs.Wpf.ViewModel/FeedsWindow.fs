@@ -8,23 +8,18 @@ open System.Windows.Threading
 open Chessie.ErrorHandling
 open RssReaderFs
 
-type AddFeedPanel(rc: RssClient) as this =
+type AddFeedPanel(rc: RssClient, raiseError: seq<string> -> unit) as this =
   inherit WpfViewModel.Base()
 
   let mutable error = ""
 
   member val Name   = "" with get, set
   member val Url    = "" with get, set
-  member this.Error
-    with get () = error
-    and  set v  =
-      error <- v
-      this.RaisePropertyChanged("Error")
 
   member this.Reset() =
     this.Name     <- ""
     this.Url      <- ""
-    this.Error    <- ""
+    raiseError []
 
   member val AddFeedCommand =
     Command.create
@@ -36,14 +31,44 @@ type AddFeedPanel(rc: RssClient) as this =
         | Ok ((), _) ->
             this.Reset() |> ignore
         | Bad msgs ->
-            this.Error <- msgs |> String.concat (Environment.NewLine)
+            msgs |> raiseError
         )
+    |> fst
+
+type FollowPanel(rc: RssClient, raiseError: seq<string> -> unit) as this =
+  inherit WpfViewModel.Base()
+
+  member val Name = "" with get, set
+
+  member this.Reset() =
+    this.Name <- ""
+    raiseError []
+
+  member val FollowCommand =
+    Command.create
+      (fun _ -> true)
+      (fun _ ->
+          match rc.TryAddSource(RssSource.ofTwitterUser this.Name) with
+          | Ok ((), _) ->
+              this.Reset()
+          | Bad msgs ->
+              raiseError msgs
+          )
     |> fst
 
 type FeedsWindow(rc: RssClient) as this =
   inherit WpfViewModel.DialogBase<unit>()
 
-  let addFeedPanel = AddFeedPanel(rc)
+  let mutable error = ""
+
+  let raiseError msgs =
+    error <- msgs |> String.concat Environment.NewLine
+    this.RaisePropertyChanged("Error")
+    this.RaisePropertyChanged("ErrorVisibility")
+
+  let addFeedPanel = AddFeedPanel(rc, raiseError)
+
+  let followPanel = FollowPanel(rc, raiseError)
   
   do rc.Changed |> Observable.add (fun () ->
       this.RaisePropertyChanged("Feeds")
@@ -52,4 +77,16 @@ type FeedsWindow(rc: RssClient) as this =
   member this.Feeds =
     rc.Reader |> RssReader.allFeeds
 
+  member this.TwitterUsers =
+    rc.Reader |> RssReader.twitterUsers
+
   member this.AddFeedPanel = addFeedPanel
+
+  member this.FollowPanel = followPanel 
+
+  member this.Error = error
+
+  member this.ErrorVisibility =
+    if String.IsNullOrWhiteSpace(this.Error)
+    then Visibility.Collapsed
+    else Visibility.Visible

@@ -1,4 +1,5 @@
 source https://www.nuget.org/api/v2
 
+nuget CoreTweet
 nuget FsYaml
 github fsprojects/Chessie src/Chessie/ErrorHandling.fs

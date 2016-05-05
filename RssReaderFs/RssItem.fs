@@ -31,3 +31,12 @@ module RssItem =
       xml
       |> Xml.selectNodes "rss/channel/item"
       |> Seq.choose tryBuildItem
+
+  let ofTweet (status: CoreTweet.Status) =
+    {
+      Title       = status.Text
+      Desc        = status.Text |> Some
+      Link        = status |> Twitter.Status.permanentLink |> Some
+      Date        = status.CreatedAt.DateTime
+      Url         = "https://twitter.com/" + status.User.ScreenName
+    }

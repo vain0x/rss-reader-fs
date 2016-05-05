@@ -1,10 +1,14 @@
 NUGET
   remote: https://www.nuget.org/api/v2
   specs:
+    CoreTweet (0.6.2.277)
+      Newtonsoft.Json (>= 4.5.11) - framework: >= net35
+      Newtonsoft.Json (>= 6.0.8) - framework: net10, net11, net20, net30
     FSharp.Configuration (0.5.12)
     FsYaml (2.1)
       FSharp.Configuration (>= 0.4.10)
       YamlDotNet (>= 3.8)
+    Newtonsoft.Json (8.0.3) - framework: >= net35
     YamlDotNet (3.8)
 GITHUB
   remote: fsprojects/Chessie

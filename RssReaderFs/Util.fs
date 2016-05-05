@@ -10,6 +10,8 @@ module Misc =
 
   let flip f x y = f y x
 
+  let konst x _ = x
+
   let replace src dst self =
     if self = src
     then dst
@@ -177,6 +179,9 @@ module Async =
 
 module Trial =
   open Chessie.ErrorHandling
+
+  let ignore self =
+    self |> Trial.lift (konst ())
 
   let failf fmt =
     kprintf fail fmt
