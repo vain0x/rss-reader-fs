@@ -3,16 +3,14 @@
 open System
 open System.IO
 open System.Collections.Generic
+open Chessie.ErrorHandling
 open RssReaderFs
 
 type Ctrl (rc: RssClient, view: View) =
   member this.TryFindSource(srcName) =
     rc.Reader
     |> RssReader.tryFindSource srcName
-    |> tap (fun opt ->
-        if opt |> Option.isNone then
-          view.PrintUnknownSourceNameError(srcName)
-        )
+    |> Trial.failIfNone ("Unknown source name:" + srcName)
 
   member this.CheckNewItemsAsync(?timeout, ?thresh) =
     let timeout = defaultArg timeout  (5 * 60 * 1000)  // 5 min
@@ -30,98 +28,90 @@ type Ctrl (rc: RssClient, view: View) =
     in loop ()
 
   member this.UpdateAndShowCount(srcName) =
-    async {
-      match this.TryFindSource(srcName) with
-      | None -> ()
-      | Some src ->
-          let! items = rc.UpdateAsync(src)
-          do view.PrintCount(items)
-    }
+    this.TryFindSource(srcName)
+    |> Trial.lift (fun src -> async {
+        let! items = rc.UpdateAsync(src)
+        do view.PrintCount(items)
+        })
 
   member this.UpdateAndShowDetails(srcName) =
-    async {
-      match this.TryFindSource(srcName) with
-      | None -> ()
-      | Some src ->
-          let! items = rc.UpdateAsync(src)
-          do view.PrintItems(items)
-    }
+    this.TryFindSource(srcName)
+    |> Trial.lift (fun src -> async {
+        let! items = rc.UpdateAsync(src)
+        do view.PrintItems(items)
+        })
 
   member this.UpdateAndShowTitles(srcName) =
-    async {
-      match this.TryFindSource(srcName) with
-      | None -> ()
-      | Some src ->
-          let! items = rc.UpdateAsync(src)
-          do view.PrintItemTitles(items)
-    }
+    this.TryFindSource(srcName)
+    |> Trial.lift (fun src -> async {
+        let! items = rc.UpdateAsync(src)
+        do view.PrintItemTitles(items)
+        })
 
   member private this.ProcCommandImpl(command) =
-    async {
       match command with
       | "update" :: srcName :: _ ->
-          do! this.UpdateAndShowCount(srcName)
+          this.UpdateAndShowCount(srcName) |> ResultAsync
 
       | "update" :: _ ->
-          do! this.UpdateAndShowCount(AllSourceName)
+          this.UpdateAndShowCount(AllSourceName) |> ResultAsync
 
       | "show" :: srcName :: _ ->
-          do! this.UpdateAndShowDetails(srcName)
+          this.UpdateAndShowDetails(srcName) |> ResultAsync
 
       | "show" :: _ ->
-          do! this.UpdateAndShowDetails(AllSourceName)
+          this.UpdateAndShowDetails(AllSourceName) |> ResultAsync
           
       | "list" :: srcName :: _ ->
-          do! this.UpdateAndShowTitles(srcName)
+          this.UpdateAndShowTitles(srcName) |> ResultAsync
 
       | "list" :: _ ->
-          do! this.UpdateAndShowTitles(AllSourceName)
+          this.UpdateAndShowTitles(AllSourceName) |> ResultAsync
 
       | "feeds" :: _ ->
-          do view.PrintSources(rc.Reader |> RssReader.allFeeds |> Array.map (Source.ofFeed))
+          rc.Reader |> RssReader.allFeeds
+          |> Seq.map (Source.ofFeed)
+          |> SourceSeq
 
       | "feed" :: name :: url :: _ ->
           let feed      = RssFeed.create name url
           let result    = rc.TryAddSource(feed |> Source.ofFeed)
-          do view.PrintResult(result)
+          in result |> Result
 
       | "twitter-user" :: name :: _ ->
           let twitterUser = Entity.TwitterUser(ScreenName = name, ReadDate = DateTime.Now)
-          do view.PrintResult(rc.TryAddSource(Source.ofTwitterUser twitterUser))
+          let src         = Source.ofTwitterUser twitterUser
+          let result      = rc.TryAddSource(src)
+          in result |> Result
 
       | "remove" :: name :: _ ->
-          let result    = rc.TryRemoveSource(name)
-          do view.PrintResult(result)
+          rc.TryRemoveSource(name) |> Result
 
       | "rename" :: oldName :: newName :: _ ->
-          let result    = rc.RenameSource(oldName, newName)
-          do view.PrintResult(result)
+          rc.RenameSource(oldName, newName) |> Result
 
       | "sources" :: _ ->
-          do view.PrintSources(rc.Reader |> RssReader.allAtomicSources)
+          rc.Reader |> RssReader.allAtomicSources |> SourceSeq
 
       | "tag" :: tagName :: srcName :: _ ->
-          let result    = rc.AddTag(tagName, srcName)
-          do view.PrintResult(result)
+          rc.AddTag(tagName, srcName) |> Result
 
       | "detag" :: tagName :: srcName :: _ ->
-          let result    = rc.RemoveTag(tagName, srcName)
-          do view.PrintResult(result)
+          rc.RemoveTag(tagName, srcName) |> Result
 
       | "tags" :: srcName :: _ ->
           rc.Reader
           |> RssReader.tagSetOf srcName
           |> Seq.map (Source.ofTag)
-          |> view.PrintSources
+          |> SourceSeq
 
       | "tags" :: _ ->
           rc.Reader |> RssReader.allTags
           |> Seq.map (Source.ofTag)
-          |> view.PrintSources
+          |> SourceSeq
 
       | _ ->
-          view.PrintUnknownCommand(command)
-    }
+          UnknownCommand command
 
   member this.ProcCommand(command) =
     lockConsole (fun () -> this.ProcCommandImpl(command))
@@ -137,7 +127,8 @@ type Ctrl (rc: RssClient, view: View) =
           let command =
             line.Split([|' '|], StringSplitOptions.RemoveEmptyEntries)
             |> Array.toList
-          do! this.ProcCommand(command)
+          let result = this.ProcCommand(command)
+          do! view.PrintCommandResult(result)
           return! kont
     }
 

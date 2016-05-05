@@ -6,16 +6,16 @@ open System.Collections.Generic
 open Chessie.ErrorHandling
 open RssReaderFs
 
+type CommandResult =
+  | Result                  of Result<unit, string>
+  | ResultAsync             of Result<Async<unit>, string>
+  | SourceSeq               of seq<Source>
+  | UnknownSourceName       of string
+  | UnknownCommand          of list<string>
+
 type View (rc: RssClient) =
   let reader () =
     rc.Reader
-
-  member this.PrintUnknownSourceNameError(srcName) =
-    eprintfn "Unknown source name: %s" srcName
-
-  member this.PrintUnknownCommand(command: list<string>) =
-    eprintfn "Unknown command: %s"
-      (String.Join(" ", command))
 
   member this.PrintCount(items) =
     let len = items |> Array.length
@@ -83,9 +83,33 @@ type View (rc: RssClient) =
     for src in srcs do 
       this.PrintSource(src)
 
+  member this.PrintMessages(msgs) =
+    msgs |> List.iter (eprintfn "%s")
+
   member this.PrintResult(result) =
     match result with
-    | Pass _ -> printfn "Succeeded."
-    | Warn (_, msgs)
-    | Fail msgs ->
-        msgs |> List.iter (eprintfn "%s")
+    | Pass () -> printfn "Succeeded."
+    | Warn ((), msgs)
+    | Fail msgs -> this.PrintMessages(msgs)
+
+  member this.PrintCommandResult(result) =
+    async {
+      match result with
+      | Result r -> this.PrintResult(r)
+      | ResultAsync r ->
+          match r with
+          | Pass a ->
+              do! a
+              printfn "Succeeded."
+          | Warn (a, msgs) ->
+              do! a
+              this.PrintMessages(msgs)
+          | Fail msgs ->
+              this.PrintMessages(msgs)
+      | SourceSeq srcs ->
+          this.PrintSources(srcs)
+      | UnknownSourceName srcName ->
+          eprintfn "Unknown source name: %s" srcName
+      | UnknownCommand command ->
+          eprintfn "Unknown command: %s" (command |> String.concat " ")
+    }

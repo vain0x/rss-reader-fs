@@ -21,7 +21,7 @@ module Program =
           rrc.Interactive()
           |> Async.RunSynchronously
       | _ ->
-          rrc.ProcCommand(argv |> Array.toList)
+          view.PrintCommandResult(rrc.ProcCommand(argv |> Array.toList))
           |> Async.RunSynchronously
     finally
       rc.Save()
