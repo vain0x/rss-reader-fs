@@ -30,6 +30,7 @@ namespace RssReaderFs.Wpf.View
             _vm = vm;
             this.DataContext = _vm;
             this.addFeedExpander.DataContext = _vm.AddFeedPanel;
+            this.followExpander.DataContext = _vm.FollowPanel;
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)

@@ -40,10 +40,32 @@ type AddFeedPanel(rc: RssClient) as this =
         )
     |> fst
 
+type FollowPanel(rc: RssClient) as this =
+  inherit WpfViewModel.Base()
+
+  member val Name = "" with get, set
+
+  member this.Reset() =
+    this.Name <- ""
+
+  member val FollowCommand =
+    Command.create
+      (fun _ -> true)
+      (fun _ ->
+          match rc.TryAddSource(RssSource.ofTwitterUser this.Name) with
+          | Ok ((), _) ->
+              this.Reset()
+          | Bad msgs ->
+              () // Error に表示する
+          )
+    |> fst
+
 type FeedsWindow(rc: RssClient) as this =
   inherit WpfViewModel.DialogBase<unit>()
 
   let addFeedPanel = AddFeedPanel(rc)
+
+  let followPanel = FollowPanel(rc)
   
   do rc.Changed |> Observable.add (fun () ->
       this.RaisePropertyChanged("Feeds")
@@ -52,4 +74,9 @@ type FeedsWindow(rc: RssClient) as this =
   member this.Feeds =
     rc.Reader |> RssReader.allFeeds
 
+  member this.TwitterUsers =
+    rc.Reader |> RssReader.twitterUsers
+
   member this.AddFeedPanel = addFeedPanel
+
+  member this.FollowPanel = followPanel 

@@ -31,6 +31,14 @@ module RssReader =
         )
     |> Seq.toArray
 
+  let twitterUsers rr =
+    rr |> sourceMap |> Seq.choose (fun (KeyValue (_, v)) ->
+        match v with
+        | TwitterUser(name, _) -> Some name
+        | _ -> None
+        )
+    |> Seq.toArray
+
   /// The maximum source
   let allFeedSource rr: RssSource =
     let allUnion =
