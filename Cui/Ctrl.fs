@@ -60,7 +60,7 @@ type Ctrl (rc: RssReader, sendResult: CommandResult -> Async<unit>) =
           in result |> Result
 
       | "twitter-user" :: name :: _ ->
-          let twitterUser = Entity.TwitterUser(ScreenName = name, ReadDate = DateTime.Now)
+          let twitterUser = Entity.TwitterUser(ScreenName = name)
           let src         = Source.ofTwitterUser twitterUser
           let result      = rc |> RssReader.tryAddSource src
           in result |> Result
