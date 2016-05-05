@@ -41,7 +41,7 @@ module Entity =
     [<Key>]
     member val ScreenName = "" with get, set
 
-    member val ReadDate = DateTime.Now with get, set
+    member val SinceId = 0L with get, set
 
   [<AllowNullLiteral>]
   type RssFeed() =

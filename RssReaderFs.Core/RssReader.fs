@@ -225,8 +225,11 @@ module RssReader =
           let! items = feed |> RssFeed.downloadAsync
           return items |> Seq.toArray
       | TwitterUser tu ->
-          let! statuses   = rr.TwitterToken |> Twitter.userTweetsAsync (tu.ScreenName)
+          let! statuses   = rr.TwitterToken |> Twitter.userTweetsAsync (tu.ScreenName) (tu.SinceId)
           let items       = [| for status in statuses -> Article.ofTweet status |]
+          if items |> Array.length > 0 then
+            let maxId = statuses |> Seq.map (fun status -> status.Id) |> Seq.max
+            do tu.SinceId <- max maxId tu.SinceId
           return items
       | TagSource tagName ->
           let! itemArrayArray =
