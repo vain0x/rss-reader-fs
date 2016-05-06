@@ -96,6 +96,21 @@ module RssReader =
       yield! rr |> twitterUsers   |> Seq.map Source.ofTwitterUser
     }
 
+  let private addSource (ctx: DbCtx) =
+    ctx.Set<Entity.Source>().Add(Entity.Source())
+    |> DbCtx.saving ctx
+    |> (fun src -> src.Id)
+
+  let private addFeed (feed: RssFeed) rr =
+    let srcId = addSource (rr |> ctx)
+    let ()    = feed.SourceId <- srcId
+    (rr |> set<RssFeed>).Add(feed) |> ignore
+
+  let private addTwitterUser (tu: TwitterUser) rr =
+    let srcId = addSource (rr |> ctx)
+    let ()    = tu.SourceId <- srcId
+    (rr |> set<TwitterUser>).Add(tu) |> ignore
+
   let tryAddSource (src: Source) rr: Result<unit, Error> =
     trial {
       let srcName = src |> Source.name
@@ -107,8 +122,8 @@ module RssReader =
           match src with
           | AllSource
           | TagSource _     -> () // never
-          | Feed feed       -> (rr |> set<RssFeed>).Add(feed) |> ignore
-          | TwitterUser tw  -> (rr |> set<TwitterUser>).Add(tw) |> ignore
+          | Feed feed       -> rr |> addFeed feed
+          | TwitterUser tw  -> rr |> addTwitterUser tw
           (rr |> ctx).SaveChanges() |> ignore
           |> raisingChanged rr
     }

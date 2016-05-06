@@ -37,8 +37,13 @@ module Entity =
     member val Date = DateTime.Now with get, set
 
   [<AllowNullLiteral>]
-  type TwitterUser() =
+  type Source() =
     inherit EntityWithId()
+
+  [<AllowNullLiteral>]
+  type TwitterUser() =
+    [<Key>]
+    member val SourceId = 0L with get, set
 
     [<Index(IsUnique = true)>]
     member val ScreenName = "" with get, set
@@ -47,7 +52,8 @@ module Entity =
 
   [<AllowNullLiteral>]
   type RssFeed() =
-    inherit EntityWithId()
+    [<Key>]
+    member val SourceId = 0L with get, set
 
     [<Required; Index(IsUnique = true)>]
     member val Name = "" with get, set

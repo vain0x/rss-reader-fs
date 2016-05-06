@@ -11,6 +11,7 @@ module Database =
       // configure tables
       mb.Entity<Article       >() |> ignore
       mb.Entity<ReadLog       >() |> ignore
+      mb.Entity<Source        >() |> ignore
       mb.Entity<TwitterUser   >() |> ignore
       mb.Entity<RssFeed       >() |> ignore
       mb.Entity<Tag           >() |> ignore
