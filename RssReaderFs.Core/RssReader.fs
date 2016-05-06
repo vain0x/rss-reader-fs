@@ -212,6 +212,19 @@ module RssReader =
       )
     |> raisingChanged rr
 
+  let unreadItems rr: Article [] =
+    let logs = rr |> set<ReadLog>
+    query {
+      for article in (rr |> set<Article>) do
+      where (not (query {
+        for log in logs do
+        where (article.Id = log.ArticleId)
+        exists true
+        }))
+      select article
+    }
+    |> Seq.toArray
+
   let rec fetchItemsAsync (src: Source) rr: Async<Article []> =
     async {
       match src with
