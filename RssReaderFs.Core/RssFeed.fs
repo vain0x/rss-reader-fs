@@ -12,15 +12,15 @@ module RssFeed =
     sprintf "%s <%s>"
       feed.Name (feed.Url)
 
-  let downloadAsync (feed: RssFeed) =
+  let downloadAsync url =
     async {
-      let url = feed.Url
       let! xml = Net.downloadXmlAsync(url)
       return (xml |> Article.parseXml url)
     }
 
-  let validate feed =
+  let validate url =
     Trial.runRaisable (fun () ->
-      feed |> downloadAsync |> Async.RunSynchronously
+      url |> downloadAsync |> Async.RunSynchronously
       )
     |> Trial.lift (fun _ -> ())
+    |> Trial.mapFailure (List.map ExnError)

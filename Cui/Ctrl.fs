@@ -67,14 +67,11 @@ type Ctrl (rc: RssReader, sendResult: CommandResult -> Async<unit>) =
           |> SourceSeq
 
       | "feed" :: name :: url :: _ ->
-          let feed      = RssFeed.create name url
-          let result    = rc |> RssReader.tryAddSource (feed |> Source.ofFeed)
+          let result    = rc |> RssReader.addFeed name url
           in result |> Result
 
       | "twitter-user" :: name :: _ ->
-          let twitterUser = Entity.TwitterUser(ScreenName = name)
-          let src         = Source.ofTwitterUser twitterUser
-          let result      = rc |> RssReader.tryAddSource src
+          let result      = rc |> RssReader.addTwitterUser name
           in result |> Result
 
       | "remove" :: name :: _ ->

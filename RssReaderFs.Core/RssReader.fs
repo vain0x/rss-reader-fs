@@ -96,36 +96,36 @@ module RssReader =
       yield! rr |> twitterUsers   |> Seq.map Source.ofTwitterUser
     }
 
-  let private addSource (ctx: DbCtx) =
-    ctx.Set<Entity.Source>().Add(Entity.Source())
-    |> DbCtx.saving ctx
-    |> (fun src -> src.Id)
-
-  let private addFeed (feed: RssFeed) rr =
-    let srcId = addSource (rr |> ctx)
-    let ()    = feed.SourceId <- srcId
-    (rr |> set<RssFeed>).Add(feed) |> ignore
-
-  let private addTwitterUser (tu: TwitterUser) rr =
-    let srcId = addSource (rr |> ctx)
-    let ()    = tu.SourceId <- srcId
-    (rr |> set<TwitterUser>).Add(tu) |> ignore
-
-  let tryAddSource (src: Source) rr: Result<unit, Error> =
+  let private addSource srcName rr =
     trial {
-      let srcName = src |> Source.name
       match rr |> tryFindSource srcName with
       | Some _ ->
           return! Trial.fail (SourceAlreadyExists srcName)
       | None ->
-          do! src |> Source.validate rr |> Trial.mapFailure (List.map ExnError)
-          match src with
-          | AllSource
-          | TagSource _     -> () // never
-          | Feed feed       -> rr |> addFeed feed
-          | TwitterUser tw  -> rr |> addTwitterUser tw
-          (rr |> ctx).SaveChanges() |> ignore
-          |> raisingChanged rr
+          return
+            (rr |> set<Entity.Source>).Add(Entity.Source())
+            |> DbCtx.saving (rr |> ctx)
+            |> (fun src -> src.Id)
+    }
+
+  let addFeed name url rr =
+    trial {
+      do! RssFeed.validate url
+      let! srcId    = rr |> addSource name
+      let feed      = RssFeed(SourceId = srcId, Name = name, Url = url)
+      (rr |> set<RssFeed>).Add(feed) |> ignore
+      |> DbCtx.saving (rr |> ctx)
+      |> raisingChanged rr
+    }
+
+  let addTwitterUser name rr =
+    trial {
+      do! rr.TwitterToken |> Twitter.validate name
+      let! srcId    = rr |> addSource name
+      let tu        = Entity.TwitterUser(SourceId = srcId, ScreenName = name)
+      (rr |> set<TwitterUser>).Add(tu) |> ignore
+      |> DbCtx.saving (rr |> ctx)
+      |> raisingChanged rr
     }
 
   let tryRemoveSource (srcName: string) rr: Result<unit, Error> =
@@ -250,7 +250,7 @@ module RssReader =
             |> Async.Parallel
           return itemArrayArray |> Array.collect id
       | Feed feed ->
-          let! items = feed |> RssFeed.downloadAsync
+          let! items = feed.Url |> RssFeed.downloadAsync
           return items |> Seq.toArray
       | TwitterUser tu ->
           let! statuses   = rr.TwitterToken |> Twitter.userTweetsAsync (tu.ScreenName) (tu.SinceId)

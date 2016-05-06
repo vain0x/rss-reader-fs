@@ -34,6 +34,11 @@ module Twitter =
     with
     | _ -> fail (Exception("No user found."))
 
+  let validate (name: string) token =
+    tryFindUser name token
+    |> Trial.ignore
+    |> Trial.mapFailure (List.map ExnError)
+
   module Status =
     let permanentLink (status: Status) =
       sprintf "https://twitter.com/%s/status/%d" status.User.ScreenName status.Id

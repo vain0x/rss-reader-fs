@@ -21,14 +21,3 @@ module Source =
     | Feed feed         -> feed.Name
     | TwitterUser tu    -> tu.ScreenName
     | TagSource tagName -> tagName
-
-  let validate (rr: RssReader) =
-    function
-    | AllSource
-    | TagSource _
-      -> pass ()
-    | Feed feed ->
-        feed |> RssFeed.validate
-    | TwitterUser tu ->
-        rr.TwitterToken |> Twitter.tryFindUser (tu.ScreenName)
-        |> Trial.ignore
