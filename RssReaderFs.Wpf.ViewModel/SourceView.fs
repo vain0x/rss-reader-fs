@@ -12,7 +12,7 @@ type SourceView(rc: RssReader) as this =
     rc |> RssReader.tryFindSource srcName
 
   let mutable items =
-    ([||]: Article [])
+    (rc |> RssReader.unreadItems)
 
   let mutable selectedIndex = -1
 
