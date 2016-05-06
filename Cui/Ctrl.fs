@@ -7,10 +7,20 @@ open Chessie.ErrorHandling
 open RssReaderFs.Core
 
 type Ctrl (rc: RssReader, sendResult: CommandResult -> Async<unit>) =
+  let mutable unreadItems =
+    rc |> RssReader.unreadItems
+
   member this.TryFindSource(srcName) =
     rc
     |> RssReader.tryFindSource srcName
     |> Trial.failIfNone (srcName |> SourceDoesNotExist)
+
+  member this.UpdateAsync(src) =
+    async {
+      let! newItems = rc |> RssReader.updateAsync src
+      if newItems |> Array.isEmpty |> not then
+        unreadItems <- Array.append unreadItems newItems
+    }
 
   member this.CheckNewItemsAsync(?timeout, ?thresh) =
     let timeout = defaultArg timeout  (5 * 60 * 1000)  // 5 min
@@ -18,9 +28,9 @@ type Ctrl (rc: RssReader, sendResult: CommandResult -> Async<unit>) =
 
     let rec loop () =
       async {
-        let! newItems = rc |> RssReader.updateAsync Source.all
-        if newItems |> Array.isEmpty |> not then
-          do! (newItems, Count) |> Async.inject |> Trial.inject |> ArticleSeq |> sendResult
+        do! this.UpdateAsync(Source.all)
+        if unreadItems |> Array.isEmpty |> not then
+          do! (unreadItems, Count) |> Async.inject |> Trial.inject |> ArticleSeq |> sendResult
         do! Async.Sleep(timeout)
         return! loop ()
       }
@@ -29,8 +39,10 @@ type Ctrl (rc: RssReader, sendResult: CommandResult -> Async<unit>) =
   member this.UpdateAndShow(srcName, fmt) =
     this.TryFindSource(srcName)
     |> Trial.lift (fun src -> async {
-        let! items = rc |> RssReader.updateAsync src
-        return (items, fmt)
+        do! this.UpdateAsync(src)
+        return
+          (unreadItems, fmt)
+          |> tap (fun _ -> if fmt <> Count then unreadItems <- [||])
         })
     |> ArticleSeq
 
