@@ -38,7 +38,9 @@ module Entity =
 
   [<AllowNullLiteral>]
   type TwitterUser() =
-    [<Key>]
+    inherit EntityWithId()
+
+    [<Index(IsUnique = true)>]
     member val ScreenName = "" with get, set
 
     member val SinceId = 0L with get, set

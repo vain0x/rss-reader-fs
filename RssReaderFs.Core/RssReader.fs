@@ -60,7 +60,7 @@ module RssReader =
     |> Option.ofObj
 
   let tryFindTwitterUser (name: string) rr: option<TwitterUser> =
-    (rr |> set<TwitterUser>).Find(name)
+    (rr |> set<TwitterUser>).FirstOrDefault(fun tu -> tu.ScreenName = name)
     |> Option.ofObj
     
   let findTaggedSourceNames tagName rr: Set<string> =
