@@ -49,7 +49,7 @@ module RssReader =
   let allTags rr: Set<string> =
     rr |> set<Tag> |> Seq.map (fun tag -> tag.TagName) |> Set.ofSeq
 
-  let twitterUsers rr: TwitterUser [] =
+  let allTwitterUsers rr: TwitterUser [] =
     rr |> set<TwitterUser> |> Array.ofSeq
 
   let tryFindFeed url rr: option<RssFeed> =
@@ -89,8 +89,8 @@ module RssReader =
 
   let allAtomicSources rr: seq<DerivedSource> =
     seq {
-      yield! rr |> allFeeds       |> Seq.map Source.ofFeed
-      yield! rr |> twitterUsers   |> Seq.map Source.ofTwitterUser
+      yield! rr |> allFeeds          |> Seq.map Source.ofFeed
+      yield! rr |> allTwitterUsers   |> Seq.map Source.ofTwitterUser
     }
 
   let private addSource srcName rr =
