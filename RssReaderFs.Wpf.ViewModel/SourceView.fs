@@ -9,7 +9,7 @@ type SourceView(rc: RssReader) as this =
   let mutable srcName = AllSourceName
 
   let srcOpt () =
-    Source.tryFindSource (rc |> RssReader.ctx) srcName
+    Source.tryFindByName (rc |> RssReader.ctx) srcName
 
   let mutable items =
     (rc |> RssReader.unreadItems)
@@ -38,7 +38,7 @@ type SourceView(rc: RssReader) as this =
     
   let updateAsync () =
     async {
-      match Source.tryFindSource (rc |> RssReader.ctx) srcName with
+      match Source.tryFindByName (rc |> RssReader.ctx) srcName with
       | None -> ()
       | Some src ->
           let! newItems = rc |> RssReader.updateAsync src

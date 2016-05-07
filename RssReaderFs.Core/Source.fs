@@ -64,7 +64,7 @@ module Source =
     then None
     else ofTag tagName |> Some
 
-  let tryFindSource ctx (srcName: string): option<DerivedSource> =
+  let tryFindByName ctx (srcName: string): option<DerivedSource> =
     if srcName = AllSourceName
     then all |> Some
     else

@@ -50,7 +50,7 @@ module RssReader =
 
   let private addSource srcName rr =
     trial {
-      match Source.tryFindSource (rr |> ctx) srcName with
+      match Source.tryFindByName (rr |> ctx) srcName with
       | Some _ ->
           return! Trial.fail (SourceAlreadyExists srcName)
       | None ->
@@ -82,7 +82,7 @@ module RssReader =
 
   let tryRemoveSource (srcName: string) rr: Result<unit, Error> =
     trial {
-      match Source.tryFindSource (rr |> ctx) srcName with
+      match Source.tryFindByName (rr |> ctx) srcName with
       | Some src ->
           match src with
           | AllSource ->
@@ -103,8 +103,8 @@ module RssReader =
   let renameSource (oldName: string) (newName: string) rr: Result<unit, Error> =
     trial {
       match
-        ( Source.tryFindSource (rr |> ctx) oldName
-        , Source.tryFindSource (rr |> ctx) newName
+        ( Source.tryFindByName (rr |> ctx) oldName
+        , Source.tryFindByName (rr |> ctx) newName
         )
         with
       | (Some src, None) ->
@@ -130,7 +130,7 @@ module RssReader =
   /// TODO: 循環的なタグづけを禁止する
   let addTag (tagName: TagName) (srcName: string) rr: Result<unit, Error> =
     trial {
-      match Source.tryFindSource (rr |> ctx) tagName with
+      match Source.tryFindByName (rr |> ctx) tagName with
       | Some (TagSource _)
       | None ->
           let tag = Tag(TagName = tagName, SourceName = srcName)
@@ -216,7 +216,7 @@ module RssReader =
           let! itemArrayArray =
             Source.findTaggedSourceNames (rr |> ctx) tagName
             |> Seq.choose (fun src ->
-                Source.tryFindSource (rr |> ctx) src
+                Source.tryFindByName (rr |> ctx) src
                 |> Option.map (fun src -> rr |> fetchItemsAsync src))
             |> Async.Parallel
           return itemArrayArray |> Array.collect id
