@@ -27,6 +27,9 @@ module DatabaseExtension =
   type DbCtx = Database.SampleDbContext
 
 module DbCtx =
+  let set<'t when 't: not struct and 't: null> (ctx: DbCtx) =
+    ctx.Set<'t>()
+
   let saving (ctx: DbCtx) x =
     x |> tap (fun _ -> ctx.SaveChanges() |> ignore)
 

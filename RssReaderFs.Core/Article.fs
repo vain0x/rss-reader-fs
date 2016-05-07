@@ -15,8 +15,8 @@ module Article =
       )
 
   /// Return the id of the item if it's been already inserted; None otherwise.
-  let tryFindId (ctx: DbCtx) (item: Article) =
-    ctx.Set<Article>().FirstOrDefault
+  let tryFindId ctx (item: Article) =
+    (ctx |> DbCtx.set<Article>).FirstOrDefault
       (fun item' ->
            item'.Url   = item.Url
         && item'.Date  = item.Date
@@ -27,15 +27,15 @@ module Article =
   /// Insert the item into the table.
   /// Doesn't save, so Id's are invalid until db context is saved.
   /// Returns if it's actually inserted or not.
-  let insert (ctx: DbCtx) (item: Article) =
+  let insert ctx (item: Article) =
     if item |> tryFindId ctx |> Option.isNone then
-      ctx.Set<Article>().Add(item) |> ignore
+      (ctx |> DbCtx.set<Article>).Add(item) |> ignore
       true
     else
       false
 
-  let readDate (ctx: DbCtx) itemId =
-    ctx.Set<ReadLog>().Find(itemId) |> Option.ofObj
+  let readDate ctx itemId =
+    (ctx |> DbCtx.set<ReadLog>).Find(itemId) |> Option.ofObj
 
   let hasAlreadyBeenRead ctx itemId =
     itemId |> readDate ctx |> Option.isSome

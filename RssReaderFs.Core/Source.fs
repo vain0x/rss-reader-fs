@@ -26,14 +26,14 @@ module Source =
   let allSource ctx =
     all
 
-  let allFeeds (ctx: DbCtx): RssFeed [] =
-    (ctx.Set<RssFeed>()) |> Array.ofSeq
+  let allFeeds ctx: RssFeed [] =
+    (ctx |> DbCtx.set<RssFeed>) |> Array.ofSeq
 
-  let allTwitterUsers (ctx: DbCtx): TwitterUser [] =
-    (ctx.Set<TwitterUser>()) |> Array.ofSeq
+  let allTwitterUsers ctx: TwitterUser [] =
+    (ctx |> DbCtx.set<TwitterUser>) |> Array.ofSeq
 
-  let allTags (ctx: DbCtx): Set<string> =
-    (ctx.Set<Tag>()) |> Seq.map (fun tag -> tag.TagName) |> Set.ofSeq
+  let allTags ctx: Set<string> =
+    (ctx |> DbCtx.set<Tag>) |> Seq.map (fun tag -> tag.TagName) |> Set.ofSeq
 
   let allAtomicSources ctx: seq<DerivedSource> =
     seq {
@@ -41,26 +41,26 @@ module Source =
       yield! allTwitterUsers ctx  |> Seq.map ofTwitterUser
     }
 
-  let tryFindFeedByUrl (ctx: DbCtx) url: option<RssFeed> =
-    ctx.Set<RssFeed>().FirstOrDefault(fun feed -> feed.Url = url)
+  let tryFindFeedByUrl ctx url: option<RssFeed> =
+    (ctx |> DbCtx.set<RssFeed>).FirstOrDefault(fun feed -> feed.Url = url)
     |> Option.ofObj
 
-  let tryFindFeedByName (ctx: DbCtx) srcName =
-    ctx.Set<RssFeed>().FirstOrDefault(fun feed -> feed.Name = srcName)
+  let tryFindFeedByName ctx srcName =
+    (ctx |> DbCtx.set<RssFeed>).FirstOrDefault(fun feed -> feed.Name = srcName)
     |> Option.ofObj
 
-  let tryFindTwitterUser (ctx: DbCtx) (name: string): option<TwitterUser> =
-    ctx.Set<TwitterUser>().FirstOrDefault(fun tu -> tu.ScreenName = name)
+  let tryFindTwitterUser ctx (name: string): option<TwitterUser> =
+    (ctx |> DbCtx.set<TwitterUser>).FirstOrDefault(fun tu -> tu.ScreenName = name)
     |> Option.ofObj
     
-  let findTaggedSourceNames (ctx: DbCtx) tagName: Set<string> =
-    ctx.Set<Tag>()
+  let findTaggedSourceNames ctx tagName: Set<string> =
+    (ctx |> DbCtx.set<Tag>)
       .Where(fun tag -> tag.TagName = tagName)
       .Select(fun tag -> tag.SourceName)
     |> Set.ofSeq
 
-  let tryFindTagSource (ctx: DbCtx) (tagName: TagName): option<DerivedSource> =
-    if ctx.Set<Tag>().FirstOrDefault(fun tag -> tag.TagName = tagName) = null
+  let tryFindTagSource ctx (tagName: TagName): option<DerivedSource> =
+    if (ctx |> DbCtx.set<Tag>).FirstOrDefault(fun tag -> tag.TagName = tagName) = null
     then None
     else ofTag tagName |> Some
 

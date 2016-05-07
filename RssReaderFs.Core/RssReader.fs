@@ -9,7 +9,7 @@ open Chessie.ErrorHandling
 module RssReader =
   let create (): RssReader =
     let ctx             = new DbCtx()
-    let configOpt       = ctx.Set<Config>().Find(DefaultConfigName) |> Option.ofObj
+    let configOpt       = (ctx |> DbCtx.set<Config>).Find(DefaultConfigName) |> Option.ofObj
     let token           =
       match configOpt with
       | Some config ->
@@ -19,7 +19,7 @@ module RssReader =
           |> tap (fun token ->
               // Save BearToken
               let config = Config(Name = DefaultConfigName, BearToken = token.BearerToken)
-              ctx.Set<Config>().Add(config) |> ignore
+              (ctx |> DbCtx.set<Config>).Add(config) |> ignore
               ctx.SaveChanges() |> ignore
               )
     in
