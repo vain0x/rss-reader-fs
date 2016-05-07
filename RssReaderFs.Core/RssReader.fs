@@ -73,7 +73,7 @@ module RssReader =
 
   let feedName (url: string) rr: string =
     match rr |> tryFindFeed url with
-    | Some feed -> feed |> RssFeed.nameUrl
+    | Some feed -> sprintf "%s <%s>" feed.Name url
     | None -> sprintf "<%s>" url
 
   let tryFindSource (srcName: string) rr: option<DerivedSource> =
