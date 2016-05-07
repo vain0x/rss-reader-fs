@@ -12,7 +12,7 @@ type SourceView(rc: RssReader) as this =
     Source.tryFindByName (rc |> RssReader.ctx) srcName
 
   let mutable items =
-    (rc |> RssReader.unreadItems)
+    ([||]: Article [])
 
   let mutable selectedIndex = -1
 
@@ -94,7 +94,13 @@ type SourceView(rc: RssReader) as this =
     with get () = srcName
     and  set newName =
       srcName <- newName
-      items <- [||]
+
+      items <-
+        match Source.tryFindByName (rc |> RssReader.ctx) srcName with
+        | Some src -> rc |> RssReader.unreadItems src
+        | None -> [||]
+      this.RaisePropertyChanged("Items")
+
       updateAsync () |> Async.Start
 
       for name in ["SourceName"; "Items"] do

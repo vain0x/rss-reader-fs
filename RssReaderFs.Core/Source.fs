@@ -94,6 +94,13 @@ module Source =
       }
       |> Seq.tryPick id
 
+  // TODO: 再帰的タグづけに対応する
+  let isTaggedBy ctx (tag: Tag) (srcId: Id) =
+    query {
+      for tts in ctx |> DbCtx.set<TagToSource> do
+      exists (tts.TagId = tag.SourceId && tts.SourceId = srcId)
+    }
+
   let findTaggedSources ctx (tag: Tag): list<Source> =
     query {
       for tts in ctx |> DbCtx.set<TagToSource> do
