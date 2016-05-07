@@ -3,6 +3,7 @@
 open System
 open System.Xml
 open System.Linq
+open Basis.Core
 
 module Article =
   let create title desc link date srcId =
@@ -63,9 +64,13 @@ module Article =
       |> Seq.choose tryBuildItem
 
   let ofTweet (status: CoreTweet.Status) srcId =
-    create
-      (status.Text)
-      (status.Text |> Some)
-      (status |> Twitter.Status.permanentLink |> Some)
-      (status.CreatedAt.DateTime.ToLocalTime())
-      srcId
+    let (header, body) = status.Text |>  Str.splitAt 50
+    let desc  = if body |> Str.isNullOrWhiteSpace then None else Some body
+    let title = header + (if desc |> Option.isSome then "..." else "")
+    in
+      create
+        title
+        desc
+        (status |> Twitter.Status.permanentLink |> Some)
+        (status.CreatedAt.DateTime.ToLocalTime())
+        srcId
