@@ -210,12 +210,12 @@ module RssReader =
             |> Async.Parallel
           return itemArrayArray |> Array.collect id
       | Feed feed ->
-          let! items = feed.Url |> RssFeed.downloadAsync
+          let! items = feed.Url |> RssFeed.downloadAsync feed.SourceId
           return items |> Seq.toArray
       | TwitterUser tu ->
           let screenName  = src |> Source.name
           let! statuses   = rr.TwitterToken |> Twitter.userTweetsAsync screenName (tu.SinceId)
-          let items       = [| for status in statuses -> Article.ofTweet status |]
+          let items       = [| for status in statuses -> Article.ofTweet status tu.SourceId |]
           if items |> Array.length > 0 then
             let maxId = statuses |> Seq.map (fun status -> status.Id) |> Seq.max
             do tu.SinceId <- max maxId tu.SinceId
@@ -237,7 +237,7 @@ module RssReader =
     ctx |> DbCtx.withTransaction (fun _ -> async {
         let! items = rr |> fetchItemsAsync src
         let (news, _) =
-          items |> Array.uniqueBy (fun item -> (item.Title, item.Date, item.Url))
+          items |> Array.uniqueBy (fun item -> (item.Title, item.Date, item.SourceId))
           |> Array.partition (fun item -> item |> Article.insert ctx)
         ctx.SaveChanges() |> ignore
         return news

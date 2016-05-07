@@ -18,15 +18,15 @@ module Entity =
     [<Required>]
     member val Title = "" with get, set
 
-    [<Required; Index>]
-    member val Url = "" with get, set
-
     member val Desc = (None: option<string>) with get, set
 
     member val Link = (None: option<string>) with get, set
 
     [<Required; Index>]
     member val Date = DateTime.Now with get, set
+
+    [<Required; Index>]
+    member val SourceId = 0L with get, set
 
   [<AllowNullLiteral>]
   type ReadLog() =

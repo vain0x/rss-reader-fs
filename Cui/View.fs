@@ -23,12 +23,12 @@ type View (rc: RssReader) =
       | Some h -> h + " "
       | None -> ""
     let src =
-      Source.tryFindFeedByUrl (rc |> RssReader.ctx) (item.Url)
+      Source.findSourceById (rc |> RssReader.ctx) item.SourceId
     let () =
       printfn "%s%s" header (item.Title)
       printfn "* Date: %s" (item.Date.ToString("G"))
       printfn "* Link: %s" (item.Link |> Option.getOr "(no link)")
-      printfn "* From: %s" (Source.feedName (rc |> RssReader.ctx) item.Url)
+      printfn "* From: %s" src.Name
       item.Desc |> Option.iter (printfn "* Desc:\r\n%s")
     let () =
       rc |> RssReader.readItem item |> ignore

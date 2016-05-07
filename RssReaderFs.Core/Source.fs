@@ -94,15 +94,6 @@ module Source =
       }
       |> Seq.tryPick id
 
-  let tryFindFeedByUrl ctx url: option<Source * RssFeed> =
-    query {
-      for feed in ctx |> DbCtx.set<RssFeed> do
-      where (feed.Url = url)
-      join src in (ctx |> DbCtx.set<Source>) on (feed.SourceId = src.Id)
-      select (src, feed)
-    }
-    |> Seq.tryHead
-
   let findTaggedSources ctx (tag: Tag): list<Source> =
     query {
       for tts in ctx |> DbCtx.set<TagToSource> do
@@ -123,13 +114,6 @@ module Source =
       select (tagSrc, tag)
     }
     |> Seq.toList
-
-  let feedName ctx (url: string): string =
-    match tryFindFeedByUrl ctx url with
-    | Some (_, feed) ->
-        let src = findSourceById ctx feed.SourceId
-        in sprintf "%s <%s>" (src.Name) url
-    | None -> sprintf "<%s>" url
 
   let dump ctx (src: DerivedSource): string =
     let srcName = src |> name
