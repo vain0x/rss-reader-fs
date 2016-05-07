@@ -1,10 +1,15 @@
 ﻿namespace RssReaderFs.Wpf.ViewModel
 
-open RssReaderFs
+open RssReaderFs.Core
 
-type SourceTree(rc: RssClient) =
+type SourceTree(rr: RssReader) as this =
   inherit WpfViewModel.Base()
 
-  member this.Feeds       = rc.Reader |> RssReader.allFeeds |> Array.map (fun feed -> feed.Name)
-  member this.Tags        = rc.Reader.TagMap    |> Map.keySet
-  member this.Sources     = rc.Reader.SourceMap |> Map.keySet
+  do rr |> RssReader.changed |> Observable.add (fun () ->
+      for name in ["Feeds"; "Tags"; "Sources"] do
+        this.RaisePropertyChanged(name)
+      )
+
+  member this.Feeds       = Source.allFeeds (rr |> RssReader.ctx) |> Array.map (Source.name)
+  member this.Tags        = Source.allTags (rr |> RssReader.ctx) |> Seq.map (Source.name)
+  member this.Sources     = Source.allAtomicSources (rr |> RssReader.ctx) |> Seq.map (Source.name)

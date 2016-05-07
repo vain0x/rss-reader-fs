@@ -3,19 +3,18 @@
 open System
 open System.ComponentModel
 open System.Windows.Threading
-open RssReaderFs
+open RssReaderFs.Core
 
 type MainWindow() =
   inherit WpfViewModel.Base()
 
-  let path = @"feeds.yaml"
-  let rc = RssClient.Create(path)
+  let rr = RssReader.create()
 
-  let sourceTree = SourceTree(rc)
+  let sourceTree = SourceTree(rr)
 
-  let sourceView = SourceView(rc)
+  let sourceView = SourceView(rr)
 
-  let feedsWindow = FeedsWindow(rc)
+  let feedsWindow = FeedsWindow(rr)
 
   let (feedsCommand, _) =
     Command.create
@@ -31,4 +30,4 @@ type MainWindow() =
   member this.SourceView = sourceView
 
   member this.Save() =
-    rc.Save()
+    rr |> RssReader.save

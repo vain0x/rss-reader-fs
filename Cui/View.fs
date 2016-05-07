@@ -3,20 +3,11 @@
 open System
 open System.IO
 open System.Collections.Generic
+open Basis.Core
 open Chessie.ErrorHandling
-open RssReaderFs
+open RssReaderFs.Core
 
-type View (rc: RssClient) =
-  let reader () =
-    rc.Reader
-
-  member this.PrintUnknownSourceNameError(srcName) =
-    eprintfn "Unknown source name: %s" srcName
-
-  member this.PrintUnknownCommand(command: list<string>) =
-    eprintfn "Unknown command: %s"
-      (String.Join(" ", command))
-
+type View (rr: RssReader) =
   member this.PrintCount(items) =
     let len = items |> Array.length
     in
@@ -24,26 +15,24 @@ type View (rc: RssClient) =
       then printfn "No new items."
       else printfn "New %d items!" len
 
-  member this.PrintItem(item: RssItem, ?header) =
+  member this.PrintItem(item: Article, ?header) =
     let header =
       match header with
       | Some h -> h + " "
       | None -> ""
     let src =
-      reader () |> RssReader.tryFindFeed (item.Url)
+      Source.findSourceById (rr |> RssReader.ctx) item.SourceId
     let () =
       printfn "%s%s" header (item.Title)
       printfn "* Date: %s" (item.Date.ToString("G"))
       printfn "* Link: %s" (item.Link |> Option.getOr "(no link)")
-      src |> Option.iter (fun { Name = name } ->
-          printfn "* From: %s" name
-          )
+      printfn "* From: %s" src.Name
       item.Desc |> Option.iter (printfn "* Desc:\r\n%s")
     let () =
-      rc.ReadItem(item)
+      rr |> RssReader.readItem item |> ignore
     in ()
 
-  member this.PrintItems(items) =
+  member this.PrintItems(items: Article []) =
     let len = items |> Seq.length
     in
       if len = 0
@@ -63,7 +52,7 @@ type View (rc: RssClient) =
               )
             )
 
-  member this.PrintItemTitles(items: RssItem []) =
+  member this.PrintItemTitles(items: Article []) =
     let len = items |> Array.length
     in
       if len = 0
@@ -76,59 +65,53 @@ type View (rc: RssClient) =
               (item.Date.ToString("G")) item.Title
             )
 
-  member this.PrintFeed(feed) =
-    printfn "%s" (feed |> RssFeed.nameUrl)
-
-  member this.PrintFeeds(feeds) =
-    feeds |> Array.iter (this.PrintFeed)
-
-  member this.PrintRenameSourceResult(result) =
-    if result
-    then printfn "Some sources are renamed."
-    else printfn "No sources are renamed."
+  member this.PrintSource(src) =
+    printfn "%s" (Source.dump (rr |> RssReader.ctx) src)
 
   member this.PrintSources(srcs) =
-    srcs
-    |> List.iter (fun (_, src) ->
-        printfn "%s" (src |> RssSource.toSExpr)
-        )
+    for src in srcs do 
+      this.PrintSource(src)
 
-  member this.PrintAddTagResult(tagName, srcName, result) =
-    match result with
-    | None -> ()
-    | Some src ->
-        match rc.AddTag(tagName, src) with
-        | Some _ ->
-            eprintfn "Source '%s' does already exist."
-              tagName
-        | None ->
-            printfn "Tag '%s' is added to '%s'."
-              tagName srcName
+  member this.PrintArticles(items, fmt) =
+    match fmt with
+    | Count     -> this.PrintCount(items)
+    | Titles    -> this.PrintItemTitles(items)
+    | Details   -> this.PrintItems(items)
 
-  member this.PrintRemoveTagResult(tagName, srcName, result) =
-    match result with
-    | None -> ()
-    | Some src ->
-        match rc.RemoveTag(tagName, src) with
-        | None ->
-            eprintfn "Source '%s' doesn't have tag '%s'."
-              srcName tagName
-        | Some _ ->
-            printfn "Tag '%s' is removed from '%s'."
-              tagName srcName
-
-
-  member this.PrintTag(tagName) =
-    match rc.Reader |> RssReader.tagMap |> Map.tryFind tagName with
-    | None -> eprintfn "Unknown tag name: %s" tagName
-    | Some srcs ->
-        printfn "%s %s"
-          tagName
-          (String.Join(" ", srcs |> Set.map (RssSource.toSExpr)))
+  member this.PrintMessages(msgs) =
+    msgs |> List.iter (Error.toString >> eprintfn "%s")
 
   member this.PrintResult(result) =
     match result with
-    | Pass _ -> printfn "Succeeded."
-    | Warn (_, msgs)
-    | Fail msgs ->
-        msgs |> List.iter (eprintfn "%s")
+    | Pass () -> printfn "Succeeded."
+    | Warn ((), msgs)
+    | Fail msgs -> this.PrintMessages(msgs)
+
+  member this.PrintCommandResult(result) =
+    async {
+      match result with
+      | Result r -> this.PrintResult(r)
+      | ArticleSeq r ->
+          match r with
+          | Pass a ->
+              let! (items, fmt) = a
+              this.PrintArticles(items, fmt)
+          | Warn (a, msgs) ->
+              let! (items, fmt) = a
+              this.PrintMessages(msgs)
+              this.PrintArticles(items, fmt)
+          | Fail msgs ->
+              this.PrintMessages(msgs)
+      | SourceSeq srcs ->
+          this.PrintSources(srcs)
+      | UnknownCommand command ->
+          eprintfn "Unknown command: %s" (command |> String.concat " ")
+    }
+
+  member this.Interactive(rrc: Ctrl) =
+    let rec loop () =
+      async {
+        let! line = Console.In.ReadLineAsync() |> Async.AwaitTask
+        return! rrc.ProcCommandLine(loop (), line)
+      }
+    in loop ()

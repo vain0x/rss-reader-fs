@@ -1,18 +1,19 @@
 ﻿namespace RssReaderFs.Wpf.ViewModel
 
 open System
-open RssReaderFs
+open Basis.Core
+open RssReaderFs.Core
 
-type SourceView(rc: RssClient) as this =
+type SourceView(rr: RssReader) as this =
   inherit WpfViewModel.Base()
 
   let mutable srcName = AllSourceName
 
   let srcOpt () =
-    rc.Reader |> RssReader.tryFindSource srcName
+    Source.tryFindByName (rr |> RssReader.ctx) srcName
 
   let mutable items =
-    ([||]: RssItem [])
+    ([||]: Article [])
 
   let mutable selectedIndex = -1
 
@@ -29,19 +30,19 @@ type SourceView(rc: RssClient) as this =
       (fun () -> selectedLink () |> String.IsNullOrEmpty |> not)
       (fun () -> selectedLink () |> Diagnostics.Process.Start |> ignore)
 
-  let addNewItems newItems =
+  let addNewItems (newItems: Article []) =
     items <-
       newItems
       |> Array.sortBy (fun item -> item.Date)
       |> flip Array.append items
-    this.RaisePropertyChanged ["Items"]
+    this.RaisePropertyChanged("Items")
     
   let updateAsync () =
     async {
-      match srcOpt () with
+      match Source.tryFindByName (rr |> RssReader.ctx) srcName with
       | None -> ()
       | Some src ->
-          let! newItems = rc.UpdateAsync(src)
+          let! newItems = rr |> RssReader.updateAsync src
           if newItems |> Array.isEmpty |> not then
             addNewItems newItems
     }
@@ -56,29 +57,29 @@ type SourceView(rc: RssClient) as this =
 
   do checkUpdate ()
 
-  do rc.Changed |> Observable.add (fun () ->
-      this.RaisePropertyChanged ["Items"]
+  do rr |> RssReader.changed |> Observable.add (fun () ->
+      this.RaisePropertyChanged("Items")
       )
 
   member this.Items =
-    items |> Array.map (RssItemRow.ofItem rc)
+    items |> Array.map (ArticleRow.ofItem rr)
 
   member this.SelectedIndex
     with get () = selectedIndex
     and  set v  =
       selectedIndex <- v
 
-      this.RaisePropertyChanged
-        ["SelectedRow"; "SelectedDesc"]
+      for name in ["SelectedRow"; "SelectedDesc"] do
+        this.RaisePropertyChanged(name)
 
       linkJumpCommandExecutabilityChanged this
 
   member this.SelectedItem = selectedItem ()
 
-  member this.SelectedRow: RssItemRow =
+  member this.SelectedRow: ArticleRow =
     match items |> Array.tryItem selectedIndex with
-    | Some item -> item |> RssItemRow.ofItem rc
-    | None -> RssItemRow.empty
+    | Some item -> item |> ArticleRow.ofItem rr
+    | None -> ArticleRow.empty
 
   member this.SelectedDesc
     with get () =
@@ -94,6 +95,14 @@ type SourceView(rc: RssClient) as this =
     with get () = srcName
     and  set newName =
       srcName <- newName
-      items <- [||]
+
+      items <-
+        match Source.tryFindByName (rr |> RssReader.ctx) srcName with
+        | Some src -> rr |> RssReader.unreadItems src
+        | None -> [||]
+      this.RaisePropertyChanged("Items")
+
       updateAsync () |> Async.Start
-      this.RaisePropertyChanged ["SourceName"; "Items"]
+
+      for name in ["SourceName"; "Items"] do
+        this.RaisePropertyChanged(name)

@@ -1,30 +1,35 @@
 ﻿namespace RssReaderFs.Cui
 
 open System
-open RssReaderFs
+open RssReaderFs.Core
 
 module Program =
   [<EntryPoint>]
   let main argv =
-    let rc = RssClient.Create(@"feeds.yaml")
-    let view = View(rc)
-    let rrc = Ctrl(rc, view)
+    let rr = RssReader.create ()
+    let view = View(rr)
+    let rrc = Ctrl(rr, view.PrintCommandResult)
 
     try
-      match argv with
-      | [||]
-      | [| "-i" |]
-      | [| "--interactive " |] ->
-          rrc.CheckNewItemsAsync()
-          |> Async.Start
+      try
+        match argv with
+        | [||]
+        | [| "-i" |]
+        | [| "--interactive " |] ->
+            rrc.CheckNewItemsAsync()
+            |> Async.Start
 
-          rrc.Interactive()
-          |> Async.RunSynchronously
-      | _ ->
-          rrc.ProcCommand(argv |> Array.toList)
-          |> Async.RunSynchronously
-    finally
-      rc.Save()
+            view.Interactive(rrc)
+            |> Async.RunSynchronously
+        | _ ->
+            view.PrintCommandResult(rrc.ProcCommand(argv |> Array.toList))
+            |> Async.RunSynchronously
+      finally
+        rr |> RssReader.save
 
-    // exit code
-    0
+      // exit code
+      0
+    with
+    | e ->
+        eprintfn "%s" e.Message
+        1

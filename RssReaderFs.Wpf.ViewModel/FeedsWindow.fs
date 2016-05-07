@@ -6,50 +6,95 @@ open System.Windows
 open System.Windows.Input
 open System.Windows.Threading
 open Chessie.ErrorHandling
-open RssReaderFs
+open RssReaderFs.Core
 
-type AddFeedPanel(rc: RssClient) as this =
+type AddFeedPanel(rr: RssReader, raiseError: seq<Error> -> unit) as this =
   inherit WpfViewModel.Base()
 
-  let mutable error = ""
+  let mutable name = ""
+  let mutable url  = ""
 
-  member val Name   = "" with get, set
-  member val Url    = "" with get, set
-  member this.Error
-    with get () = error
-    and  set v  =
-      error <- v
-      this.RaisePropertyChanged ["Error"]
+  member this.Name
+    with get () = name
+    and  set v  = name <- v; this.RaisePropertyChanged("Name")
+
+  member this.Url
+    with get () = url
+    and  set v  = url <- v; this.RaisePropertyChanged("Url")
 
   member this.Reset() =
     this.Name     <- ""
     this.Url      <- ""
-    this.Error    <- ""
+    raiseError []
 
   member val AddFeedCommand =
     Command.create
       (fun _ -> true)
       (fun _ ->
-        let feed    =
-          { Name = this.Name; Url = Url(this.Url); DoneSet = Set.empty }
-        match rc.TryAddSource(RssSource.ofFeed feed) with
+        match rr |> RssReader.addFeed this.Name this.Url with
         | Ok ((), _) ->
             this.Reset() |> ignore
         | Bad msgs ->
-            this.Error <- msgs |> String.concat (Environment.NewLine)
+            msgs |> raiseError
         )
     |> fst
 
-type FeedsWindow(rc: RssClient) as this =
+type FollowPanel(rr: RssReader, raiseError: seq<Error> -> unit) as this =
+  inherit WpfViewModel.Base()
+
+  let mutable name = ""
+
+  member this.Name
+    with get () = name
+    and  set v  = name <- v; this.RaisePropertyChanged("Name")
+
+  member this.Reset() =
+    this.Name <- ""
+    raiseError []
+
+  member val FollowCommand =
+    Command.create
+      (fun _ -> true)
+      (fun _ ->
+          match rr |> RssReader.addTwitterUser this.Name with
+          | Ok ((), _) ->
+              this.Reset()
+          | Bad msgs ->
+              raiseError msgs
+          )
+    |> fst
+
+type FeedsWindow(rr: RssReader) as this =
   inherit WpfViewModel.DialogBase<unit>()
 
-  let addFeedPanel = AddFeedPanel(rc)
+  let mutable error = ""
+
+  let raiseError msgs =
+    error <- msgs |> Seq.map Error.toString |> String.concat Environment.NewLine
+    this.RaisePropertyChanged("Error")
+    this.RaisePropertyChanged("ErrorVisibility")
+
+  let addFeedPanel = AddFeedPanel(rr, raiseError)
+
+  let followPanel = FollowPanel(rr, raiseError)
   
-  do rc.Changed |> Observable.add (fun () ->
-      this.RaisePropertyChanged ["Feeds"]
+  do rr |> RssReader.changed |> Observable.add (fun () ->
+      this.RaisePropertyChanged("Feeds")
       )
 
   member this.Feeds =
-    rc.Reader |> RssReader.allFeeds
+    Source.allFeeds (rr |> RssReader.ctx)
+
+  member this.TwitterUsers =
+    Source.allTwitterUsers (rr |> RssReader.ctx) |> Array.map Source.name
 
   member this.AddFeedPanel = addFeedPanel
+
+  member this.FollowPanel = followPanel 
+
+  member this.Error = error
+
+  member this.ErrorVisibility =
+    if String.IsNullOrWhiteSpace(this.Error)
+    then Visibility.Collapsed
+    else Visibility.Visible
