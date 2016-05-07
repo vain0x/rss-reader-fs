@@ -95,9 +95,9 @@ module RssReader =
               (rr |> set<RssFeed>).Remove(feed) |> ignore
           | TwitterUser tu ->
               (rr |> set<TwitterUser>).Remove(tu) |> ignore
-          | TagSource _ ->
+          | TagSource tag ->
               let taggeds =
-                (rr |> set<TagToSource>).Where(fun tts -> tts.TagName = srcName)
+                (rr |> set<TagToSource>).Where(fun tts -> tts.TagId = tag.SourceId)
               in
                 (rr |> set<TagToSource>).RemoveRange(taggeds) |> ignore
           (rr |> ctx).SaveChanges() |> ignore
@@ -129,9 +129,7 @@ module RssReader =
     |> Trial.lift (raisingChanged rr)
 
   let private addTagToSource (tag: Tag) (src: Source) rr =
-    let tagName = (Source.findSourceById (rr |> ctx) tag.SourceId).Name
-    let srcName = (Source.findSourceById (rr |> ctx) src.Id).Name
-    let tagToSource = TagToSource(TagName = tagName, SourceName = srcName)
+    let tagToSource = TagToSource(TagId = tag.SourceId, SourceId = src.Id)
     (rr |> set<TagToSource>).Add(tagToSource) |> ignore
     |> DbCtx.saving (rr |> ctx)
     |> raisingChanged rr
@@ -158,15 +156,26 @@ module RssReader =
   /// src からタグを外す
   let removeTag (tagName: TagName) (srcName: string) rr: Result<unit, Error> =
     trial {
-      let ttss =
-        (rr |> set<TagToSource>)
-          .Where(fun tts -> tts.TagName = tagName && tts.SourceName = srcName)
-      if ttss.Any() then
-        (rr |> set<TagToSource>).RemoveRange(ttss) |> ignore
-        |> DbCtx.saving (rr |> ctx)
-        |> raisingChanged rr
-      else
-        return! () |> warn (SourceDoesNotHaveTag (srcName, tagName))
+      match
+        ( (Source.tryFindByName (rr |> ctx) tagName)
+        , (Source.tryFindByName (rr |> ctx) srcName) ) with
+      | (Some (_, TagSource tag), Some (src, _)) ->
+          match
+            (rr |> set<TagToSource>)
+              .FirstOrDefault(fun tts -> tts.TagId = tag.SourceId && tts.SourceId = src.Id)
+            |> Option.ofObj
+            with
+          | Some tts ->
+              (rr |> set<TagToSource>).Remove(tts) |> ignore
+              |> DbCtx.saving (rr |> ctx)
+              |> raisingChanged rr
+          | None ->
+              return! () |> warn (SourceDoesNotHaveTag (srcName, tagName))
+      | (_, None) ->
+          return! fail (srcName |> SourceDoesNotExist)
+      | _ ->
+          // TODO: Error ケースにする
+          return! fail (ExnError <| Exception(sprintf "'%s' isn't a tag name." tagName))
     }
 
   /// Note: The read date of items already read can't be updated.

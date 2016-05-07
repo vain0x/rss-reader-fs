@@ -104,11 +104,10 @@ module Source =
     |> Seq.tryHead
 
   let findTaggedSources ctx (tag: Tag): list<Source> =
-    let tagName = (findSourceById ctx tag.SourceId).Name
     query {
       for tts in ctx |> DbCtx.set<TagToSource> do
-      where (tts.TagName = tagName)
-      join src in (ctx |> DbCtx.set<Source>) on (tts.SourceName = src.Name)
+      where (tts.TagId = tag.SourceId)
+      join src in (ctx |> DbCtx.set<Source>) on (tts.SourceId = src.Id)
       select src
     }
     |> Seq.toList
@@ -116,9 +115,10 @@ module Source =
   /// src についているタグのリスト
   let tagsOf ctx (srcName: string): list<Source * Tag> =
     query {
-      for tts in ctx |> DbCtx.set<TagToSource> do
-      where (tts.SourceName = srcName)
-      join tagSrc in (ctx |> DbCtx.set<Source>) on (tts.TagName = tagSrc.Name)
+      for src in ctx |> DbCtx.set<Source> do
+      where (src.Name = srcName)
+      join tts in (ctx |> DbCtx.set<TagToSource>) on (src.Id = tts.SourceId)
+      join tagSrc in (ctx |> DbCtx.set<Source>) on (tts.TagId = tagSrc.Id)
       join tag in (ctx |> DbCtx.set<Tag>) on (tagSrc.Id = tag.SourceId)
       select (tagSrc, tag)
     }

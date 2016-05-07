@@ -68,10 +68,10 @@ module Entity =
     inherit EntityWithId()
 
     [<Required; Index>]
-    member val TagName = "" with get, set
+    member val TagId = 0L with get, set
 
     [<Required; Index>]
-    member val SourceName = "" with get, set
+    member val SourceId = 0L with get, set
 
   [<AllowNullLiteral>]
   type Config() =
