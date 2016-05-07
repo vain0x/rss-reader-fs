@@ -43,15 +43,6 @@ module RssReader =
   let raisingChanged rr (x: 'x): 'x =
     x |> tap (fun _ -> (rr |> changedEvent).Trigger())
 
-  let allFeeds rr: RssFeed [] =
-    rr |> set<RssFeed> |> Array.ofSeq
-
-  let allTags rr: Set<string> =
-    rr |> set<Tag> |> Seq.map (fun tag -> tag.TagName) |> Set.ofSeq
-
-  let allTwitterUsers rr: TwitterUser [] =
-    rr |> set<TwitterUser> |> Array.ofSeq
-
   let tryFindFeed url rr: option<RssFeed> =
     (rr |> set<RssFeed>).FirstOrDefault(fun feed -> feed.Url = url)
     |> Option.ofObj
@@ -86,12 +77,6 @@ module RssReader =
         yield rr |> tryFindTagSource    srcName
       }
       |> Seq.tryPick id
-
-  let allAtomicSources rr: seq<DerivedSource> =
-    seq {
-      yield! rr |> allFeeds          |> Seq.map Source.ofFeed
-      yield! rr |> allTwitterUsers   |> Seq.map Source.ofTwitterUser
-    }
 
   let private addSource srcName rr =
     trial {
@@ -243,7 +228,7 @@ module RssReader =
       match src with
       | AllSource ->
           let! itemArrayArray =
-            rr |> allAtomicSources
+            Source.allAtomicSources (rr |> ctx)
             |> Seq.map (fun src -> rr |> fetchItemsAsync src)
             |> Async.Parallel
           return itemArrayArray |> Array.collect id

@@ -62,7 +62,7 @@ type Ctrl (rc: RssReader, sendResult: CommandResult -> Async<unit>) =
           this.UpdateAndShow(AllSourceName, Titles)
 
       | "feeds" :: _ ->
-          rc |> RssReader.allFeeds
+          Source.allFeeds (rc |> RssReader.ctx)
           |> Seq.map (Source.ofFeed)
           |> SourceSeq
 
@@ -81,7 +81,7 @@ type Ctrl (rc: RssReader, sendResult: CommandResult -> Async<unit>) =
           rc |> RssReader.renameSource oldName newName |> Result
 
       | "sources" :: _ ->
-          rc |> RssReader.allAtomicSources |> SourceSeq
+          Source.allAtomicSources (rc |> RssReader.ctx) |> SourceSeq
 
       | "tag" :: tagName :: srcName :: _ ->
           rc |> RssReader.addTag tagName srcName |> Result
@@ -96,7 +96,7 @@ type Ctrl (rc: RssReader, sendResult: CommandResult -> Async<unit>) =
           |> SourceSeq
 
       | "tags" :: _ ->
-          rc |> RssReader.allTags
+          Source.allTags (rc |> RssReader.ctx)
           |> Seq.map (Source.ofTag)
           |> SourceSeq
 
