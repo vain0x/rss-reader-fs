@@ -81,3 +81,13 @@ module Source =
       .Where(fun tag -> tag.SourceName = srcName)
       .Select(fun tag -> tag.TagName)
     |> Seq.toList
+
+  let dump ctx (src: DerivedSource): string =
+    let srcName = src |> name
+    match src with
+    | AllSource         -> AllSourceName
+    | Feed feed         -> sprintf "feed %s %s" srcName feed.Url
+    | TwitterUser _     -> sprintf "twitter-user %s" srcName
+    | TagSource tagName ->
+        let srcNames = findTaggedSourceNames ctx tagName
+        in sprintf "tag %s %s" srcName (srcNames |> String.concat " ")

@@ -68,7 +68,7 @@ type View (rc: RssReader) =
             )
 
   member this.PrintSource(src) =
-    printfn "%s" (rc |> RssReader.dumpSource src)
+    printfn "%s" (Source.dump (rc |> RssReader.ctx) src)
 
   member this.PrintSources(srcs) =
     for src in srcs do 

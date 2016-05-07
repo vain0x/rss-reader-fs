@@ -154,16 +154,6 @@ module RssReader =
         return! () |> warn (SourceDoesNotHaveTag (srcName, tagName))
     }
 
-  let dumpSource (src: DerivedSource) rr: string =
-    let srcName = src |> Source.name
-    match src with
-    | AllSource         -> AllSourceName
-    | Feed feed         -> sprintf "feed %s %s" srcName feed.Url
-    | TwitterUser _     -> sprintf "twitter-user %s" srcName
-    | TagSource tagName ->
-        let srcNames = Source.findTaggedSourceNames (rr |> ctx) tagName
-        in sprintf "tag %s %s" srcName (srcNames |> String.concat " ")
-
   /// Note: The read date of items already read can't be updated.
   let readItem (item: Article) rr: ReadLog =
     (rr |> set<ReadLog>).Find(item.Id)
