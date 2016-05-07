@@ -10,6 +10,6 @@ type SourceTree(rc: RssReader) as this =
         this.RaisePropertyChanged(name)
       )
 
-  member this.Feeds       = Source.allFeeds (rc |> RssReader.ctx) |> Array.map (fun feed -> feed.Name)
-  member this.Tags        = Source.allTags (rc |> RssReader.ctx)
+  member this.Feeds       = Source.allFeeds (rc |> RssReader.ctx) |> Array.map (Source.name)
+  member this.Tags        = Source.allTags (rc |> RssReader.ctx) |> Seq.map (Source.name)
   member this.Sources     = Source.allAtomicSources (rc |> RssReader.ctx) |> Seq.map (Source.name)

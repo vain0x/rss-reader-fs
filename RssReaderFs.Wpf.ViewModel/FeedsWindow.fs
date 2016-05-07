@@ -86,7 +86,7 @@ type FeedsWindow(rc: RssReader) as this =
     Source.allFeeds (rc |> RssReader.ctx)
 
   member this.TwitterUsers =
-    Source.allTwitterUsers (rc |> RssReader.ctx) |> Array.map (fun tu -> tu.ScreenName)
+    Source.allTwitterUsers (rc |> RssReader.ctx) |> Array.map Source.name
 
   member this.AddFeedPanel = addFeedPanel
 

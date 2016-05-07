@@ -15,12 +15,17 @@ module Database =
       mb.Entity<TwitterUser   >() |> ignore
       mb.Entity<RssFeed       >() |> ignore
       mb.Entity<Tag           >() |> ignore
+      mb.Entity<TagToSource   >() |> ignore
       mb.Entity<Config        >() |> ignore
 
       Database.SetInitializer(SampleDbInitializer(mb))
 
   and SampleDbInitializer(mb) =
     inherit SqliteDropCreateDatabaseWhenModelChanges<SampleDbContext>(mb)
+
+    override this.Seed(mb) =
+      mb.Set<Source>().Add(Source(Name = "ALL")) |> ignore
+      mb.SaveChanges() |> ignore
 
 [<AutoOpen>]
 module DatabaseExtension =

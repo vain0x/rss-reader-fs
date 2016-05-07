@@ -40,13 +40,13 @@ module Entity =
   type Source() =
     inherit EntityWithId()
 
+    [<Required; Index(IsUnique = true)>]
+    member val Name = "" with get, set
+
   [<AllowNullLiteral>]
   type TwitterUser() =
     [<Key; DatabaseGenerated(DatabaseGeneratedOption.None)>]
     member val SourceId = 0L with get, set
-
-    [<Index(IsUnique = true)>]
-    member val ScreenName = "" with get, set
 
     member val SinceId = 0L with get, set
 
@@ -56,13 +56,15 @@ module Entity =
     member val SourceId = 0L with get, set
 
     [<Required; Index(IsUnique = true)>]
-    member val Name = "" with get, set
-
-    [<Required; Index(IsUnique = true)>]
     member val Url = "" with get, set
 
   [<AllowNullLiteral>]
   type Tag() =
+    [<Key; DatabaseGenerated(DatabaseGeneratedOption.None)>]
+    member val SourceId = 0L with get, set
+
+  [<AllowNullLiteral>]
+  type TagToSource() =
     inherit EntityWithId()
 
     [<Required; Index>]

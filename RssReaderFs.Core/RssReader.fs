@@ -45,21 +45,20 @@ module RssReader =
 
   let private addSource srcName rr =
     trial {
-      match Source.tryFindByName (rr |> ctx) srcName with
+      match Source.tryFindSourceByName (rr |> ctx) srcName with
       | Some _ ->
           return! Trial.fail (SourceAlreadyExists srcName)
       | None ->
           return
-            (rr |> set<Entity.Source>).Add(Entity.Source())
+            (rr |> set<Entity.Source>).Add(Entity.Source(Name = srcName))
             |> DbCtx.saving (rr |> ctx)
-            |> (fun src -> src.Id)
     }
 
   let addFeed name url rr =
     trial {
       do! RssFeed.validate url
-      let! srcId    = rr |> addSource name
-      let feed      = RssFeed(SourceId = srcId, Name = name, Url = url)
+      let! src      = rr |> addSource name
+      let feed      = RssFeed(SourceId = src.Id, Url = url)
       (rr |> set<RssFeed>).Add(feed) |> ignore
       |> DbCtx.saving (rr |> ctx)
       |> raisingChanged rr
@@ -68,27 +67,39 @@ module RssReader =
   let addTwitterUser name rr =
     trial {
       do! rr.TwitterToken |> Twitter.validate name
-      let! srcId    = rr |> addSource name
-      let tu        = Entity.TwitterUser(SourceId = srcId, ScreenName = name)
+      let! src      = rr |> addSource name
+      let tu        = Entity.TwitterUser(SourceId = src.Id)
       (rr |> set<TwitterUser>).Add(tu) |> ignore
       |> DbCtx.saving (rr |> ctx)
       |> raisingChanged rr
+    }
+
+  let private createTag name rr =
+    trial {
+      let! src      = rr |> addSource name
+      let tag       = Entity.Tag(SourceId = src.Id)
+      (rr |> set<Tag>).Add(tag) |> ignore
+      |> DbCtx.saving (rr |> ctx)
+      |> raisingChanged rr
+      return tag
     }
 
   let tryRemoveSource (srcName: string) rr: Result<unit, Error> =
     trial {
       match Source.tryFindByName (rr |> ctx) srcName with
       | Some src ->
-          match src with
+          match src |> snd with
           | AllSource ->
               return! fail (SourceCannotBeRemoved AllSourceName)
           | Feed feed ->
               (rr |> set<RssFeed>).Remove(feed) |> ignore
           | TwitterUser tu ->
               (rr |> set<TwitterUser>).Remove(tu) |> ignore
-          | TagSource tagName ->
-              let rows = (rr |> set<Tag>).Where(fun tag -> tag.TagName = tagName)
-              (rr |> set<Tag>).RemoveRange(rows) |> ignore
+          | TagSource _ ->
+              let taggeds =
+                (rr |> set<TagToSource>).Where(fun tts -> tts.TagName = srcName)
+              in
+                (rr |> set<TagToSource>).RemoveRange(taggeds) |> ignore
           (rr |> ctx).SaveChanges() |> ignore
       | None ->
           return! fail (SourceDoesNotExist srcName)
@@ -103,17 +114,13 @@ module RssReader =
         )
         with
       | (Some src, None) ->
-          match src with
+          match src |> snd with
           | AllSource
           | TwitterUser _
             -> return! fail (SourceCannotBeRenamed oldName)
-          | Feed feed ->
-              feed.Name <- newName
-              |> DbCtx.saving (rr |> ctx)
-          | TagSource tagName ->
-              (rr |> set<Tag>).Where(fun tag -> tag.TagName = tagName).ToArray()
-              |> Array.iter (fun tag -> tag.TagName <- newName)
-              |> DbCtx.saving (rr |> ctx)
+          | Feed _
+          | TagSource _
+            -> (src |> fst).Name <- newName |> DbCtx.saving (rr |> ctx)
       | (None, _) ->
           return! fail (SourceDoesNotExist oldName)
       | (_, Some _) ->
@@ -121,28 +128,41 @@ module RssReader =
     }
     |> Trial.lift (raisingChanged rr)
 
+  let private addTagToSource (tag: Tag) (src: Source) rr =
+    let tagName = (Source.findSourceById (rr |> ctx) tag.SourceId).Name
+    let srcName = (Source.findSourceById (rr |> ctx) src.Id).Name
+    let tagToSource = TagToSource(TagName = tagName, SourceName = srcName)
+    (rr |> set<TagToSource>).Add(tagToSource) |> ignore
+    |> DbCtx.saving (rr |> ctx)
+    |> raisingChanged rr
+
   /// src にタグを付ける
   /// TODO: 循環的なタグづけを禁止する
   let addTag (tagName: TagName) (srcName: string) rr: Result<unit, Error> =
     trial {
-      match Source.tryFindByName (rr |> ctx) tagName with
-      | Some (TagSource _)
-      | None ->
-          let tag = Tag(TagName = tagName, SourceName = srcName)
-          (rr |> set<Tag>).Add(tag) |> ignore
-          |> DbCtx.saving (rr |> ctx)
-          |> raisingChanged rr
-      | Some src ->
+      match
+        ( (Source.tryFindByName (rr |> ctx) tagName)
+        , (Source.tryFindByName (rr |> ctx) srcName)
+        ) with
+      | (Some (_, TagSource tag), Some (src, _)) ->
+          rr |> addTagToSource tag src
+      | (None, Some (src, _)) ->
+          let! tag = rr |> createTag tagName
+          in rr |> addTagToSource tag src
+      | (Some src, _) ->
           return! fail (src |> Source.name |> SourceAlreadyExists)
+      | (_, None) ->
+          return! fail (srcName |> SourceDoesNotExist)
     }
 
   /// src からタグを外す
   let removeTag (tagName: TagName) (srcName: string) rr: Result<unit, Error> =
     trial {
-      let rows =
-        (rr |> set<Tag>).Where(fun tag -> tag.TagName = tagName && tag.SourceName = srcName)
-      if rows.Any() then
-        (rr |> set<Tag>).RemoveRange(rows) |> ignore
+      let ttss =
+        (rr |> set<TagToSource>)
+          .Where(fun tts -> tts.TagName = tagName && tts.SourceName = srcName)
+      if ttss.Any() then
+        (rr |> set<TagToSource>).RemoveRange(ttss) |> ignore
         |> DbCtx.saving (rr |> ctx)
         |> raisingChanged rr
       else
@@ -173,7 +193,7 @@ module RssReader =
 
   let rec fetchItemsAsync (src: DerivedSource) rr: Async<Article []> =
     async {
-      match src with
+      match src |> snd with
       | AllSource ->
           let! itemArrayArray =
             Source.allAtomicSources (rr |> ctx)
@@ -184,17 +204,18 @@ module RssReader =
           let! items = feed.Url |> RssFeed.downloadAsync
           return items |> Seq.toArray
       | TwitterUser tu ->
-          let! statuses   = rr.TwitterToken |> Twitter.userTweetsAsync (tu.ScreenName) (tu.SinceId)
+          let screenName  = src |> Source.name
+          let! statuses   = rr.TwitterToken |> Twitter.userTweetsAsync screenName (tu.SinceId)
           let items       = [| for status in statuses -> Article.ofTweet status |]
           if items |> Array.length > 0 then
             let maxId = statuses |> Seq.map (fun status -> status.Id) |> Seq.max
             do tu.SinceId <- max maxId tu.SinceId
           return items
-      | TagSource tagName ->
+      | TagSource tag ->
           let! itemArrayArray =
-            Source.findTaggedSourceNames (rr |> ctx) tagName
+            Source.findTaggedSources (rr |> ctx) tag
             |> Seq.choose (fun src ->
-                Source.tryFindByName (rr |> ctx) src
+                Source.tryFindByName (rr |> ctx) src.Name
                 |> Option.map (fun src -> rr |> fetchItemsAsync src))
             |> Async.Parallel
           return itemArrayArray |> Array.collect id
