@@ -187,18 +187,31 @@ module RssReader =
       )
     |> raisingChanged rr
 
-  let unreadItems rr: Article [] =
-    let logs = rr |> set<ReadLog>
-    query {
-      for article in (rr |> set<Article>) do
-      where (not (query {
-        for log in logs do
-        where (article.Id = log.ArticleId)
-        exists true
-        }))
-      select article
-    }
-    |> Seq.toArray
+  let unreadItems src rr: Article [] =
+    let allUnreads =
+      let logs = rr |> set<ReadLog>
+      query {
+        for article in (rr |> set<Article>) do
+        where (not (query {
+          for log in logs do
+          where (article.Id = log.ArticleId)
+          exists true
+          }))
+        select article
+      }
+    let (xs: seq<Article>) =
+      match src |> snd with
+      | AllSource ->
+          allUnreads :> seq<Article>
+      | Feed feed ->
+          allUnreads.Where(fun article -> article.SourceId = feed.SourceId) :> seq<Article>
+      | TwitterUser tu ->
+          allUnreads.Where(fun article -> article.SourceId = tu.SourceId) :> seq<Article>
+      | TagSource tag ->
+          allUnreads |> Seq.filter (fun article ->
+            article.SourceId |> Source.isTaggedBy (rr |> ctx) tag
+            )
+    in xs |> Seq.toArray
 
   let rec fetchItemsAsync (src: DerivedSource) rr: Async<Article []> =
     async {

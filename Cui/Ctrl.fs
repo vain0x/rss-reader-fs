@@ -8,7 +8,7 @@ open RssReaderFs.Core
 
 type Ctrl (rc: RssReader, sendResult: CommandResult -> Async<unit>) =
   let mutable unreadItems =
-    rc |> RssReader.unreadItems
+    rc |> RssReader.unreadItems (Source.allSource (rc |> RssReader.ctx))
 
   member this.TryFindSource(srcName) =
     Source.tryFindByName (rc |> RssReader.ctx) srcName
