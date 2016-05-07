@@ -207,13 +207,14 @@ module RssReader =
     |> Set.ofSeq
 
   let dumpSource (src: DerivedSource) rr: string =
+    let srcName = src |> Source.name
     match src with
     | AllSource         -> AllSourceName
-    | Feed feed         -> sprintf "feed %s %s" feed.Name feed.Url
-    | TwitterUser tu    -> sprintf "twitter-user %s" tu.ScreenName
+    | Feed feed         -> sprintf "feed %s %s" srcName feed.Url
+    | TwitterUser _     -> sprintf "twitter-user %s" srcName
     | TagSource tagName ->
         let srcNames = rr |> findTaggedSourceNames tagName
-        in sprintf "tag %s %s" tagName (srcNames |> String.concat " ")
+        in sprintf "tag %s %s" srcName (srcNames |> String.concat " ")
 
   /// Note: The read date of items already read can't be updated.
   let readItem (item: Article) rr: ReadLog =
