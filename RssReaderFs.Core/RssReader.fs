@@ -52,9 +52,6 @@ module RssReader =
   let twitterUsers rr: TwitterUser [] =
     rr |> set<TwitterUser> |> Array.ofSeq
 
-  let allFeedSource rr: DerivedSource =
-    Source.all
-
   let tryFindFeed url rr: option<RssFeed> =
     (rr |> set<RssFeed>).FirstOrDefault(fun feed -> feed.Url = url)
     |> Option.ofObj

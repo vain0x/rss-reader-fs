@@ -5,9 +5,6 @@ open System.Linq
 open Chessie.ErrorHandling
 
 module RssFeed =
-  let create name (url: string) =
-    RssFeed(Name = name, Url = url)
-
   let nameUrl (feed: RssFeed) =
     sprintf "%s <%s>"
       feed.Name (feed.Url)
