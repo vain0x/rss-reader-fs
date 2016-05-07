@@ -75,9 +75,9 @@ module Source =
       }
       |> Seq.tryPick id
 
-  /// src についているタグの集合
-  let tagSetOf ctx (srcName: string): Set<TagName> =
+  /// src についているタグのリスト
+  let tagsOf ctx (srcName: string): list<TagName> =
     (ctx |> DbCtx.set<Tag>)
       .Where(fun tag -> tag.SourceName = srcName)
       .Select(fun tag -> tag.TagName)
-    |> Set.ofSeq
+    |> Seq.toList
