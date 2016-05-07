@@ -3,6 +3,7 @@
 open System
 open System.IO
 open System.Collections.Generic
+open Basis.Core
 open Chessie.ErrorHandling
 open RssReaderFs.Core
 
