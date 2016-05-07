@@ -1,5 +1,6 @@
 ﻿namespace RssReaderFs.Core
 
+open System.Linq
 open Chessie.ErrorHandling
 
 module Source =
@@ -36,3 +37,33 @@ module Source =
       yield! allFeeds        ctx  |> Seq.map ofFeed
       yield! allTwitterUsers ctx  |> Seq.map ofTwitterUser
     }
+
+  let tryFindFeed (ctx: DbCtx) url: option<RssFeed> =
+    ctx.Set<RssFeed>().FirstOrDefault(fun feed -> feed.Url = url)
+    |> Option.ofObj
+
+  let tryFindTwitterUser (ctx: DbCtx) (name: string): option<TwitterUser> =
+    ctx.Set<TwitterUser>().FirstOrDefault(fun tu -> tu.ScreenName = name)
+    |> Option.ofObj
+    
+  let findTaggedSourceNames (ctx: DbCtx) tagName: Set<string> =
+    ctx.Set<Tag>()
+      .Where(fun tag -> tag.TagName = tagName)
+      .Select(fun tag -> tag.SourceName)
+    |> Set.ofSeq
+
+  let tryFindTagSource (ctx: DbCtx) (tagName: TagName): option<DerivedSource> =
+    if ctx.Set<Tag>().FirstOrDefault(fun tag -> tag.TagName = tagName) = null
+    then None
+    else ofTag tagName |> Some
+
+  let tryFindSource ctx (srcName: string): option<DerivedSource> =
+    if srcName = AllSourceName
+    then all |> Some
+    else
+      seq {
+        yield tryFindFeed         ctx srcName |> Option.map (ofFeed)
+        yield tryFindTwitterUser  ctx srcName |> Option.map (ofTwitterUser)
+        yield tryFindTagSource    ctx srcName
+      }
+      |> Seq.tryPick id

@@ -11,8 +11,7 @@ type Ctrl (rc: RssReader, sendResult: CommandResult -> Async<unit>) =
     rc |> RssReader.unreadItems
 
   member this.TryFindSource(srcName) =
-    rc
-    |> RssReader.tryFindSource srcName
+    Source.tryFindSource (rc |> RssReader.ctx) srcName
     |> Trial.failIfNone (srcName |> SourceDoesNotExist)
 
   member this.UpdateAsync(src) =
