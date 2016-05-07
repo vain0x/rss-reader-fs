@@ -7,7 +7,7 @@ open CoreTweet
 module Domain =
   type TagName          = string
 
-  type Source =
+  type DerivedSource =
     | AllSource
     | Feed              of RssFeed
     | TwitterUser       of TwitterUser

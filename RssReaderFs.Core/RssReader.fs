@@ -52,7 +52,7 @@ module RssReader =
   let twitterUsers rr: TwitterUser [] =
     rr |> set<TwitterUser> |> Array.ofSeq
 
-  let allFeedSource rr: Source =
+  let allFeedSource rr: DerivedSource =
     Source.all
 
   let tryFindFeed url rr: option<RssFeed> =
@@ -69,7 +69,7 @@ module RssReader =
       .Select(fun tag -> tag.SourceName)
     |> Set.ofSeq
 
-  let tryFindTagSource (tagName: TagName) rr: option<Source> =
+  let tryFindTagSource (tagName: TagName) rr: option<DerivedSource> =
     if (rr |> set<Tag>).FirstOrDefault(fun tag -> tag.TagName = tagName) = null
     then None
     else Source.ofTag tagName |> Some
@@ -79,7 +79,7 @@ module RssReader =
     | Some feed -> feed |> RssFeed.nameUrl
     | None -> sprintf "<%s>" url
 
-  let tryFindSource (srcName: string) rr: option<Source> =
+  let tryFindSource (srcName: string) rr: option<DerivedSource> =
     if srcName = AllSourceName
     then Source.all |> Some
     else
@@ -90,7 +90,7 @@ module RssReader =
       }
       |> Seq.tryPick id
 
-  let allAtomicSources rr: seq<Source> =
+  let allAtomicSources rr: seq<DerivedSource> =
     seq {
       yield! rr |> allFeeds       |> Seq.map Source.ofFeed
       yield! rr |> twitterUsers   |> Seq.map Source.ofTwitterUser
@@ -209,7 +209,7 @@ module RssReader =
       .Select(fun tag -> tag.TagName)
     |> Set.ofSeq
 
-  let dumpSource (src: Source) rr: string =
+  let dumpSource (src: DerivedSource) rr: string =
     match src with
     | AllSource         -> AllSourceName
     | Feed feed         -> sprintf "feed %s %s" feed.Name feed.Url
@@ -240,7 +240,7 @@ module RssReader =
     }
     |> Seq.toArray
 
-  let rec fetchItemsAsync (src: Source) rr: Async<Article []> =
+  let rec fetchItemsAsync (src: DerivedSource) rr: Async<Article []> =
     async {
       match src with
       | AllSource ->
@@ -270,7 +270,7 @@ module RssReader =
    }
 
   /// Returns only new articles.
-  let updateAsync (src: Source) rr: Async<Article []> =
+  let updateAsync (src: DerivedSource) rr: Async<Article []> =
     let ctx = rr |> ctx
     ctx.SaveChanges() |> ignore
     ctx |> DbCtx.withTransaction (fun _ -> async {
