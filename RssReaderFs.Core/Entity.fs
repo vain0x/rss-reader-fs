@@ -30,7 +30,7 @@ module Entity =
 
   [<AllowNullLiteral>]
   type ReadLog() =
-    [<Key>]
+    [<Key; DatabaseGenerated(DatabaseGeneratedOption.None)>]
     member val ArticleId = 0L with get, set
 
     [<Required>]
@@ -42,7 +42,7 @@ module Entity =
 
   [<AllowNullLiteral>]
   type TwitterUser() =
-    [<Key>]
+    [<Key; DatabaseGenerated(DatabaseGeneratedOption.None)>]
     member val SourceId = 0L with get, set
 
     [<Index(IsUnique = true)>]
@@ -52,7 +52,7 @@ module Entity =
 
   [<AllowNullLiteral>]
   type RssFeed() =
-    [<Key>]
+    [<Key; DatabaseGenerated(DatabaseGeneratedOption.None)>]
     member val SourceId = 0L with get, set
 
     [<Required; Index(IsUnique = true)>]
