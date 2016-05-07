@@ -11,8 +11,7 @@ type Ctrl (rc: RssReader, sendResult: CommandResult -> Async<unit>) =
     rc |> RssReader.unreadItems
 
   member this.TryFindSource(srcName) =
-    rc
-    |> RssReader.tryFindSource srcName
+    Source.tryFindByName (rc |> RssReader.ctx) srcName
     |> Trial.failIfNone (srcName |> SourceDoesNotExist)
 
   member this.UpdateAsync(src) =
@@ -28,7 +27,7 @@ type Ctrl (rc: RssReader, sendResult: CommandResult -> Async<unit>) =
 
     let rec loop () =
       async {
-        do! this.UpdateAsync(Source.all)
+        do! this.UpdateAsync(Source.allSource (rc |> RssReader.ctx))
         if unreadItems |> Array.isEmpty |> not then
           do! (unreadItems, Count) |> Async.inject |> Trial.inject |> ArticleSeq |> sendResult
         do! Async.Sleep(timeout)
@@ -62,19 +61,16 @@ type Ctrl (rc: RssReader, sendResult: CommandResult -> Async<unit>) =
           this.UpdateAndShow(AllSourceName, Titles)
 
       | "feeds" :: _ ->
-          rc |> RssReader.allFeeds
+          Source.allFeeds (rc |> RssReader.ctx)
           |> Seq.map (Source.ofFeed)
           |> SourceSeq
 
       | "feed" :: name :: url :: _ ->
-          let feed      = RssFeed.create name url
-          let result    = rc |> RssReader.tryAddSource (feed |> Source.ofFeed)
+          let result    = rc |> RssReader.addFeed name url
           in result |> Result
 
       | "twitter-user" :: name :: _ ->
-          let twitterUser = Entity.TwitterUser(ScreenName = name)
-          let src         = Source.ofTwitterUser twitterUser
-          let result      = rc |> RssReader.tryAddSource src
+          let result      = rc |> RssReader.addTwitterUser name
           in result |> Result
 
       | "remove" :: name :: _ ->
@@ -84,7 +80,7 @@ type Ctrl (rc: RssReader, sendResult: CommandResult -> Async<unit>) =
           rc |> RssReader.renameSource oldName newName |> Result
 
       | "sources" :: _ ->
-          rc |> RssReader.allAtomicSources |> SourceSeq
+          Source.allAtomicSources (rc |> RssReader.ctx) |> SourceSeq
 
       | "tag" :: tagName :: srcName :: _ ->
           rc |> RssReader.addTag tagName srcName |> Result
@@ -93,13 +89,12 @@ type Ctrl (rc: RssReader, sendResult: CommandResult -> Async<unit>) =
           rc |> RssReader.removeTag tagName srcName |> Result
 
       | "tags" :: srcName :: _ ->
-          rc
-          |> RssReader.tagSetOf srcName
+          Source.tagsOf (rc |> RssReader.ctx) srcName
           |> Seq.map (Source.ofTag)
           |> SourceSeq
 
       | "tags" :: _ ->
-          rc |> RssReader.allTags
+          Source.allTags (rc |> RssReader.ctx)
           |> Seq.map (Source.ofTag)
           |> SourceSeq
 

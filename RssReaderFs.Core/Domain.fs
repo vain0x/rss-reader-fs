@@ -5,13 +5,17 @@ open CoreTweet
 
 [<AutoOpen>]
 module Domain =
+  type Id               = int64
   type TagName          = string
 
-  type Source =
+  type DerivedSourceUnion =
     | AllSource
     | Feed              of RssFeed
     | TwitterUser       of TwitterUser
-    | TagSource         of TagName
+    | TagSource         of Tag
+
+  type DerivedSource =
+    Source * DerivedSourceUnion
 
   type RssReader =
     {

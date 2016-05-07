@@ -5,22 +5,16 @@ open System.Linq
 open Chessie.ErrorHandling
 
 module RssFeed =
-  let create name (url: string) =
-    RssFeed(Name = name, Url = url)
-
-  let nameUrl (feed: RssFeed) =
-    sprintf "%s <%s>"
-      feed.Name (feed.Url)
-
-  let downloadAsync (feed: RssFeed) =
+  let downloadAsync srcId url =
     async {
-      let url = feed.Url
       let! xml = Net.downloadXmlAsync(url)
-      return (xml |> Article.parseXml url)
+      return (xml |> Article.parseXml srcId)
     }
 
-  let validate feed =
+  let validate url =
     Trial.runRaisable (fun () ->
-      feed |> downloadAsync |> Async.RunSynchronously
+      // source id はダミー値で問題ない
+      url |> downloadAsync 0L |> Async.RunSynchronously
       )
     |> Trial.lift (fun _ -> ())
+    |> Trial.mapFailure (List.map ExnError)

@@ -5,21 +5,21 @@ open System.Xml
 open System.Linq
 
 module Article =
-  let create title desc link date url =
+  let create title desc link date srcId =
     Article
       ( Title     = title
       , Desc      = desc
       , Link      = link
       , Date      = date
-      , Url       = url
+      , SourceId  = srcId
       )
 
   /// Return the id of the item if it's been already inserted; None otherwise.
-  let tryFindId (ctx: DbCtx) (item: Article) =
-    ctx.Set<Article>().FirstOrDefault
+  let tryFindId ctx (item: Article) =
+    (ctx |> DbCtx.set<Article>).FirstOrDefault
       (fun item' ->
-           item'.Url   = item.Url
-        && item'.Date  = item.Date
+           item'.SourceId   = item.SourceId
+        && item'.Date       = item.Date
         )
     |> Option.ofObj
     |> Option.map (fun item -> item.Id)
@@ -27,20 +27,20 @@ module Article =
   /// Insert the item into the table.
   /// Doesn't save, so Id's are invalid until db context is saved.
   /// Returns if it's actually inserted or not.
-  let insert (ctx: DbCtx) (item: Article) =
+  let insert ctx (item: Article) =
     if item |> tryFindId ctx |> Option.isNone then
-      ctx.Set<Article>().Add(item) |> ignore
+      (ctx |> DbCtx.set<Article>).Add(item) |> ignore
       true
     else
       false
 
-  let readDate (ctx: DbCtx) itemId =
-    ctx.Set<ReadLog>().Find(itemId) |> Option.ofObj
+  let readDate ctx itemId =
+    (ctx |> DbCtx.set<ReadLog>).Find(itemId) |> Option.ofObj
 
   let hasAlreadyBeenRead ctx itemId =
     itemId |> readDate ctx |> Option.isSome
 
-  let parseXml url (xml: XmlDocument) =
+  let parseXml srcId (xml: XmlDocument) =
     let getTextElem xpath =
       Xml.selectSingleNode xpath
       >> Option.map (Xml.innerText)
@@ -55,17 +55,17 @@ module Article =
       in
         match (title, date) with
         | (Some title, Some date) ->
-            create title (at "description") (at "link") date url |> Some
+            create title (at "description") (at "link") date srcId |> Some
         | _ -> None
     in
       xml
       |> Xml.selectNodes "rss/channel/item"
       |> Seq.choose tryBuildItem
 
-  let ofTweet (status: CoreTweet.Status) =
+  let ofTweet (status: CoreTweet.Status) srcId =
     create
       (status.Text)
       (status.Text |> Some)
       (status |> Twitter.Status.permanentLink |> Some)
       (status.CreatedAt.DateTime)
-      ("https://twitter.com/" + status.User.ScreenName)
+      srcId

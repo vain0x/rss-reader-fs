@@ -11,9 +11,11 @@ module Database =
       // configure tables
       mb.Entity<Article       >() |> ignore
       mb.Entity<ReadLog       >() |> ignore
+      mb.Entity<Source        >() |> ignore
       mb.Entity<TwitterUser   >() |> ignore
       mb.Entity<RssFeed       >() |> ignore
       mb.Entity<Tag           >() |> ignore
+      mb.Entity<TagToSource   >() |> ignore
       mb.Entity<Config        >() |> ignore
 
       Database.SetInitializer(SampleDbInitializer(mb))
@@ -21,11 +23,18 @@ module Database =
   and SampleDbInitializer(mb) =
     inherit SqliteDropCreateDatabaseWhenModelChanges<SampleDbContext>(mb)
 
+    override this.Seed(mb) =
+      mb.Set<Source>().Add(Source(Name = "ALL")) |> ignore
+      mb.SaveChanges() |> ignore
+
 [<AutoOpen>]
 module DatabaseExtension =
   type DbCtx = Database.SampleDbContext
 
 module DbCtx =
+  let set<'t when 't: not struct and 't: null> (ctx: DbCtx) =
+    ctx.Set<'t>()
+
   let saving (ctx: DbCtx) x =
     x |> tap (fun _ -> ctx.SaveChanges() |> ignore)
 

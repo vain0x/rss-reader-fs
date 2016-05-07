@@ -18,9 +18,6 @@ module Entity =
     [<Required>]
     member val Title = "" with get, set
 
-    [<Required; Index>]
-    member val Url = "" with get, set
-
     member val Desc = (None: option<string>) with get, set
 
     member val Link = (None: option<string>) with get, set
@@ -28,42 +25,53 @@ module Entity =
     [<Required; Index>]
     member val Date = DateTime.Now with get, set
 
+    [<Required; Index>]
+    member val SourceId = 0L with get, set
+
   [<AllowNullLiteral>]
   type ReadLog() =
-    [<Key>]
+    [<Key; DatabaseGenerated(DatabaseGeneratedOption.None)>]
     member val ArticleId = 0L with get, set
 
     [<Required>]
     member val Date = DateTime.Now with get, set
 
   [<AllowNullLiteral>]
-  type TwitterUser() =
+  type Source() =
     inherit EntityWithId()
 
-    [<Index(IsUnique = true)>]
-    member val ScreenName = "" with get, set
+    [<Required; Index(IsUnique = true)>]
+    member val Name = "" with get, set
+
+  [<AllowNullLiteral>]
+  type TwitterUser() =
+    [<Key; DatabaseGenerated(DatabaseGeneratedOption.None)>]
+    member val SourceId = 0L with get, set
 
     member val SinceId = 0L with get, set
 
   [<AllowNullLiteral>]
   type RssFeed() =
-    inherit EntityWithId()
-
-    [<Required; Index(IsUnique = true)>]
-    member val Name = "" with get, set
+    [<Key; DatabaseGenerated(DatabaseGeneratedOption.None)>]
+    member val SourceId = 0L with get, set
 
     [<Required; Index(IsUnique = true)>]
     member val Url = "" with get, set
 
   [<AllowNullLiteral>]
   type Tag() =
+    [<Key; DatabaseGenerated(DatabaseGeneratedOption.None)>]
+    member val SourceId = 0L with get, set
+
+  [<AllowNullLiteral>]
+  type TagToSource() =
     inherit EntityWithId()
 
     [<Required; Index>]
-    member val TagName = "" with get, set
+    member val TagId = 0L with get, set
 
     [<Required; Index>]
-    member val SourceName = "" with get, set
+    member val SourceId = 0L with get, set
 
   [<AllowNullLiteral>]
   type Config() =
