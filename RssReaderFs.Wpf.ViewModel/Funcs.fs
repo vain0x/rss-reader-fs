@@ -11,9 +11,9 @@ module ArticleRow =
       FeedName      = ""
     }
 
-  let ofItem (rc: RssReader) (item: Article) =
+  let ofItem (rr: RssReader) (item: Article) =
     {
       Title         = item.Title
       Date          = item.Date.ToString("G")
-      FeedName      = (Source.findSourceById (rc |> RssReader.ctx) item.SourceId).Name
+      FeedName      = (Source.findSourceById (rr |> RssReader.ctx) item.SourceId).Name
     }

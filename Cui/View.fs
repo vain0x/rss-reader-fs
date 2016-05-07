@@ -6,9 +6,9 @@ open System.Collections.Generic
 open Chessie.ErrorHandling
 open RssReaderFs.Core
 
-type View (rc: RssReader) =
+type View (rr: RssReader) =
   let reader () =
-    rc
+    rr
 
   member this.PrintCount(items) =
     let len = items |> Array.length
@@ -23,7 +23,7 @@ type View (rc: RssReader) =
       | Some h -> h + " "
       | None -> ""
     let src =
-      Source.findSourceById (rc |> RssReader.ctx) item.SourceId
+      Source.findSourceById (rr |> RssReader.ctx) item.SourceId
     let () =
       printfn "%s%s" header (item.Title)
       printfn "* Date: %s" (item.Date.ToString("G"))
@@ -31,7 +31,7 @@ type View (rc: RssReader) =
       printfn "* From: %s" src.Name
       item.Desc |> Option.iter (printfn "* Desc:\r\n%s")
     let () =
-      rc |> RssReader.readItem item |> ignore
+      rr |> RssReader.readItem item |> ignore
     in ()
 
   member this.PrintItems(items: Article []) =
@@ -68,7 +68,7 @@ type View (rc: RssReader) =
             )
 
   member this.PrintSource(src) =
-    printfn "%s" (Source.dump (rc |> RssReader.ctx) src)
+    printfn "%s" (Source.dump (rr |> RssReader.ctx) src)
 
   member this.PrintSources(srcs) =
     for src in srcs do 
