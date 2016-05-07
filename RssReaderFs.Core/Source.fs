@@ -53,12 +53,6 @@ module Source =
     (ctx |> DbCtx.set<TwitterUser>).FirstOrDefault(fun tu -> tu.ScreenName = name)
     |> Option.ofObj
     
-  let findTaggedSourceNames ctx tagName: Set<string> =
-    (ctx |> DbCtx.set<Tag>)
-      .Where(fun tag -> tag.TagName = tagName)
-      .Select(fun tag -> tag.SourceName)
-    |> Set.ofSeq
-
   let tryFindTagSource ctx (tagName: TagName): option<DerivedSource> =
     if (ctx |> DbCtx.set<Tag>).FirstOrDefault(fun tag -> tag.TagName = tagName) = null
     then None
@@ -74,6 +68,12 @@ module Source =
         yield tryFindTagSource    ctx srcName
       }
       |> Seq.tryPick id
+
+  let findTaggedSourceNames ctx tagName: Set<string> =
+    (ctx |> DbCtx.set<Tag>)
+      .Where(fun tag -> tag.TagName = tagName)
+      .Select(fun tag -> tag.SourceName)
+    |> Set.ofSeq
 
   /// src についているタグのリスト
   let tagsOf ctx (srcName: string): list<TagName> =
