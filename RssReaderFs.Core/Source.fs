@@ -38,7 +38,7 @@ module Source =
       yield! allTwitterUsers ctx  |> Seq.map ofTwitterUser
     }
 
-  let tryFindFeed (ctx: DbCtx) url: option<RssFeed> =
+  let tryFindFeedByUrl (ctx: DbCtx) url: option<RssFeed> =
     ctx.Set<RssFeed>().FirstOrDefault(fun feed -> feed.Url = url)
     |> Option.ofObj
 

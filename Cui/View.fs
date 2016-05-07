@@ -23,7 +23,7 @@ type View (rc: RssReader) =
       | Some h -> h + " "
       | None -> ""
     let src =
-      Source.tryFindFeed (rc |> RssReader.ctx) (item.Url)
+      Source.tryFindFeedByUrl (rc |> RssReader.ctx) (item.Url)
     let () =
       printfn "%s%s" header (item.Title)
       printfn "* Date: %s" (item.Date.ToString("G"))
