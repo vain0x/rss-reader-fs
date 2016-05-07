@@ -6,17 +6,17 @@ open System.Collections.Generic
 open Chessie.ErrorHandling
 open RssReaderFs.Core
 
-type Ctrl (rc: RssReader, sendResult: CommandResult -> Async<unit>) =
+type Ctrl (rr: RssReader, sendResult: CommandResult -> Async<unit>) =
   let mutable unreadItems =
-    rc |> RssReader.unreadItems (Source.allSource (rc |> RssReader.ctx))
+    rr |> RssReader.unreadItems (Source.allSource (rr |> RssReader.ctx))
 
   member this.TryFindSource(srcName) =
-    Source.tryFindByName (rc |> RssReader.ctx) srcName
+    Source.tryFindByName (rr |> RssReader.ctx) srcName
     |> Trial.failIfNone (srcName |> SourceDoesNotExist)
 
   member this.UpdateAsync(src) =
     async {
-      let! newItems = rc |> RssReader.updateAsync src
+      let! newItems = rr |> RssReader.updateAsync src
       if newItems |> Array.isEmpty |> not then
         unreadItems <- Array.append unreadItems newItems
     }
@@ -27,7 +27,7 @@ type Ctrl (rc: RssReader, sendResult: CommandResult -> Async<unit>) =
 
     let rec loop () =
       async {
-        do! this.UpdateAsync(Source.allSource (rc |> RssReader.ctx))
+        do! this.UpdateAsync(Source.allSource (rr |> RssReader.ctx))
         if unreadItems |> Array.isEmpty |> not then
           do! (unreadItems, Count) |> Async.inject |> Trial.inject |> ArticleSeq |> sendResult
         do! Async.Sleep(timeout)
@@ -61,40 +61,40 @@ type Ctrl (rc: RssReader, sendResult: CommandResult -> Async<unit>) =
           this.UpdateAndShow(AllSourceName, Titles)
 
       | "feeds" :: _ ->
-          Source.allFeeds (rc |> RssReader.ctx)
+          Source.allFeeds (rr |> RssReader.ctx)
           |> Seq.map (Source.ofFeed)
           |> SourceSeq
 
       | "feed" :: name :: url :: _ ->
-          let result    = rc |> RssReader.addFeed name url
+          let result    = rr |> RssReader.addFeed name url
           in result |> Result
 
       | "twitter-user" :: name :: _ ->
-          let result      = rc |> RssReader.addTwitterUser name
+          let result      = rr |> RssReader.addTwitterUser name
           in result |> Result
 
       | "remove" :: name :: _ ->
-          rc |> RssReader.tryRemoveSource name |> Result
+          rr |> RssReader.tryRemoveSource name |> Result
 
       | "rename" :: oldName :: newName :: _ ->
-          rc |> RssReader.renameSource oldName newName |> Result
+          rr |> RssReader.renameSource oldName newName |> Result
 
       | "sources" :: _ ->
-          Source.allAtomicSources (rc |> RssReader.ctx) |> SourceSeq
+          Source.allAtomicSources (rr |> RssReader.ctx) |> SourceSeq
 
       | "tag" :: tagName :: srcName :: _ ->
-          rc |> RssReader.addTag tagName srcName |> Result
+          rr |> RssReader.addTag tagName srcName |> Result
 
       | "detag" :: tagName :: srcName :: _ ->
-          rc |> RssReader.removeTag tagName srcName |> Result
+          rr |> RssReader.removeTag tagName srcName |> Result
 
       | "tags" :: srcName :: _ ->
-          Source.tagsOf (rc |> RssReader.ctx) srcName
+          Source.tagsOf (rr |> RssReader.ctx) srcName
           |> Seq.map (Source.ofTag)
           |> SourceSeq
 
       | "tags" :: _ ->
-          Source.allTags (rc |> RssReader.ctx)
+          Source.allTags (rr |> RssReader.ctx)
           |> Seq.map (Source.ofTag)
           |> SourceSeq
 

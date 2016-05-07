@@ -64,7 +64,7 @@ type FollowPanel(rr: RssReader, raiseError: seq<Error> -> unit) as this =
           )
     |> fst
 
-type FeedsWindow(rc: RssReader) as this =
+type FeedsWindow(rr: RssReader) as this =
   inherit WpfViewModel.DialogBase<unit>()
 
   let mutable error = ""
@@ -74,19 +74,19 @@ type FeedsWindow(rc: RssReader) as this =
     this.RaisePropertyChanged("Error")
     this.RaisePropertyChanged("ErrorVisibility")
 
-  let addFeedPanel = AddFeedPanel(rc, raiseError)
+  let addFeedPanel = AddFeedPanel(rr, raiseError)
 
-  let followPanel = FollowPanel(rc, raiseError)
+  let followPanel = FollowPanel(rr, raiseError)
   
-  do rc |> RssReader.changed |> Observable.add (fun () ->
+  do rr |> RssReader.changed |> Observable.add (fun () ->
       this.RaisePropertyChanged("Feeds")
       )
 
   member this.Feeds =
-    Source.allFeeds (rc |> RssReader.ctx)
+    Source.allFeeds (rr |> RssReader.ctx)
 
   member this.TwitterUsers =
-    Source.allTwitterUsers (rc |> RssReader.ctx) |> Array.map Source.name
+    Source.allTwitterUsers (rr |> RssReader.ctx) |> Array.map Source.name
 
   member this.AddFeedPanel = addFeedPanel
 

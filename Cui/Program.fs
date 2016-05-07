@@ -6,9 +6,9 @@ open RssReaderFs.Core
 module Program =
   [<EntryPoint>]
   let main argv =
-    let rc = RssReader.create ()
-    let view = View(rc)
-    let rrc = Ctrl(rc, view.PrintCommandResult)
+    let rr = RssReader.create ()
+    let view = View(rr)
+    let rrc = Ctrl(rr, view.PrintCommandResult)
 
     try
       try
@@ -25,7 +25,7 @@ module Program =
             view.PrintCommandResult(rrc.ProcCommand(argv |> Array.toList))
             |> Async.RunSynchronously
       finally
-        rc |> RssReader.save
+        rr |> RssReader.save
 
       // exit code
       0

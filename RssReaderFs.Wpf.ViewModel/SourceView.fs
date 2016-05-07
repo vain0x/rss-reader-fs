@@ -1,15 +1,16 @@
 ﻿namespace RssReaderFs.Wpf.ViewModel
 
 open System
+open Basis.Core
 open RssReaderFs.Core
 
-type SourceView(rc: RssReader) as this =
+type SourceView(rr: RssReader) as this =
   inherit WpfViewModel.Base()
 
   let mutable srcName = AllSourceName
 
   let srcOpt () =
-    Source.tryFindByName (rc |> RssReader.ctx) srcName
+    Source.tryFindByName (rr |> RssReader.ctx) srcName
 
   let mutable items =
     ([||]: Article [])
@@ -38,10 +39,10 @@ type SourceView(rc: RssReader) as this =
     
   let updateAsync () =
     async {
-      match Source.tryFindByName (rc |> RssReader.ctx) srcName with
+      match Source.tryFindByName (rr |> RssReader.ctx) srcName with
       | None -> ()
       | Some src ->
-          let! newItems = rc |> RssReader.updateAsync src
+          let! newItems = rr |> RssReader.updateAsync src
           if newItems |> Array.isEmpty |> not then
             addNewItems newItems
     }
@@ -56,12 +57,12 @@ type SourceView(rc: RssReader) as this =
 
   do checkUpdate ()
 
-  do rc |> RssReader.changed |> Observable.add (fun () ->
+  do rr |> RssReader.changed |> Observable.add (fun () ->
       this.RaisePropertyChanged("Items")
       )
 
   member this.Items =
-    items |> Array.map (ArticleRow.ofItem rc)
+    items |> Array.map (ArticleRow.ofItem rr)
 
   member this.SelectedIndex
     with get () = selectedIndex
@@ -77,7 +78,7 @@ type SourceView(rc: RssReader) as this =
 
   member this.SelectedRow: ArticleRow =
     match items |> Array.tryItem selectedIndex with
-    | Some item -> item |> ArticleRow.ofItem rc
+    | Some item -> item |> ArticleRow.ofItem rr
     | None -> ArticleRow.empty
 
   member this.SelectedDesc
@@ -96,8 +97,8 @@ type SourceView(rc: RssReader) as this =
       srcName <- newName
 
       items <-
-        match Source.tryFindByName (rc |> RssReader.ctx) srcName with
-        | Some src -> rc |> RssReader.unreadItems src
+        match Source.tryFindByName (rr |> RssReader.ctx) srcName with
+        | Some src -> rr |> RssReader.unreadItems src
         | None -> [||]
       this.RaisePropertyChanged("Items")
 

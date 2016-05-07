@@ -29,16 +29,6 @@ module Nullable =
     | x -> Some x
 
 module Option =
-  let getOr def =
-    function
-    | None -> def
-    | Some x -> x
-
-  let getOrElse f =
-    function
-    | None -> f ()
-    | Some x -> x
-
   let ofTrial =
     function
     | (true, value) -> Some value

@@ -3,6 +3,7 @@
 open System
 open System.Linq
 open System.Collections.Generic
+open Basis.Core
 open FsYaml
 open Chessie.ErrorHandling
 

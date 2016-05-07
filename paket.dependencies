@@ -6,6 +6,7 @@ nuget System.Data.SQLite.EF6
 nuget System.Data.SQLite.Linq
 nuget EntityFramework
 nuget SQLite.CodeFirst
+nuget Basis.Core
 nuget CoreTweet
 nuget FsYaml
 github fsprojects/Chessie src/Chessie/ErrorHandling.fs
