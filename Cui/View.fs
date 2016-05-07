@@ -28,9 +28,7 @@ type View (rc: RssReader) =
       printfn "%s%s" header (item.Title)
       printfn "* Date: %s" (item.Date.ToString("G"))
       printfn "* Link: %s" (item.Link |> Option.getOr "(no link)")
-      src |> Option.iter (fun feed ->
-          printfn "* From: %s" (feed.Name)
-          )
+      printfn "* From: %s" (reader () |> RssReader.feedName item.Url)
       item.Desc |> Option.iter (printfn "* Desc:\r\n%s")
     let () =
       rc |> RssReader.readItem item |> ignore
