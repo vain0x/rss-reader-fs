@@ -89,8 +89,7 @@ type Ctrl (rc: RssReader, sendResult: CommandResult -> Async<unit>) =
           rc |> RssReader.removeTag tagName srcName |> Result
 
       | "tags" :: srcName :: _ ->
-          rc
-          |> RssReader.tagSetOf srcName
+          Source.tagSetOf (rc |> RssReader.ctx) srcName
           |> Seq.map (Source.ofTag)
           |> SourceSeq
 

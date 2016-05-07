@@ -154,13 +154,6 @@ module RssReader =
         return! () |> warn (SourceDoesNotHaveTag (srcName, tagName))
     }
 
-  /// src についているタグの集合
-  let tagSetOf (srcName: string) rr: Set<TagName> =
-    (rr |> set<Tag>)
-      .Where(fun tag -> tag.SourceName = srcName)
-      .Select(fun tag -> tag.TagName)
-    |> Set.ofSeq
-
   let dumpSource (src: DerivedSource) rr: string =
     let srcName = src |> Source.name
     match src with
