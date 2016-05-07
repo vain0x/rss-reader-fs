@@ -67,5 +67,5 @@ module Article =
       (status.Text)
       (status.Text |> Some)
       (status |> Twitter.Status.permanentLink |> Some)
-      (status.CreatedAt.DateTime)
+      (status.CreatedAt.DateTime.ToLocalTime())
       srcId
