@@ -43,11 +43,6 @@ module RssReader =
   let raisingChanged rr (x: 'x): 'x =
     x |> tap (fun _ -> (rr |> changedEvent).Trigger())
 
-  let feedName (url: string) rr: string =
-    match Source.tryFindFeedByUrl (rr |> ctx) url with
-    | Some feed -> sprintf "%s <%s>" feed.Name url
-    | None -> sprintf "<%s>" url
-
   let private addSource srcName rr =
     trial {
       match Source.tryFindByName (rr |> ctx) srcName with

@@ -82,6 +82,11 @@ module Source =
       .Select(fun tag -> tag.TagName)
     |> Seq.toList
 
+  let feedName ctx (url: string): string =
+    match tryFindFeedByUrl ctx url with
+    | Some feed -> sprintf "%s <%s>" feed.Name url
+    | None -> sprintf "<%s>" url
+
   let dump ctx (src: DerivedSource): string =
     let srcName = src |> name
     match src with

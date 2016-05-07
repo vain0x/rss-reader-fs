@@ -15,5 +15,5 @@ module ArticleRow =
     {
       Title         = item.Title
       Date          = item.Date.ToString("G")
-      FeedName      = rc |> RssReader.feedName item.Url
+      FeedName      = Source.feedName (rc |> RssReader.ctx) item.Url
     }
