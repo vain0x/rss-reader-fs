@@ -42,6 +42,10 @@ module Source =
     ctx.Set<RssFeed>().FirstOrDefault(fun feed -> feed.Url = url)
     |> Option.ofObj
 
+  let tryFindFeedByName (ctx: DbCtx) srcName =
+    ctx.Set<RssFeed>().FirstOrDefault(fun feed -> feed.Name = srcName)
+    |> Option.ofObj
+
   let tryFindTwitterUser (ctx: DbCtx) (name: string): option<TwitterUser> =
     ctx.Set<TwitterUser>().FirstOrDefault(fun tu -> tu.ScreenName = name)
     |> Option.ofObj
@@ -62,7 +66,7 @@ module Source =
     then all |> Some
     else
       seq {
-        yield tryFindFeed         ctx srcName |> Option.map (ofFeed)
+        yield tryFindFeedByName   ctx srcName |> Option.map (ofFeed)
         yield tryFindTwitterUser  ctx srcName |> Option.map (ofTwitterUser)
         yield tryFindTagSource    ctx srcName
       }
