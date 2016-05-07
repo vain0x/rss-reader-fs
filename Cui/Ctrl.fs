@@ -27,7 +27,7 @@ type Ctrl (rc: RssReader, sendResult: CommandResult -> Async<unit>) =
 
     let rec loop () =
       async {
-        do! this.UpdateAsync(Source.all)
+        do! this.UpdateAsync(Source.allSource (rc |> RssReader.ctx))
         if unreadItems |> Array.isEmpty |> not then
           do! (unreadItems, Count) |> Async.inject |> Trial.inject |> ArticleSeq |> sendResult
         do! Async.Sleep(timeout)

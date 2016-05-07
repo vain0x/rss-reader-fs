@@ -4,7 +4,7 @@ open System.Linq
 open Chessie.ErrorHandling
 
 module Source =
-  let all =
+  let private all =
     AllSource
 
   let ofFeed feed =
@@ -22,6 +22,9 @@ module Source =
     | Feed feed         -> feed.Name
     | TwitterUser tu    -> tu.ScreenName
     | TagSource tagName -> tagName
+
+  let allSource ctx =
+    all
 
   let allFeeds (ctx: DbCtx): RssFeed [] =
     (ctx.Set<RssFeed>()) |> Array.ofSeq
