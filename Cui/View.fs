@@ -7,9 +7,6 @@ open Chessie.ErrorHandling
 open RssReaderFs.Core
 
 type View (rr: RssReader) =
-  let reader () =
-    rr
-
   member this.PrintCount(items) =
     let len = items |> Array.length
     in
