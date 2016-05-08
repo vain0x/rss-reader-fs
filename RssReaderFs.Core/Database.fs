@@ -16,7 +16,7 @@ module Database =
       mb.Entity<RssFeed       >() |> ignore
       mb.Entity<Tag           >() |> ignore
       mb.Entity<TagToSource   >() |> ignore
-      mb.Entity<Config        >() |> ignore
+      mb.Entity<BearTokenCache>() |> ignore
 
       Database.SetInitializer(SampleDbInitializer(mb))
 

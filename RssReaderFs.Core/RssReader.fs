@@ -10,23 +10,10 @@ open Chessie.ErrorHandling
 module RssReader =
   let create (): RssReader =
     let ctx             = new DbCtx()
-    let configOpt       = (ctx |> DbCtx.set<Config>).Find(DefaultConfigName) |> Option.ofObj
-    let token           =
-      match configOpt with
-      | Some config ->
-          Twitter.createAppOnlyToken(config.BearToken)
-      | None ->
-          Twitter.getAppOnlyToken()
-          |> tap (fun token ->
-              // Save BearToken
-              let config = Config(Name = DefaultConfigName, BearToken = token.BearerToken)
-              (ctx |> DbCtx.set<Config>).Add(config) |> ignore
-              ctx.SaveChanges() |> ignore
-              )
     in
       {
         Ctx             = ctx
-        TwitterToken    = token
+        TwitterToken    = Twitter.fetchAppOnlyToken ctx
         ChangedEvent    = Event<unit>()
       }
 
