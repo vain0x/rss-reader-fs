@@ -17,14 +17,14 @@ type SourceView(rr: RssReader) as this =
 
   let mutable selectedIndex = -1
 
-  let selectedItem () =
+  let selectedArticle () =
     items |> Array.tryItem selectedIndex 
     |> Option.map (fun item ->
       (rr |> RssReader.ctx |> DbCtx.set<Article>).Find(item.ArticleId)
       )
 
   let selectedLink () =
-    selectedItem ()
+    selectedArticle ()
     |> Option.bind (fun item -> item.Link)
     |> Option.getOr ""
 
@@ -78,12 +78,12 @@ type SourceView(rr: RssReader) as this =
 
       linkJumpCommandExecutabilityChanged this
 
-      selectedItem () |> Option.iter (fun item ->
+      selectedArticle () |> Option.iter (fun item ->
         let readLog = rr |> RssReader.readItem item
         items.[v].ReadDate <- Some readLog.Date
         )
 
-  member this.SelectedItem = selectedItem ()
+  member this.SelectedArticle = selectedArticle ()
 
   member this.SelectedRow: MetaArticle =
     match items |> Array.tryItem selectedIndex with
@@ -92,7 +92,7 @@ type SourceView(rr: RssReader) as this =
 
   member this.SelectedDesc
     with get () =
-      selectedItem ()
+      selectedArticle ()
       |> Option.bind (fun item -> item.Desc)
       |> Option.getOr "(No description.)"
     and  set (_: string) = ()
