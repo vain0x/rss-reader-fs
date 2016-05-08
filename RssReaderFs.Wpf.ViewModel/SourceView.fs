@@ -17,9 +17,11 @@ type SourceView(rr: RssReader) as this =
 
   let mutable selectedIndex = -1
 
-  let selectedArticle () =
+  let selectedItem () =
     items |> Array.tryItem selectedIndex 
-    |> Option.map (fun item ->
+
+  let selectedArticle () =
+    selectedItem () |> Option.map (fun item ->
       (rr |> RssReader.ctx |> DbCtx.set<Article>).Find(item.ArticleId)
       )
 
@@ -73,7 +75,7 @@ type SourceView(rr: RssReader) as this =
     and  set v  =
       selectedIndex <- v
 
-      for name in ["SelectedRow"; "SelectedDesc"] do
+      for name in ["SelectedItem"; "SelectedDesc"] do
         this.RaisePropertyChanged(name)
 
       linkJumpCommandExecutabilityChanged this
@@ -85,10 +87,8 @@ type SourceView(rr: RssReader) as this =
 
   member this.SelectedArticle = selectedArticle ()
 
-  member this.SelectedRow: MetaArticle =
-    match items |> Array.tryItem selectedIndex with
-    | Some item -> item
-    | None -> MetaArticle.empty
+  member this.SelectedItem: MetaArticle =
+    selectedItem () |> Option.getOr MetaArticle.empty
 
   member this.SelectedDesc
     with get () =
