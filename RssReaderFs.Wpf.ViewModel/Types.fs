@@ -2,7 +2,7 @@
 
 [<AutoOpen>]
 module Types =
-  type ArticleRow =
+  type MetaArticle =
     {
       Title           : string
       Date            : string

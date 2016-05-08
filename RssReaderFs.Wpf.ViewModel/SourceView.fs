@@ -62,7 +62,7 @@ type SourceView(rr: RssReader) as this =
       )
 
   member this.Items =
-    items |> Array.map (ArticleRow.ofItem rr)
+    items |> Array.map (MetaArticle.ofItem rr)
 
   member this.SelectedIndex
     with get () = selectedIndex
@@ -76,10 +76,10 @@ type SourceView(rr: RssReader) as this =
 
   member this.SelectedItem = selectedItem ()
 
-  member this.SelectedRow: ArticleRow =
+  member this.SelectedRow: MetaArticle =
     match items |> Array.tryItem selectedIndex with
-    | Some item -> item |> ArticleRow.ofItem rr
-    | None -> ArticleRow.empty
+    | Some item -> item |> MetaArticle.ofItem rr
+    | None -> MetaArticle.empty
 
   member this.SelectedDesc
     with get () =

@@ -3,7 +3,7 @@ module RssReaderFs.Wpf.ViewModel.Funcs
 
 open RssReaderFs.Core
 
-module ArticleRow =
+module MetaArticle =
   let empty =
     {
       Title         = ""
