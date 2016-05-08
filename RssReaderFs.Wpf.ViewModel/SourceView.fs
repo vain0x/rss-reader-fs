@@ -38,7 +38,7 @@ type SourceView(rr: RssReader) as this =
       newItems
       |> Array.sortBy (fun item -> item.Date)
       |> Array.map (MetaArticle.ofItem rr)
-      |> flip Array.append (items |> Array.map (fun item -> { item with IsNew = false }))
+      |> flip Array.append items
     this.RaisePropertyChanged("Items")
     
   let updateAsync () =
@@ -77,6 +77,12 @@ type SourceView(rr: RssReader) as this =
         this.RaisePropertyChanged(name)
 
       linkJumpCommandExecutabilityChanged this
+
+      selectedItem () |> Option.iter (fun item ->
+        let readLog = rr |> RssReader.readItem item
+        items.[v] <- { items.[v] with ReadDate = Some (readLog.Date) }
+        this.RaisePropertyChanged("Items")
+        )
 
   member this.SelectedItem = selectedItem ()
 

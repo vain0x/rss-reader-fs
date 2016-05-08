@@ -11,4 +11,5 @@ module Types =
       Title           : string
       Date            : string
       FeedName        : string
+      ReadDate        : option<DateTime>
     }
