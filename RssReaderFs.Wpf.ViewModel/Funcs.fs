@@ -7,23 +7,14 @@ open RssReaderFs.Core
 
 module MetaArticle =
   let empty =
-    {
-      ArticleId     = 0L  // dummy value
-      Title         = ""
-      Date          = ""
-      FeedName      = ""
-      ReadDate      = None
-    }
+    MetaArticle(0L, "", "", "", None)
 
   let ofItem (rr: RssReader) (item: Article) =
     let ctx         = rr |> RssReader.ctx
     let readDate    =
       (ctx |> DbCtx.set<ReadLog>).FirstOrDefault() |> Option.ofObj
       |> Option.map (fun log -> log.Date)
-    {
-      ArticleId     = item.Id
-      Title         = item.Title
-      Date          = item.Date.ToString("G")
-      FeedName      = (Source.findSourceById ctx item.SourceId).Name
-      ReadDate      = readDate 
-    }
+    let feedName    =
+      (Source.findSourceById ctx item.SourceId).Name
+    in
+      MetaArticle(item.Id, item.Title, item.Date.ToString("G"), feedName, readDate)
