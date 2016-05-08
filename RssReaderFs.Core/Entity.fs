@@ -74,8 +74,8 @@ module Entity =
     member val SourceId = 0L with get, set
 
   [<AllowNullLiteral>]
-  type Config() =
-    [<Key>]
-    member val Name = "" with get, set
+  type BearTokenCache() =
+    inherit EntityWithId()
 
+    [<Required>]
     member val BearToken = "" with get, set

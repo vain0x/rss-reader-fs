@@ -1,6 +1,7 @@
 ﻿namespace RssReaderFs.Core
 
 open System
+open System.Linq
 open CoreTweet
 open Chessie.ErrorHandling
 
@@ -16,6 +17,18 @@ module Twitter =
 
   let createAppOnlyToken bearToken =
     OAuth2Token.Create(SecretSettings.consumerKey, SecretSettings.consumerSecret, bearToken)
+
+  /// Get or create using cache
+  let fetchAppOnlyToken ctx =
+    let btcs = ctx |> DbCtx.set<BearTokenCache>
+    match btcs.FirstOrDefault() |> Option.ofObj with
+    | Some btc ->
+        createAppOnlyToken btc.BearToken
+    | None ->
+        getAppOnlyTokenAsync () |> Async.RunSynchronously
+        |> tap (fun token ->
+            btcs.Add(BearTokenCache(BearToken = token.BearerToken)) |> ignore
+            )
 
   let userTweetsAsync (name: string) (sinceId: int64) (token: OAuth2Token) =
     let args =
