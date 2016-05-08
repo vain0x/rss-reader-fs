@@ -13,12 +13,15 @@ type SourceView(rr: RssReader) as this =
     Source.tryFindByName (rr |> RssReader.ctx) srcName
 
   let mutable items =
-    ([||]: Article [])
+    ([||]: MetaArticle [])
 
   let mutable selectedIndex = -1
 
   let selectedItem () =
-    items |> Array.tryItem selectedIndex
+    items |> Array.tryItem selectedIndex 
+    |> Option.map (fun item ->
+      (rr |> RssReader.ctx |> DbCtx.set<Article>).Find(item.ArticleId)
+      )
 
   let selectedLink () =
     selectedItem ()
@@ -34,6 +37,7 @@ type SourceView(rr: RssReader) as this =
     items <-
       newItems
       |> Array.sortBy (fun item -> item.Date)
+      |> Array.map (MetaArticle.ofItem rr)
       |> flip Array.append items
     this.RaisePropertyChanged("Items")
     
@@ -62,7 +66,7 @@ type SourceView(rr: RssReader) as this =
       )
 
   member this.Items =
-    items |> Array.map (ArticleRow.ofItem rr)
+    items
 
   member this.SelectedIndex
     with get () = selectedIndex
@@ -74,17 +78,21 @@ type SourceView(rr: RssReader) as this =
 
       linkJumpCommandExecutabilityChanged this
 
+      selectedItem () |> Option.iter (fun item ->
+        let readLog = rr |> RssReader.readItem item
+        items.[v].ReadDate <- Some readLog.Date
+        )
+
   member this.SelectedItem = selectedItem ()
 
-  member this.SelectedRow: ArticleRow =
+  member this.SelectedRow: MetaArticle =
     match items |> Array.tryItem selectedIndex with
-    | Some item -> item |> ArticleRow.ofItem rr
-    | None -> ArticleRow.empty
+    | Some item -> item
+    | None -> MetaArticle.empty
 
   member this.SelectedDesc
     with get () =
-      items
-      |> Array.tryItem selectedIndex
+      selectedItem ()
       |> Option.bind (fun item -> item.Desc)
       |> Option.getOr "(No description.)"
     and  set (_: string) = ()
@@ -98,7 +106,9 @@ type SourceView(rr: RssReader) as this =
 
       items <-
         match Source.tryFindByName (rr |> RssReader.ctx) srcName with
-        | Some src -> rr |> RssReader.unreadItems src
+        | Some src ->
+            rr |> RssReader.unreadItems src
+            |> Array.map (MetaArticle.ofItem rr)
         | None -> [||]
       this.RaisePropertyChanged("Items")
 

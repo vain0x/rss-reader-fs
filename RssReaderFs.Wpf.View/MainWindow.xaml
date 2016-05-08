@@ -39,8 +39,25 @@
             <ListView x:Name="listView" ItemsSource="{Binding Items}" SelectedIndex="{Binding SelectedIndex}">
                 <ListView.View>
                     <GridView>
-                        <GridViewColumn Header="Title"  DisplayMemberBinding="{Binding Title}" />
-                        <GridViewColumn Header="Date"   DisplayMemberBinding="{Binding Date}" />
+                        <GridViewColumn Header="Title">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Title}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="{x:Type TextBlock}">
+                                                    <Setter Property="FontWeight" Value="Bold" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding ReadDate}" Value="null">
+                                                            <Setter Property="FontWeight" Value="Normal" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Date"   DisplayMemberBinding="{Binding Date}" />
                         <GridViewColumn Header="Feed"   DisplayMemberBinding="{Binding FeedName}" />
                     </GridView>
                 </ListView.View>
