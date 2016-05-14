@@ -11,6 +11,7 @@
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="auto" />
+            <ColumnDefinition Width="auto" />
             <ColumnDefinition />
         </Grid.ColumnDefinitions>
 
@@ -27,7 +28,13 @@
             <Button Grid.Row="1" Content="Feeds" Command="{Binding FeedsCommand}" />
         </Grid>
 
-        <Grid Grid.Column="1" x:Name="_sourceView">
+        <GridSplitter
+            Grid.Column="1"
+            HorizontalAlignment="Stretch"
+            Width="5"
+            />
+
+        <Grid Grid.Column="2" x:Name="_sourceView">
             <Grid.RowDefinitions>
                 <RowDefinition Height="2*" />
                 <RowDefinition Height="auto" />
