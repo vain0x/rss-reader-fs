@@ -50,7 +50,7 @@ namespace RssReaderFs.Wpf.View
             var srcName = e.NewValue as string;
             if (srcName != null)
             {
-                _vm.SourceView.SourceName = srcName;
+                _vm.SourceView.SelectSourceByName(srcName);
             }
         }
     }

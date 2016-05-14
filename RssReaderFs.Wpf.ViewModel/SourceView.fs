@@ -46,8 +46,6 @@ type SourceView(rr: RssReader) as this =
   let mutable pages =
     (Map.empty: Map<Id, SourceViewPage>)
 
-  let mutable srcName = AllSourceName
-
   let mutable selectedIndex = -1
 
   let selectedItem () =
@@ -124,17 +122,11 @@ type SourceView(rr: RssReader) as this =
       selectedPage.UpdateAsync () |> Async.Start
       this.RaisePropertyChanged("Items")
 
-  member this.SourceName
-    with get () = srcName
-    and  set newName =
-      srcName <- newName
-
-      let page =
-        match Source.tryFindByName (rr |> RssReader.ctx) srcName with
-        | None -> defaultPage
-        | Some src ->
-            pages |> Map.tryFind ((src |> fst).Id)
-            |> Option.getOrElse (fun () -> SourceViewPage(rr, Some src))
-      this.SelectedPage <- page
-
-      this.RaisePropertyChanged("SourceName")
+  member this.SelectSourceByName(srcName) =
+    let page =
+      match Source.tryFindByName (rr |> RssReader.ctx) srcName with
+      | None -> defaultPage
+      | Some src ->
+          pages |> Map.tryFind ((src |> fst).Id)
+          |> Option.getOrElse (fun () -> SourceViewPage(rr, Some src))
+    this.SelectedPage <- page
