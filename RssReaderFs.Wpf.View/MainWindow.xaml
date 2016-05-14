@@ -10,16 +10,16 @@
         FontFamily="Yu Gothic">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="1*" />
-            <ColumnDefinition Width="4*" />
+            <ColumnDefinition Width="auto" />
+            <ColumnDefinition />
         </Grid.ColumnDefinitions>
 
         <Grid Grid.Column="0">
             <Grid.RowDefinitions>
-                <RowDefinition Height="1*" />
+                <RowDefinition />
                 <RowDefinition Height="auto" />
             </Grid.RowDefinitions>
-            <TreeView x:Name="_sourceTree" SelectedItemChanged="_sourceTree_SelectedItemChanged">
+            <TreeView x:Name="_sourceTree" SelectedItemChanged="_sourceTree_SelectedItemChanged" MinWidth="120">
                 <TreeViewItem Header="Feeds" ItemsSource="{Binding Feeds}" />
                 <TreeViewItem Header="Tags" ItemsSource="{Binding Tags}" />
                 <TreeViewItem Header="Sources" ItemsSource="{Binding Sources}" />
@@ -69,14 +69,14 @@
                 />
             <Grid Grid.Row="2">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="40" />
                     <RowDefinition Height="auto" />
-                    <RowDefinition Height="1*" />
+                    <RowDefinition Height="auto" />
+                    <RowDefinition />
                 </Grid.RowDefinitions>
                 <Label x:Name="titleLabel" Content="{Binding SelectedItem.Title}" FontSize="20" Grid.Row="0" />
                 <Grid Grid.Row="1">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="1*" />
+                        <ColumnDefinition />
                         <ColumnDefinition Width="auto" />
                     </Grid.ColumnDefinitions>
                     <Label Grid.Column="0" x:Name="sourceLabel" Content="{Binding SelectedItem.FeedName}" />

@@ -22,7 +22,7 @@
         </Grid.RowDefinitions>
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="auto" />
+                <ColumnDefinition Width="auto" MinWidth="150" />
                 <ColumnDefinition Width="auto" />
             </Grid.ColumnDefinitions>
             <GroupBox Header="Feeds">
@@ -31,7 +31,7 @@
                         <RowDefinition Height="1*" />
                         <RowDefinition Height="auto" />
                     </Grid.RowDefinitions>
-                    <ListView x:Name="listView" ItemsSource="{Binding Feeds}" Grid.Row="0">
+                    <ListView x:Name="listView" ItemsSource="{Binding Feeds}"  MinHeight="100" Grid.Row="0">
                         <ListView.View>
                             <GridView>
                                 <GridViewColumn Header="Name"   DisplayMemberBinding="{Binding Name}" />
@@ -77,7 +77,7 @@
                         <RowDefinition />
                         <RowDefinition Height="auto" />
                     </Grid.RowDefinitions>
-                    <ListBox ItemsSource="{Binding TwitterUsers}" />
+                    <ListBox ItemsSource="{Binding TwitterUsers}" MinHeight="100" />
                     <Expander Grid.Row="1" x:Name="followExpander" Header="Follow" IsExpanded="True">
                         <Grid>
                             <Grid.RowDefinitions>
