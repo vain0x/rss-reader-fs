@@ -47,7 +47,7 @@
                                                 <Style TargetType="{x:Type TextBlock}">
                                                     <Setter Property="FontWeight" Value="Bold" />
                                                     <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding ReadDate}" Value="null">
+                                                        <DataTrigger Binding="{Binding HasBeenRead}" Value="true">
                                                             <Setter Property="FontWeight" Value="Normal" />
                                                         </DataTrigger>
                                                     </Style.Triggers>
