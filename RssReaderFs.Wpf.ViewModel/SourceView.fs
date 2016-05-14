@@ -24,8 +24,7 @@ type SourceViewPage(rr: RssReader, srcOpt: option<DerivedSource>) =
   member this.AddNewItems(newItems: Article []) =
     for item in newItems |> Array.sortBy (fun item -> item.Date) do
       items.Insert(0, item |> MetaArticle.ofItem rr)
-    this.RaisePropertyChanged("Items")
-    
+
   member this.UpdateAsync() =
     async {
       match srcOpt with
