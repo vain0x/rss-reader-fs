@@ -17,4 +17,9 @@ module Types =
 
     member this.ReadDate
       with get () = readDate
-      and  set v  = readDate <- v; this.RaisePropertyChanged("ReadDate")
+      and  set v  =
+        readDate <- v
+        for name in ["ReadDate"; "HasBeenRead"] do
+          this.RaisePropertyChanged(name)
+
+    member this.HasBeenRead   = this.ReadDate |> Option.isSome

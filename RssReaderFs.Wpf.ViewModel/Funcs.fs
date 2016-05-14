@@ -12,7 +12,7 @@ module MetaArticle =
   let ofItem (rr: RssReader) (item: Article) =
     let ctx         = rr |> RssReader.ctx
     let readDate    =
-      (ctx |> DbCtx.set<ReadLog>).FirstOrDefault() |> Option.ofObj
+      (ctx |> DbCtx.set<ReadLog>).Find(item.Id) |> Option.ofObj
       |> Option.map (fun log -> log.Date)
     let feedName    =
       (Source.findSourceById ctx item.SourceId).Name
