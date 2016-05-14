@@ -13,6 +13,7 @@ type SourceViewPage(rr: RssReader, srcOpt: option<DerivedSource>) =
     | Some src ->
         rr |> RssReader.unreadItems src
         |> Array.map (MetaArticle.ofItem rr)
+    |> Seq.toObservableCollection
 
   member this.Items
     with get () = items
@@ -21,12 +22,9 @@ type SourceViewPage(rr: RssReader, srcOpt: option<DerivedSource>) =
       this.RaisePropertyChanged("Items")
 
   member this.AddNewItems(newItems: Article []) =
-    this.Items <-
-      newItems
-      |> Array.sortBy (fun item -> item.Date)
-      |> Array.map (MetaArticle.ofItem rr)
-      |> flip Array.append items
-    
+    for item in newItems |> Array.sortBy (fun item -> item.Date) do
+      items.Insert(0, item |> MetaArticle.ofItem rr)
+
   member this.UpdateAsync() =
     async {
       match srcOpt with
@@ -53,7 +51,7 @@ type SourceView(rr: RssReader) as this =
   let mutable selectedIndex = -1
 
   let selectedItem () =
-    selectedPage.Items |> Array.tryItem selectedIndex 
+    selectedPage.Items |> Seq.tryItem selectedIndex 
 
   let selectedArticle () =
     selectedItem () |> Option.map (fun item ->

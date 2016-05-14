@@ -2,9 +2,14 @@
 module RssReaderFs.Wpf.ViewModel.Util
 
 open System
+open System.Collections.ObjectModel
 open System.ComponentModel
 open System.Windows
 open System.Windows.Input
+
+module Seq =
+  let toObservableCollection (xs: seq<_>) =
+    ObservableCollection(xs)
 
 module NotifyPropertyChanged =
   let create sender =
