@@ -101,6 +101,6 @@
             </GroupBox>
         </Grid>
 
-        <TextBlock Grid.Row="1" Text="{Binding Error}" Visibility="{Binding ErrorVisibility}" TextWrapping="Wrap" Margin="10" />
+        <TextBlock Grid.Row="1" Text="{Binding Error}" Visibility="{Binding ErrorVisibility}" TextWrapping="Wrap" Padding="10" />
     </Grid>
 </Window>
