@@ -12,6 +12,7 @@ type SourceViewPage(rr: RssReader, srcOpt: option<DerivedSource>) =
     | None -> [||]
     | Some src ->
         rr |> RssReader.unreadItems src
+        |> Array.sortByDescending (fun item -> item.Date)
         |> Array.map (MetaArticle.ofItem rr)
     |> Seq.toObservableCollection
 
