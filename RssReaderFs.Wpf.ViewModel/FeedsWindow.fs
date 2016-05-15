@@ -79,7 +79,8 @@ type FeedsWindow(rr: RssReader) as this =
   let followPanel = FollowPanel(rr, raiseError)
   
   do rr |> RssReader.changed |> Observable.add (fun () ->
-      this.RaisePropertyChanged("Feeds")
+      for name in ["Feeds"; "TwitterUsers"] do
+        this.RaisePropertyChanged(name)
       )
 
   member this.Feeds =
