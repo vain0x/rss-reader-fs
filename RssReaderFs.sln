@@ -11,6 +11,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "RssReaderFs.Wpf.ViewModel",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RssReaderFs.Wpf.View", "RssReaderFs.Wpf.View\RssReaderFs.Wpf.View.csproj", "{01AB9ABD-CDBF-4F88-B189-8F9345D28690}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "RssReaderFs.Core.Test", "RssReaderFs.Core.Test\RssReaderFs.Core.Test.fsproj", "{F2BF9932-E289-4224-8228-3102EAAEC407}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{01AB9ABD-CDBF-4F88-B189-8F9345D28690}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{01AB9ABD-CDBF-4F88-B189-8F9345D28690}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{01AB9ABD-CDBF-4F88-B189-8F9345D28690}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F2BF9932-E289-4224-8228-3102EAAEC407}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F2BF9932-E289-4224-8228-3102EAAEC407}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F2BF9932-E289-4224-8228-3102EAAEC407}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F2BF9932-E289-4224-8228-3102EAAEC407}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
