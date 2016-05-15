@@ -71,15 +71,16 @@ type FeedsWindow(rr: RssReader) as this =
 
   let raiseError msgs =
     error <- msgs |> Seq.map Error.toString |> String.concat Environment.NewLine
-    this.RaisePropertyChanged("Error")
-    this.RaisePropertyChanged("ErrorVisibility")
+    for name in ["Error"; "ErrorVisibility"] do
+      this.RaisePropertyChanged(name)
 
   let addFeedPanel = AddFeedPanel(rr, raiseError)
 
   let followPanel = FollowPanel(rr, raiseError)
   
   do rr |> RssReader.changed |> Observable.add (fun () ->
-      this.RaisePropertyChanged("Feeds")
+      for name in ["Feeds"; "TwitterUsers"] do
+        this.RaisePropertyChanged(name)
       )
 
   member this.Feeds =

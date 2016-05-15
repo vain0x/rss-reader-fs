@@ -10,36 +10,57 @@
         FontFamily="Yu Gothic">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="1*" />
-            <ColumnDefinition Width="4*" />
+            <ColumnDefinition Width="auto" />
+            <ColumnDefinition Width="auto" />
+            <ColumnDefinition />
         </Grid.ColumnDefinitions>
 
         <Grid Grid.Column="0">
             <Grid.RowDefinitions>
-                <RowDefinition Height="1*" />
+                <RowDefinition />
                 <RowDefinition Height="auto" />
             </Grid.RowDefinitions>
-            <TreeView x:Name="_sourceTree" SelectedItemChanged="_sourceTree_SelectedItemChanged">
+            <TreeView x:Name="_sourceTree" SelectedItemChanged="_sourceTree_SelectedItemChanged" MinWidth="120">
                 <TreeViewItem Header="Feeds" ItemsSource="{Binding Feeds}" />
                 <TreeViewItem Header="Tags" ItemsSource="{Binding Tags}" />
                 <TreeViewItem Header="Sources" ItemsSource="{Binding Sources}" />
             </TreeView>
-            <Button Grid.Row="1" Content="Feeds" Command="{Binding FeedsCommand}" Height="25" Margin="10" />
+            <Button Grid.Row="1" Content="Feeds" Command="{Binding FeedsCommand}" />
         </Grid>
 
-        <Grid Grid.Column="1" x:Name="_sourceView">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1*" />
-            </Grid.ColumnDefinitions>
+        <GridSplitter
+            Grid.Column="1"
+            HorizontalAlignment="Stretch"
+            Width="5"
+            />
+
+        <Grid Grid.Column="2" x:Name="_sourceView">
             <Grid.RowDefinitions>
                 <RowDefinition Height="2*" />
                 <RowDefinition Height="auto" />
-                <RowDefinition Height="3*" />
+                <RowDefinition Height="3*"/>
             </Grid.RowDefinitions>
             <ListView x:Name="listView" ItemsSource="{Binding Items}" SelectedIndex="{Binding SelectedIndex}">
                 <ListView.View>
                     <GridView>
-                        <GridViewColumn Header="Title"  DisplayMemberBinding="{Binding Title}" />
+                        <GridViewColumn Header="Title">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Title}" TextWrapping="Wrap">
+                                        <TextBlock.Style>
+                                            <Style TargetType="{x:Type TextBlock}">
+                                                <Setter Property="FontWeight" Value="Bold" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasBeenRead}" Value="true">
+                                                        <Setter Property="FontWeight" Value="Normal" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
                         <GridViewColumn Header="Date"   DisplayMemberBinding="{Binding Date}" />
                         <GridViewColumn Header="Feed"   DisplayMemberBinding="{Binding FeedName}" />
                     </GridView>
@@ -52,20 +73,20 @@
                 />
             <Grid Grid.Row="2">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="40" />
                     <RowDefinition Height="auto" />
-                    <RowDefinition Height="1*" />
+                    <RowDefinition Height="auto" />
+                    <RowDefinition />
                 </Grid.RowDefinitions>
-                <Label x:Name="titleLabel" Content="{Binding SelectedRow.Title}" FontSize="20" Grid.Row="0" />
+                <TextBlock x:Name="titleLabel" Text="{Binding SelectedItem.Title}" TextWrapping="Wrap" FontSize="18" Margin="5" Grid.Row="0" />
                 <Grid Grid.Row="1">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="1*" />
+                        <ColumnDefinition />
                         <ColumnDefinition Width="auto" />
                     </Grid.ColumnDefinitions>
-                    <Label Grid.Column="0" x:Name="sourceLabel" Content="{Binding SelectedRow.FeedName}" />
-                    <Button Grid.Column="1" x:Name="linkButton" Content="Link" Command="{Binding LinkJumpCommand}" Width="80" Height="25" Margin="5" />
+                    <Label Grid.Column="0" x:Name="sourceLabel" Content="{Binding SelectedItem.FeedName}" />
+                    <Button Grid.Column="1" x:Name="linkButton" Content="Link" Command="{Binding LinkJumpCommand}" />
                 </Grid>
-                <TextBox x:Name="descTextBox" Text="{Binding SelectedDesc}" Height="auto" TextWrapping="Wrap" AcceptsReturn="True" Grid.Row="2" />
+                <TextBox x:Name="descTextBox" Text="{Binding SelectedDesc}" TextWrapping="Wrap" AcceptsReturn="True" Grid.Row="2" />
             </Grid>
         </Grid>
     </Grid>

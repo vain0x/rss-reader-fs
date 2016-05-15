@@ -31,6 +31,7 @@ module Domain =
     | SourceCannotBeRemoved         of string
     | SourceCannotBeRenamed         of string
     | SourceDoesNotHaveTag          of srcName: string * tagName: TagName
+    | SourceIsNotATag               of srcName: string
 
   [<Literal>]
   let AllSourceName = "ALL"

@@ -29,7 +29,7 @@ type View (rr: RssReader) =
       printfn "* From: %s" src.Name
       item.Desc |> Option.iter (printfn "* Desc:\r\n%s")
     let () =
-      rr |> RssReader.readItem item |> ignore
+      rr |> RssReader.readItem item.Id |> ignore
     in ()
 
   member this.PrintItems(items: Article []) =

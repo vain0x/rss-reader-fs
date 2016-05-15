@@ -10,23 +10,10 @@ open Chessie.ErrorHandling
 module RssReader =
   let create (): RssReader =
     let ctx             = new DbCtx()
-    let configOpt       = (ctx |> DbCtx.set<Config>).Find(DefaultConfigName) |> Option.ofObj
-    let token           =
-      match configOpt with
-      | Some config ->
-          Twitter.createAppOnlyToken(config.BearToken)
-      | None ->
-          Twitter.getAppOnlyToken()
-          |> tap (fun token ->
-              // Save BearToken
-              let config = Config(Name = DefaultConfigName, BearToken = token.BearerToken)
-              (ctx |> DbCtx.set<Config>).Add(config) |> ignore
-              ctx.SaveChanges() |> ignore
-              )
     in
       {
         Ctx             = ctx
-        TwitterToken    = token
+        TwitterToken    = Twitter.fetchAppOnlyToken ctx
         ChangedEvent    = Event<unit>()
       }
 
@@ -175,16 +162,15 @@ module RssReader =
       | (_, None) ->
           return! fail (srcName |> SourceDoesNotExist)
       | _ ->
-          // TODO: Error ケースにする
-          return! fail (ExnError <| Exception(sprintf "'%s' isn't a tag name." tagName))
+          return! fail (tagName |> SourceIsNotATag)
     }
 
   /// Note: The read date of items already read can't be updated.
-  let readItem (item: Article) rr: ReadLog =
-    (rr |> set<ReadLog>).Find(item.Id)
+  let readItem (articleId: Id) rr: ReadLog =
+    (rr |> set<ReadLog>).Find(articleId)
     |> Option.ofObj
     |> Option.getOrElse (fun () ->
-      (rr |> set<ReadLog>).Add(ReadLog(ArticleId = item.Id, Date = DateTime.Now))
+      (rr |> set<ReadLog>).Add(ReadLog(ArticleId = articleId, Date = DateTime.Now))
       )
     |> raisingChanged rr
 

@@ -1,27 +1,68 @@
 ﻿namespace RssReaderFs.Wpf.ViewModel
 
 open System
+open System.Windows.Data
 open Basis.Core
 open RssReaderFs.Core
+
+type SourceViewPage(rr: RssReader, srcOpt: option<DerivedSource>) =
+  inherit WpfViewModel.Base()
+
+  let lockObj = obj()
+
+  let mutable items =
+    match srcOpt with
+    | None -> [||]
+    | Some src ->
+        rr |> RssReader.unreadItems src
+        |> Array.sortByDescending (fun item -> item.Date)
+        |> Array.map (MetaArticle.ofItem rr)
+        |> tap (fun items -> BindingOperations.EnableCollectionSynchronization(items, lockObj))
+    |> Seq.toObservableCollection
+
+  member this.Items
+    with get () = items
+    and  set v  =
+      items <- v
+      this.RaisePropertyChanged("Items")
+
+  member this.AddNewItems(newItems: Article []) =
+    for item in newItems |> Array.sortBy (fun item -> item.Date) do
+      items.Insert(0, item |> MetaArticle.ofItem rr)
+
+  member this.UpdateAsync() =
+    async {
+      match srcOpt with
+      | None -> ()
+      | Some src ->
+          let! newItems = rr |> RssReader.updateAsync src
+          if newItems |> Array.isEmpty |> not then
+            this.AddNewItems(newItems)
+    }
 
 type SourceView(rr: RssReader) as this =
   inherit WpfViewModel.Base()
 
-  let mutable srcName = AllSourceName
+  let defaultPage = SourceViewPage(rr, None)
 
-  let srcOpt () =
-    Source.tryFindByName (rr |> RssReader.ctx) srcName
+  let mutable selectedPage =
+    defaultPage
 
-  let mutable items =
-    ([||]: Article [])
+  let mutable pages =
+    (Map.empty: Map<Id, SourceViewPage>)
 
   let mutable selectedIndex = -1
 
   let selectedItem () =
-    items |> Array.tryItem selectedIndex
+    selectedPage.Items |> Seq.tryItem selectedIndex 
+
+  let selectedArticle () =
+    selectedItem () |> Option.map (fun item ->
+      (rr |> RssReader.ctx |> DbCtx.set<Article>).Find(item.ArticleId)
+      )
 
   let selectedLink () =
-    selectedItem ()
+    selectedArticle ()
     |> Option.bind (fun item -> item.Link)
     |> Option.getOr ""
 
@@ -30,27 +71,10 @@ type SourceView(rr: RssReader) as this =
       (fun () -> selectedLink () |> String.IsNullOrEmpty |> not)
       (fun () -> selectedLink () |> Diagnostics.Process.Start |> ignore)
 
-  let addNewItems (newItems: Article []) =
-    items <-
-      newItems
-      |> Array.sortBy (fun item -> item.Date)
-      |> flip Array.append items
-    this.RaisePropertyChanged("Items")
-    
-  let updateAsync () =
-    async {
-      match Source.tryFindByName (rr |> RssReader.ctx) srcName with
-      | None -> ()
-      | Some src ->
-          let! newItems = rr |> RssReader.updateAsync src
-          if newItems |> Array.isEmpty |> not then
-            addNewItems newItems
-    }
-
   let checkUpdate () =
     async {
       while true do
-        do! updateAsync ()
+        do! selectedPage.UpdateAsync()
         do! Async.Sleep(3 * 60 * 1000)
     }
     |> Async.Start
@@ -62,47 +86,52 @@ type SourceView(rr: RssReader) as this =
       )
 
   member this.Items =
-    items |> Array.map (ArticleRow.ofItem rr)
+    selectedPage.Items
 
   member this.SelectedIndex
     with get () = selectedIndex
     and  set v  =
       selectedIndex <- v
 
-      for name in ["SelectedRow"; "SelectedDesc"] do
+      for name in ["SelectedItem"; "SelectedDesc"] do
         this.RaisePropertyChanged(name)
 
       linkJumpCommandExecutabilityChanged this
 
-  member this.SelectedItem = selectedItem ()
+      selectedArticle () |> Option.iter (fun item ->
+        let readLog = rr |> RssReader.readItem item.Id
+        this.Items.[v].ReadDate <- Some readLog.Date
+        )
 
-  member this.SelectedRow: ArticleRow =
-    match items |> Array.tryItem selectedIndex with
-    | Some item -> item |> ArticleRow.ofItem rr
-    | None -> ArticleRow.empty
+  member this.SelectedArticle = selectedArticle ()
+
+  member this.SelectedItem: MetaArticle =
+    selectedItem () |> Option.getOr MetaArticle.empty
 
   member this.SelectedDesc
     with get () =
-      items
-      |> Array.tryItem selectedIndex
+      selectedArticle ()
       |> Option.bind (fun item -> item.Desc)
       |> Option.getOr "(No description.)"
     and  set (_: string) = ()
 
   member this.LinkJumpCommand = linkJumpCommand
 
-  member this.SourceName
-    with get () = srcName
-    and  set newName =
-      srcName <- newName
+  member this.SelectedPage
+    with get () = selectedPage
+    and  set v  =
+      selectedPage <- v 
 
-      items <-
-        match Source.tryFindByName (rr |> RssReader.ctx) srcName with
-        | Some src -> rr |> RssReader.unreadItems src
-        | None -> [||]
+      this.SelectedIndex <- -1
+
+      selectedPage.UpdateAsync () |> Async.Start
       this.RaisePropertyChanged("Items")
 
-      updateAsync () |> Async.Start
-
-      for name in ["SourceName"; "Items"] do
-        this.RaisePropertyChanged(name)
+  member this.SelectSourceByName(srcName) =
+    let page =
+      match Source.tryFindByName (rr |> RssReader.ctx) srcName with
+      | None -> defaultPage
+      | Some src ->
+          pages |> Map.tryFind ((src |> fst).Id)
+          |> Option.getOrElse (fun () -> SourceViewPage(rr, Some src))
+    this.SelectedPage <- page

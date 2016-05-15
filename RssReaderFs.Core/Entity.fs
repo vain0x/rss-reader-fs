@@ -18,15 +18,25 @@ module Entity =
     [<Required>]
     member val Title = "" with get, set
 
-    member val Desc = (None: option<string>) with get, set
+    member val DescOrNull = (null: string) with get, set
 
-    member val Link = (None: option<string>) with get, set
+    member val LinkOrNull = (null: string) with get, set
 
     [<Required; Index>]
     member val Date = DateTime.Now with get, set
 
     [<Required; Index>]
     member val SourceId = 0L with get, set
+
+    member this.Desc
+      with get () = this.DescOrNull |> Option.ofObj
+      and  set v  =
+        this.DescOrNull <- v |> Option.toObj
+
+    member this.Link
+      with get () = this.LinkOrNull |> Option.ofObj
+      and  set v  =
+        this.LinkOrNull <- v |> Option.toObj
 
   [<AllowNullLiteral>]
   type ReadLog() =
@@ -74,8 +84,8 @@ module Entity =
     member val SourceId = 0L with get, set
 
   [<AllowNullLiteral>]
-  type Config() =
-    [<Key>]
-    member val Name = "" with get, set
+  type BearTokenCache() =
+    inherit EntityWithId()
 
+    [<Required>]
     member val BearToken = "" with get, set
