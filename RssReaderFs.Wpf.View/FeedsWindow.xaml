@@ -6,6 +6,15 @@
         Visibility="{Binding Visibility}"
         Closing="Window_Closing"
         FontFamily="Yu Gothic">
+    <Window.Resources>
+        <Style TargetType="{x:Type GroupBox}">
+            <Setter Property="Margin" Value="10" />
+        </Style>
+        <Style TargetType="{x:Type TextBox}">
+            <Setter Property="Margin" Value="10" />
+            <Setter Property="MinWidth" Value="100" />
+        </Style>
+    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition />
@@ -13,16 +22,16 @@
         </Grid.RowDefinitions>
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="auto" />
+                <ColumnDefinition Width="auto" MinWidth="150" />
                 <ColumnDefinition Width="auto" />
             </Grid.ColumnDefinitions>
-            <GroupBox Header="Feeds" Margin="5">
+            <GroupBox Header="Feeds">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="1*" />
                         <RowDefinition Height="auto" />
                     </Grid.RowDefinitions>
-                    <ListView x:Name="listView" ItemsSource="{Binding Feeds}" Grid.Row="0">
+                    <ListView x:Name="listView" ItemsSource="{Binding Feeds}"  MinHeight="100" Grid.Row="0">
                         <ListView.View>
                             <GridView>
                                 <GridViewColumn Header="Name"   DisplayMemberBinding="{Binding Name}" />
@@ -47,28 +56,28 @@
                                 </Grid.RowDefinitions>
                                 <Label Content="Name" VerticalAlignment="Center" Grid.Column="0" Grid.Row="0" />
                                 <Label Content="URL"  VerticalAlignment="Center" Grid.Column="0" Grid.Row="1" />
-                                <TextBox Text="{Binding Name}" Width="auto" Height="25" Margin="10" Grid.Column="1" Grid.Row="0" />
-                                <TextBox Text="{Binding Url}"  Width="auto" Height="25" Margin="10" Grid.Column="1" Grid.Row="1"/>
+                                <TextBox Text="{Binding Name}" Grid.Column="1" Grid.Row="0" />
+                                <TextBox Text="{Binding Url}"  Grid.Column="1" Grid.Row="1"/>
                             </Grid>
                             <Grid Grid.Row="1">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="1*"/>
                                     <ColumnDefinition Width="auto"/>
                                 </Grid.ColumnDefinitions>
-                                <Button Content="Add" Command="{Binding AddFeedCommand}" Width="80" Height="20" Margin="10" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+                                <Button Content="Add" Command="{Binding AddFeedCommand}" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
                             </Grid>
                         </Grid>
                     </Expander>
                 </Grid>
             </GroupBox>
 
-            <GroupBox Grid.Column="1" Header="Twitter Users" Margin="5">
+            <GroupBox Grid.Column="1" Header="Twitter Users">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition />
                         <RowDefinition Height="auto" />
                     </Grid.RowDefinitions>
-                    <ListBox ItemsSource="{Binding TwitterUsers}" />
+                    <ListBox ItemsSource="{Binding TwitterUsers}" MinHeight="100" />
                     <Expander Grid.Row="1" x:Name="followExpander" Header="Follow" IsExpanded="True">
                         <Grid>
                             <Grid.RowDefinitions>
@@ -81,10 +90,10 @@
                                     <ColumnDefinition />
                                 </Grid.ColumnDefinitions>
                                 <Label Content="Name" VerticalAlignment="Center" />
-                                <TextBox Grid.Column="1" Text="{Binding Name}" Width="auto" Margin="10" />
+                                <TextBox Grid.Column="1" Text="{Binding Name}" />
                             </Grid>
                             <StackPanel Grid.Row="1" HorizontalAlignment="Right">
-                                <Button Content="Follow" Command="{Binding FollowCommand}" Width="80" Height="20" Margin="10" />
+                                <Button Content="Follow" Command="{Binding FollowCommand}" />
                             </StackPanel>
                         </Grid>
                     </Expander>
@@ -92,6 +101,6 @@
             </GroupBox>
         </Grid>
 
-        <TextBlock Grid.Row="1" Text="{Binding Error}" Visibility="{Binding ErrorVisibility}" TextWrapping="Wrap" Margin="10" />
+        <TextBlock Grid.Row="1" Text="{Binding Error}" Visibility="{Binding ErrorVisibility}" TextWrapping="Wrap" Padding="10" />
     </Grid>
 </Window>
