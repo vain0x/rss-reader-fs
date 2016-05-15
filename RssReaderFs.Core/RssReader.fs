@@ -174,6 +174,18 @@ module RssReader =
       )
     |> raisingChanged rr
 
+  let rootTags rr: Tag [] =
+    let ttss = rr |> set<TagToSource>
+    query {
+      for tag in (rr |> set<Tag>) do
+      where (not (query {
+        for tts in ttss do
+        where (tts.SourceId = tag.SourceId)
+        exists true
+      }))
+    }
+    |> Seq.toArray
+
   let unreadItems src rr: Article [] =
     let allUnreads =
       let logs = rr |> set<ReadLog>
