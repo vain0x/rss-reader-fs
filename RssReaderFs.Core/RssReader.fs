@@ -162,8 +162,7 @@ module RssReader =
       | (_, None) ->
           return! fail (srcName |> SourceDoesNotExist)
       | _ ->
-          // TODO: Error ケースにする
-          return! fail (ExnError <| Exception(sprintf "'%s' isn't a tag name." tagName))
+          return! fail (tagName |> SourceIsNotATag)
     }
 
   /// Note: The read date of items already read can't be updated.

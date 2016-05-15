@@ -15,3 +15,5 @@ module Error =
         sprintf "Source '%s' can't be renamed." srcName
     | SourceDoesNotHaveTag (srcName, tagName) ->
         sprintf "Source '%s' doesn't have the tag '%s'." srcName tagName
+    | SourceIsNotATag srcName ->
+        sprintf "Source '%s' isn't a tag." srcName
