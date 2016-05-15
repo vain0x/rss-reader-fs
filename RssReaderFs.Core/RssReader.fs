@@ -167,11 +167,11 @@ module RssReader =
     }
 
   /// Note: The read date of items already read can't be updated.
-  let readItem (item: Article) rr: ReadLog =
-    (rr |> set<ReadLog>).Find(item.Id)
+  let readItem (articleId: Id) rr: ReadLog =
+    (rr |> set<ReadLog>).Find(articleId)
     |> Option.ofObj
     |> Option.getOrElse (fun () ->
-      (rr |> set<ReadLog>).Add(ReadLog(ArticleId = item.Id, Date = DateTime.Now))
+      (rr |> set<ReadLog>).Add(ReadLog(ArticleId = articleId, Date = DateTime.Now))
       )
     |> raisingChanged rr
 

@@ -99,7 +99,7 @@ type SourceView(rr: RssReader) as this =
       linkJumpCommandExecutabilityChanged this
 
       selectedArticle () |> Option.iter (fun item ->
-        let readLog = rr |> RssReader.readItem item
+        let readLog = rr |> RssReader.readItem item.Id
         this.Items.[v].ReadDate <- Some readLog.Date
         )
 
