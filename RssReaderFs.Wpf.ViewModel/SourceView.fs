@@ -1,18 +1,23 @@
 ﻿namespace RssReaderFs.Wpf.ViewModel
 
 open System
+open System.Windows.Data
 open Basis.Core
 open RssReaderFs.Core
 
 type SourceViewPage(rr: RssReader, srcOpt: option<DerivedSource>) =
   inherit WpfViewModel.Base()
 
+  let lockObj = obj()
+
   let mutable items =
     match srcOpt with
     | None -> [||]
     | Some src ->
         rr |> RssReader.unreadItems src
+        |> Array.sortByDescending (fun item -> item.Date)
         |> Array.map (MetaArticle.ofItem rr)
+        |> tap (fun items -> BindingOperations.EnableCollectionSynchronization(items, lockObj))
     |> Seq.toObservableCollection
 
   member this.Items
