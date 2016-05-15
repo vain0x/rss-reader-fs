@@ -101,14 +101,42 @@ module Source =
       exists (tts.TagId = tag.SourceId && tts.SourceId = srcId)
     }
 
-  let findTaggedSources ctx (tag: Tag): list<Source> =
-    query {
-      for tts in ctx |> DbCtx.set<TagToSource> do
-      where (tts.TagId = tag.SourceId)
-      join src in (ctx |> DbCtx.set<Source>) on (tts.SourceId = src.Id)
-      select src
-    }
-    |> Seq.toList
+  let findTaggedSources ctx: Tag -> list<Source> =
+    let taggedSources (tagIds: seq<Id>) =
+      query {
+        for tts in ctx |> DbCtx.set<TagToSource> do
+        where (query {
+          for tagId in tagIds do
+          exists (tts.TagId = tagId)
+        })
+        select tts.SourceId
+      }
+    let nonTagSourceIds (srcIds: IQueryable<Id>) =
+      let tagSet = ctx |> DbCtx.set<Tag>
+      query {
+        for srcId in srcIds do
+        where (not (query {
+          for tag in tagSet do
+          where (srcId = tag.SourceId)
+          exists true
+        }))
+        select srcId
+      }
+    let rec loop (tagIds: IQueryable<Id>) =
+      if tagIds |> Seq.isEmpty
+      then Set.empty
+      else
+        let taggedSrcIds    = tagIds |> taggedSources
+        let srcIds          = taggedSrcIds |> nonTagSourceIds
+        let nextTagIds      = Query.difference taggedSrcIds srcIds
+        let srcIds'         = loop nextTagIds
+        in Set.union (srcIds |> Set.ofSeq) srcIds'
+    fun tag ->
+      query {
+        for srcId in loop [tag.SourceId] do
+        join src in (ctx |> DbCtx.set<Source>) on (srcId = src.Id)
+        select src
+      } |> Seq.toList
 
   /// src についているタグのリスト
   let tagsOf ctx (srcName: string): list<Source * Tag> =

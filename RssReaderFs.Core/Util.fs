@@ -146,6 +146,19 @@ module Map =
       then body f l r
       else body (flip f) r l
 
+module Query =
+  open System.Linq
+
+  let difference (ls: IQueryable<'x>) (rs: IQueryable<'x>) =
+    query {
+      for l in ls do
+      where (query {
+        for r in rs do
+        all (l <> r)
+      })
+      select l
+    }
+
 module DateTime =
   let tryParse s =
     DateTime.TryParse(s)
