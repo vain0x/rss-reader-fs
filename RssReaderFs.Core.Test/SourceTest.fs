@@ -12,4 +12,10 @@ module SourceTest =
         let actual    = ctx |> Source.allFeeds |> Array.map Source.name |> Set.ofArray
         do! actual |> assertEquals expected
       }
+
+      test "allTwitterUsersTest" {
+        let expected  = defaultTwitterUsers |> Set.ofList
+        let actual    = ctx |> Source.allTwitterUsers |> Array.map Source.name |> Set.ofArray
+        do! actual |> assertEquals expected
+      }
     ]
