@@ -1,9 +1,10 @@
 ﻿namespace RssReaderFs.Core
 
 open System
-open System.Xml
+open System.Xml.Linq
 open System.Linq
 open Basis.Core
+open Basis.Core.Xml.NamespaceLess
 
 module Article =
   let create title desc link date srcId =
@@ -41,27 +42,18 @@ module Article =
   let hasAlreadyBeenRead ctx itemId =
     itemId |> readDate ctx |> Option.isSome
 
-  let parseXml srcId (xml: XmlDocument) =
-    let getTextElem xpath =
-      Xml.selectSingleNode xpath
-      >> Option.map (Xml.innerText)
-
-    let tryBuildItem (xnode: XmlNode) =
-      let at = flip getTextElem xnode
-      let title = at "title"
-      let date  =
-        at "pubDate"
-        |> Option.bind (DateTime.tryParse)
-        |> Option.map (fun time -> time.ToLocalTime())
-      in
-        match (title, date) with
-        | (Some title, Some date) ->
-            create title (at "description") (at "link") date srcId |> Some
-        | _ -> None
+  let ofRssItem srcId (item: Rss.Item) =
+    let link =
+      item.Link |> Option.map string
     in
-      xml
-      |> Xml.selectNodes "rss/channel/item"
-      |> Seq.choose tryBuildItem
+      create item.Title item.Desc link item.PubDate srcId
+
+  let ofAtomEntry srcId (entry: Atom.Entry) =
+    let desc =
+      Option.appendWith (fun x y -> x + Environment.NewLine + y)
+        entry.Summary (entry.Content |> Option.map (fun c -> c.Body))
+    in
+      create entry.Title desc (entry.Link |> string |> Some) entry.Published srcId
 
   let ofTweet (status: CoreTweet.Status) srcId =
     let (header, body) = status.Text |>  Str.splitAt 50

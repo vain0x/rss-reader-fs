@@ -34,6 +34,18 @@ module Option =
     | (true, value) -> Some value
     | _ -> None
 
+  let either (f: 'x -> 'y) (g: unit -> 'y): option<'x> -> 'y =
+    function
+    | Some x -> f x
+    | None -> g ()
+
+  let appendWith f x y =
+    match (x, y) with
+    | (Some l, Some r)        -> Some (f l r)
+    | (Some x, _)
+    | (_, Some x)             -> Some x
+    | (None, None)            -> None
+
 module Seq =
   let inline ofCollection
       (self: ^T when ^T: (member Item: int -> _) and ^T: (member Count: int))
@@ -57,6 +69,11 @@ module Seq =
             Some x
     }
     |> Seq.choose id
+
+  let unzip (xys: seq<'x * 'y>): seq<'x> * seq<'y> =
+    let xs = xys |> Seq.map fst
+    let ys = xys |> Seq.map snd
+    in (xs, ys)
 
 module Array =
   let tryItem i self =
@@ -151,36 +168,36 @@ module DateTime =
     DateTime.TryParse(s)
     |> Option.ofTrial
 
-module Xml =
-  open System.Xml
+module Uri =
+  open System.IO
 
-  let innerText (xnode: XmlNode) =
-    xnode.InnerText
+  let tryParse (s: string) =
+    try
+      Uri(s) |> Some
+    with | _ -> None
 
-  let selectSingleNode xpath (xnode: XmlNode) =
-    xnode.SelectSingleNode(xpath)
-    |> Nullable.toOption
+  let extension (uri: Uri) =
+    Path.GetExtension(uri.LocalPath)
 
-  let selectNodes xpath (xnode: XmlNode) =
-    xnode.SelectNodes(xpath)
-    |> Seq.ofCollection
+module XElement =
+  open System.Xml.Linq
+
+  let value (xe: XElement) =
+    xe.Value
 
 module Exn =
   let message (e: exn) = e.Message
 
 module Net =
   open System.Net
-  open System.Xml
+  open System.Xml.Linq
 
   let downloadXmlAsync (feedUrl: Url) =
     async {
       let req       = WebRequest.Create(feedUrl)
       let! resp     = req.GetResponseAsync() |> Async.AwaitTask
       let stream    = resp.GetResponseStream()
-      let xmlReader = new XmlTextReader(stream)
-      let xmlDoc    = new XmlDocument()
-      xmlDoc.Load(xmlReader)
-      return xmlDoc
+      return XDocument.Load(stream)
     }
 
 module Async =
@@ -227,3 +244,15 @@ module Trial =
 
   let mapExnToMessage (self: Result<_, exn>): Result<_, string> =
     self |> mapMessages (List.map Exn.message)
+    
+  let toOption =
+    function
+    | Pass x
+    | Warn (x, _)             -> Some x
+    | Fail _                  -> None
+
+  let toMessages =
+    function
+    | Pass _                  -> []
+    | Warn (_, msgs)
+    | Fail msgs               -> msgs

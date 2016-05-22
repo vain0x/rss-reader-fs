@@ -8,7 +8,14 @@ module RssFeed =
   let downloadAsync srcId url =
     async {
       let! xml = Net.downloadXmlAsync(url)
-      return (xml |> Article.parseXml srcId)
+      if (url |> Uri.tryParse |> Option.map Uri.extension) = Some ".atom" then
+        return
+          Atom.ofXml xml
+          |> Trial.either (fun (atom, _) -> atom.Entries) (fun _ -> Seq.empty)
+          |> Seq.map (Article.ofAtomEntry srcId)
+      else
+        let channel = xml |> Rss.ofXml
+        return channel.Items |> Seq.map (Article.ofRssItem srcId)
     }
 
   let validate url =
