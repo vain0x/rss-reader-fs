@@ -42,27 +42,11 @@ module Article =
   let hasAlreadyBeenRead ctx itemId =
     itemId |> readDate ctx |> Option.isSome
 
-  let parseXml srcId (xml: XDocument) =
-    let getTextElem xpath =
-      XPath.trySelectElement xpath
-      >> Option.map XElement.value
-
-    let tryBuildItem (xnode: XNode) =
-      let at = flip getTextElem xnode
-      let title = at "title"
-      let date  =
-        at "pubDate"
-        |> Option.bind (DateTime.tryParse)
-        |> Option.map (fun time -> time.ToLocalTime())
-      in
-        match (title, date) with
-        | (Some title, Some date) ->
-            create title (at "description") (at "link") date srcId |> Some
-        | _ -> None
+  let ofRssItem srcId (item: Rss.Item) =
+    let link =
+      item.Link |> Option.map string
     in
-      xml
-      |> XPath.selectElements "rss/channel/item"
-      |> Seq.choose tryBuildItem
+      create item.Title item.Desc link item.PubDate srcId
 
   let ofTweet (status: CoreTweet.Status) srcId =
     let (header, body) = status.Text |>  Str.splitAt 50

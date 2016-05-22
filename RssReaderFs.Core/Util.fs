@@ -151,6 +151,12 @@ module DateTime =
     DateTime.TryParse(s)
     |> Option.ofTrial
 
+module Uri =
+  let tryParse (s: string) =
+    try
+      Uri(s) |> Some
+    with | _ -> None
+
 module XElement =
   open System.Xml.Linq
 

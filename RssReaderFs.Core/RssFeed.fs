@@ -8,7 +8,8 @@ module RssFeed =
   let downloadAsync srcId url =
     async {
       let! xml = Net.downloadXmlAsync(url)
-      return (xml |> Article.parseXml srcId)
+      let channel = xml |> Rss.ofXml
+      return channel.Items |> Seq.map (Article.ofRssItem srcId)
     }
 
   let validate url =
