@@ -1,9 +1,10 @@
 ﻿namespace RssReaderFs.Core
 
 open System
-open System.Xml
+open System.Xml.Linq
 open System.Linq
 open Basis.Core
+open Basis.Core.Xml.NamespaceLess
 
 module Article =
   let create title desc link date srcId =
@@ -41,12 +42,12 @@ module Article =
   let hasAlreadyBeenRead ctx itemId =
     itemId |> readDate ctx |> Option.isSome
 
-  let parseXml srcId (xml: XmlDocument) =
+  let parseXml srcId (xml: XDocument) =
     let getTextElem xpath =
-      Xml.selectSingleNode xpath
-      >> Option.map (Xml.innerText)
+      XPath.trySelectElement xpath
+      >> Option.map XElement.value
 
-    let tryBuildItem (xnode: XmlNode) =
+    let tryBuildItem (xnode: XNode) =
       let at = flip getTextElem xnode
       let title = at "title"
       let date  =
@@ -60,7 +61,7 @@ module Article =
         | _ -> None
     in
       xml
-      |> Xml.selectNodes "rss/channel/item"
+      |> XPath.selectElements "rss/channel/item"
       |> Seq.choose tryBuildItem
 
   let ofTweet (status: CoreTweet.Status) srcId =

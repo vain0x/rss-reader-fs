@@ -151,36 +151,25 @@ module DateTime =
     DateTime.TryParse(s)
     |> Option.ofTrial
 
-module Xml =
-  open System.Xml
+module XElement =
+  open System.Xml.Linq
 
-  let innerText (xnode: XmlNode) =
-    xnode.InnerText
-
-  let selectSingleNode xpath (xnode: XmlNode) =
-    xnode.SelectSingleNode(xpath)
-    |> Nullable.toOption
-
-  let selectNodes xpath (xnode: XmlNode) =
-    xnode.SelectNodes(xpath)
-    |> Seq.ofCollection
+  let value (xe: XElement) =
+    xe.Value
 
 module Exn =
   let message (e: exn) = e.Message
 
 module Net =
   open System.Net
-  open System.Xml
+  open System.Xml.Linq
 
   let downloadXmlAsync (feedUrl: Url) =
     async {
       let req       = WebRequest.Create(feedUrl)
       let! resp     = req.GetResponseAsync() |> Async.AwaitTask
       let stream    = resp.GetResponseStream()
-      let xmlReader = new XmlTextReader(stream)
-      let xmlDoc    = new XmlDocument()
-      xmlDoc.Load(xmlReader)
-      return xmlDoc
+      return XDocument.Load(stream)
     }
 
 module Async =
