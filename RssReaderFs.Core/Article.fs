@@ -48,6 +48,13 @@ module Article =
     in
       create item.Title item.Desc link item.PubDate srcId
 
+  let ofAtomEntry srcId (entry: Atom.Entry) =
+    let desc =
+      Option.appendWith (fun x y -> x + Environment.NewLine + y)
+        entry.Summary (entry.Content |> Option.map (fun c -> c.Body))
+    in
+      create entry.Title desc (entry.Link |> string |> Some) entry.Published srcId
+
   let ofTweet (status: CoreTweet.Status) srcId =
     let (header, body) = status.Text |>  Str.splitAt 50
     let desc  = if body |> Str.isNullOrWhiteSpace then None else Some body

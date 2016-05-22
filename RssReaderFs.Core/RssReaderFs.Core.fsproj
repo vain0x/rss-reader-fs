@@ -112,6 +112,7 @@
     </Compile>
     <Compile Include="Util.fs" />
     <Compile Include="Rss.fs" />
+    <Compile Include="Atom.fs" />
     <Compile Include="SecretSettings.fs" />
     <Compile Include="Entity.fs" />
     <Compile Include="Database.fs" />

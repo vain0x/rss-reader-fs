@@ -34,6 +34,18 @@ module Option =
     | (true, value) -> Some value
     | _ -> None
 
+  let either (f: 'x -> 'y) (g: unit -> 'y): option<'x> -> 'y =
+    function
+    | Some x -> f x
+    | None -> g ()
+
+  let appendWith f x y =
+    match (x, y) with
+    | (Some l, Some r)        -> Some (f l r)
+    | (Some x, _)
+    | (_, Some x)             -> Some x
+    | (None, None)            -> None
+
 module Seq =
   let inline ofCollection
       (self: ^T when ^T: (member Item: int -> _) and ^T: (member Count: int))
@@ -57,6 +69,11 @@ module Seq =
             Some x
     }
     |> Seq.choose id
+
+  let unzip (xys: seq<'x * 'y>): seq<'x> * seq<'y> =
+    let xs = xys |> Seq.map fst
+    let ys = xys |> Seq.map snd
+    in (xs, ys)
 
 module Array =
   let tryItem i self =
@@ -152,10 +169,15 @@ module DateTime =
     |> Option.ofTrial
 
 module Uri =
+  open System.IO
+
   let tryParse (s: string) =
     try
       Uri(s) |> Some
     with | _ -> None
+
+  let extension (uri: Uri) =
+    Path.GetExtension(uri.LocalPath)
 
 module XElement =
   open System.Xml.Linq
@@ -222,3 +244,15 @@ module Trial =
 
   let mapExnToMessage (self: Result<_, exn>): Result<_, string> =
     self |> mapMessages (List.map Exn.message)
+    
+  let toOption =
+    function
+    | Pass x
+    | Warn (x, _)             -> Some x
+    | Fail _                  -> None
+
+  let toMessages =
+    function
+    | Pass _                  -> []
+    | Warn (_, msgs)
+    | Fail msgs               -> msgs
