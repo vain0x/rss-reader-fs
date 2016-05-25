@@ -6,29 +6,31 @@ open CoreTweet
 open Chessie.ErrorHandling
 
 module Twitter =
-  let getAppOnlyTokenAsync () =
-    OAuth2.GetTokenAsync
-      ( SecretSettings.consumerKey
-      , SecretSettings.consumerSecret
-      ) |> Async.AwaitTask
+  let tryGetAppOnlyTokenAsync () =
+    SecretSettings.consumerKeySecret |> Option.map (fun (key, secret) ->
+      OAuth2.GetTokenAsync(key, secret) |> Async.AwaitTask
+      )
 
-  let getAppOnlyToken () =
-    getAppOnlyTokenAsync () |> Async.RunSynchronously
+  let tryGetAppOnlyToken () =
+    tryGetAppOnlyTokenAsync () |> Option.map Async.RunSynchronously
 
-  let createAppOnlyToken bearToken =
-    OAuth2Token.Create(SecretSettings.consumerKey, SecretSettings.consumerSecret, bearToken)
+  let tryCreateAppOnlyToken bearToken =
+    SecretSettings.consumerKeySecret |> Option.map (fun (key, secret) ->
+      OAuth2Token.Create(key, secret, bearToken)
+      )
 
   /// Get or create using cache
-  let fetchAppOnlyToken ctx =
+  let tryFetchAppOnlyToken ctx =
     let btcs = ctx |> DbCtx.set<BearTokenCache>
     match btcs.FirstOrDefault() |> Option.ofObj with
     | Some btc ->
-        createAppOnlyToken btc.BearToken
+        tryCreateAppOnlyToken btc.BearToken
     | None ->
-        getAppOnlyTokenAsync () |> Async.RunSynchronously
-        |> tap (fun token ->
+        tryGetAppOnlyTokenAsync () |> Option.map (fun a ->
+          a |> Async.RunSynchronously
+          |> tap (fun token ->
             btcs.Add(BearTokenCache(BearToken = token.BearerToken)) |> ignore
-            )
+            ))
 
   let userTweetsAsync (name: string) (sinceId: int64) (token: OAuth2Token) =
     let args =

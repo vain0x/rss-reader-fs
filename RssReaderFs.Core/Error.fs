@@ -5,6 +5,8 @@ module Error =
     function
     | ExnError exn ->
         exn.Message
+    | TwitterDisabled ->
+        "Can't access twitter because consumer key/secret aren't set."
     | SourceAlreadyExists srcName ->
         sprintf "Source '%s' does already exist." srcName
     | SourceDoesNotExist srcName ->

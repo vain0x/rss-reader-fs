@@ -20,12 +20,13 @@ module Domain =
   type RssReader =
     {
       Ctx               : DbCtx
-      TwitterToken      : OAuth2Token
+      TwitterToken      : option<OAuth2Token>
       ChangedEvent      : Event<unit>
     }
 
   type Error =
     | ExnError                      of Exception
+    | TwitterDisabled
     | SourceAlreadyExists           of string
     | SourceDoesNotExist            of string
     | SourceCannotBeRemoved         of string
@@ -38,3 +39,6 @@ module Domain =
 
   [<Literal>]
   let DefaultConfigName = "Default"
+
+  module SecretSettings =
+    let consumerKeySecret = (None: option<string * string>)

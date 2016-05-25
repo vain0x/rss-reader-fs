@@ -13,7 +13,7 @@ module RssReader =
     in
       {
         Ctx             = ctx
-        TwitterToken    = Twitter.fetchAppOnlyToken ctx
+        TwitterToken    = Twitter.tryFetchAppOnlyToken ctx
         ChangedEvent    = Event<unit>()
       }
 
@@ -30,6 +30,9 @@ module RssReader =
 
   let raisingChanged rr (x: 'x): 'x =
     x |> tap (fun _ -> (rr |> changedEvent).Trigger())
+
+  let tryTwitterToken (rr: RssReader) =
+    rr.TwitterToken |> Trial.failIfNone TwitterDisabled
 
   let private addSource srcName rr =
     trial {
@@ -54,7 +57,8 @@ module RssReader =
 
   let addTwitterUser name rr =
     trial {
-      do! rr.TwitterToken |> Twitter.validate name
+      let! token    = rr |> tryTwitterToken
+      do! token |> Twitter.validate name
       let! src      = rr |> addSource name
       let tu        = Entity.TwitterUser(SourceId = src.Id)
       (rr |> set<TwitterUser>).Add(tu) |> ignore
@@ -213,13 +217,17 @@ module RssReader =
           let! items = feed.Url |> RssFeed.downloadAsync feed.SourceId
           return items |> Seq.toArray
       | TwitterUser tu ->
-          let screenName  = src |> Source.name
-          let! statuses   = rr.TwitterToken |> Twitter.userTweetsAsync screenName (tu.SinceId)
-          let items       = [| for status in statuses -> Article.ofTweet status tu.SourceId |]
-          if items |> Array.length > 0 then
-            let maxId = statuses |> Seq.map (fun status -> status.Id) |> Seq.max
-            do tu.SinceId <- max maxId tu.SinceId
-          return items
+          match rr.TwitterToken with
+          | Some token ->
+              let screenName  = src |> Source.name
+              let! statuses   = token |> Twitter.userTweetsAsync screenName (tu.SinceId)
+              let items       = [| for status in statuses -> Article.ofTweet status tu.SourceId |]
+              if items |> Array.length > 0 then
+                let maxId = statuses |> Seq.map (fun status -> status.Id) |> Seq.max
+                do tu.SinceId <- max maxId tu.SinceId
+              return items
+          | None ->
+              return [||]
       | TagSource tag ->
           let! itemArrayArray =
             Source.findTaggedSources (rr |> ctx) tag
